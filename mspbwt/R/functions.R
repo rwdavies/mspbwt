@@ -381,7 +381,7 @@ DisplaySetMaximalMatches <- function(X, maximal_matches, k) {
 }
 
 
-
+#' @export
 BuildIndices_Algorithm5 <- function(
     X,
     verbose = FALSE,
@@ -522,6 +522,8 @@ BuildIndices_Algorithm5 <- function(
 }
 
 
+
+#' @export
 MatchZ_Algorithm5 <- function(
     X,
     indices,
@@ -720,3 +722,246 @@ check_Algorithm5 <- function(X, Z, top_matches, display = FALSE) {
     }
 }
 
+
+
+#' @export
+ms_BuildIndices_Algorithm5 <- function(
+    X,
+    verbose = FALSE,
+    do_checks = FALSE,
+    do_var_check = TRUE,
+    check_vs_indices = FALSE,
+    indices = NULL
+) {
+    ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
+    ## inefficient?
+    n_symbols_per_grid <- as.integer(apply(X, 2, function(x) length(unique(x))))
+    Smax <- max(n_symbols_per_grid)
+    ## build arrays including a, d and now u, v, c
+    K <- nrow(X)
+    T <- ncol(X)
+    a <- array(NA, c(K, T + 1)) ## orders
+    d <- array(NA, c(K + 1, T + 1)) ## distances
+    dtemp <- array(NA, K) ## temp for filler
+    c <- array(NA, T + 1) ## not sure why
+    b <- array(NA, K)
+    a[, 1] <- 0:(K - 1) ## by definition for some reason
+    a[, 2] <- order(X[, 1]) - 1 ## 0-based
+    ## d is a 0, except first entry, and on (ordered) switch
+    d[, 1] <- 0
+    d[, 2] <- 0
+    for(k in 1:(K - 1)) {
+        if (X[a[k, 2] + 1, 1] != X[a[k + 1, 2] + 1, 1]) {
+            d[k + 1, 2] <- 1
+        }
+    }
+    ## 
+    d[1, ] <- 1:(T + 1)
+    d[K + 1, ] <- 1:(T + 1)
+    ##
+    atemp <- array(0L, c(K + 1, Smax))
+    dtemp <- array(0L, c(K, Smax))
+    ns_obs <- rep(0L, Smax)
+    ##
+    us <- array(0L, c(K + 1, Smax, T))
+    if (check_vs_indices) {
+        t <- 1
+        expect_equal(a[, t + 1], indices$a[, t + 1])
+        expect_equal(d[, t + 1], indices$d[, t + 1])
+    }
+    for(t in 1:T) {
+        ##
+        ## do sweeping bit
+        ##
+        nso <- rep(0L, Smax) ## n_symbols_observed
+        pqs <- rep(t, Smax) ## pqs - vector analogue to pq
+        for(k in 0:(K - 1)) { ## haps (1-based)
+            s <- X[a[k + 1, t] + 1, t] ## this symbol to consider
+            match_start <- d[k + 1, t]
+            for(i in 0:(Smax - 1)) {
+                if (match_start > pqs[i + 1]) {
+                    pqs[i + 1] <- match_start
+                }
+            }
+            atemp[nso[s] + 1, s] <- a[k + 1, t]
+            dtemp[nso[s] + 1, s] <- pqs[s]
+            pqs[s] <- 0
+            nso[s] <- nso[s] + 1
+            us[k + 1 + 1, , t] <- us[k + 1, , t]
+            us[k + 1 + 1, s, t] <- us[k + 1 + 1, s, t] + 1
+        }
+        ## rebuild from the us (in-efficient now but OK future?)
+        ## k <- 0
+        ## for(ic in 1:Smax) {
+        ##     for(ir in 0:(K - 1)) {
+        ##         if (us[ir + 1, ic] != us[ir + 1 + 1, ic]) {
+        ##             a[k + 1, t + 1] <-                     
+        ##         }
+        ##     }
+        ## }
+        ## now rebuild
+        k <- 0
+        ir <- 0
+        ic <- 0
+        for(ic in 0:(Smax - 1)) {
+            if (nso[ic + 1] > 0) {
+                for(ir in 0:(nso[ic + 1] - 1)) {
+                    ## I can make this more efficient using a list of vectors I think, can use (a lot?) less storage
+                    a[k + 1, t + 1] <- atemp[ir + 1, ic + 1]
+                    d[k + 1, t + 1] <- dtemp[ir + 1, ic + 1]
+                    k <- k + 1
+                }
+            }
+        }
+        if (t == 1) {
+            ## Not sure
+            d[0 + 1, t + 1] <- t + 1 ## don't override
+        }
+        if (check_vs_indices) {
+            expect_equal(a[, t + 1], indices$a[, t + 1])
+            expect_equal(d[, t + 1], indices$d[, t + 1]) ## 160
+        }
+        ## 
+        ## do checks
+        ##
+        c <- c(0, cumsum(us[K + 1, , t])) ## sort of
+        for(k in 0:(K - 1)) {
+            s <- X[a[k + 1, t] + 1, t] ## symbol here
+            w <- us[k + 1 + 1, s, t] + c[s]
+            if (verbose) {
+                message(paste0(
+                    "k=", k, ", ",
+                    "X=", X[a[k + 1, t] + 1, t], ", ",
+                    "a[w,t+1]=", a[w, t + 1], ", ",
+                    "a[k+1,t]=", a[k + 1, t]
+                ))
+            }
+            if (do_checks) {
+                stopifnot(a[w, t + 1] == a[k + 1, t])
+            }
+        }
+    }
+    return(
+        list(
+            a = a,
+            d = d,
+            us = us
+        )
+    )
+}
+
+
+
+
+#' @export
+ms_MatchZ_Algorithm5 <- function(
+    X,
+    ms_indices,
+    Z,
+    verbose = FALSE,
+    do_checks = FALSE,
+    check_vs_indices = FALSE,
+    indices = FALSE
+) {
+    K <- nrow(X)
+    T <- ncol(X)
+    a <- ms_indices[["a"]]
+    d <- ms_indices[["d"]]
+    us <- ms_indices[["us"]]
+    if (length(Z) != (ncol(a) - 1)) {
+        stop("Z not the right size")
+    }
+    e <- array(NA, T) ## keep this 0-based (like d)
+    f <- array(NA, T) ## keep these 0-based
+    g <- array(NA, T) ## keep these 0-based
+    e[1] <- 0
+    f[1] <- c(0, cumsum(us[nrow(X) + 1, , 1]))[Z[1]]
+    g[1] <- c(0, cumsum(us[nrow(X) + 1, , 1]))[Z[1] + 1]
+    ##
+    ## just do easy bit for now
+    ##
+    wf <- function(k, t, s, us) {
+        c <- c(0, cumsum(us[K + 1, , t]))[s]
+        u <- us[k + 1, s, t] + c
+        if (check_vs_indices) {
+            if (s == 1) {
+                return_val <- indices$u[k + 1, t]
+            } else {
+                return_val <- indices$v[k + 1, t] + indices$c[t]
+            }
+            if (u != return_val) {
+                stop(paste0(
+                    "s = ", s,
+                    ", u = ", u,
+                    ", u(original) = ", return_val))
+            }
+        }
+        u
+    }
+    fc <- f[1]
+    gc <- g[1]
+    ec <- e[1]
+    e1 <- NA
+    top_matches <- NULL
+    for(t in 2:T) {
+        f1 <- wf(fc, t, Z[t], us)
+        g1 <- wf(gc, t, Z[t], us)
+        if (verbose) {
+            message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
+        } 
+        if (g1 > f1) {
+            ## nothing to do
+        } else {
+            ## we have reached a maximum - need to report and update e, f, g
+            for(k in fc:(gc - 1)) {
+                top_matches <- rbind(
+                    top_matches,
+                    matrix(c(k, a[k + 1, t], ec + 1, t - 1), nrow = 1)
+                )
+            }
+            e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+            if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
+                f1 <- g1 - 1
+                index <- a[f1 + 1, t + 1]
+                while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
+                    e1 <- e1 - 1
+                }
+                while (d[f1 + 1, t + 1] <= e1) {
+                    f1 <- f1 - 1
+                }
+            } else if (f1 < K) {
+                g1 <- f1 + 1
+                index <- a[f1 + 1, t + 1]
+                while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
+                    e1 <- e1 - 1
+                }
+                while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) {
+                    g1 <- g1 + 1
+                }
+            }
+            ec <- e1
+        }
+        fc <- f1
+        gc <- g1
+        e[t] <- ec
+        f[t] <- fc
+        g[t] <- gc
+    }
+    t <- t + 1
+    if (fc < gc) {
+        for(k in fc:(gc - 1)) {
+            if (verbose) {
+                message("save final match")
+            }
+            top_matches <- rbind(
+                top_matches,
+                matrix(c(k, a[k + 1, t], ec + 1, t - 1), nrow = 1)
+            )
+        }
+    }
+    colnames(top_matches) <- c("k0", "indexB0", "start1", "end1")
+    ##
+    ## perform checks if wanted
+    ##
+    return(top_matches)
+}

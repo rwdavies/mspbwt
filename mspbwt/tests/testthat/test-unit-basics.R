@@ -56,5 +56,3 @@ test_that("Rcpp Algorithm 5 works with normal implementation", {
 
 
 
-## am here
-## start working on an actual multi-symbol version
