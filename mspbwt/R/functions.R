@@ -729,7 +729,6 @@ ms_BuildIndices_Algorithm5 <- function(
     X,
     verbose = FALSE,
     do_checks = FALSE,
-    do_var_check = TRUE,
     check_vs_indices = FALSE,
     indices = NULL
 ) {
@@ -759,8 +758,6 @@ ms_BuildIndices_Algorithm5 <- function(
     d[1, ] <- 1:(T + 1)
     d[K + 1, ] <- 1:(T + 1)
     ##
-    atemp <- array(0L, c(K + 1, Smax))
-    dtemp <- array(0L, c(K, Smax))
     ns_obs <- rep(0L, Smax)
     ##
     us <- array(0L, c(K + 1, Smax, T))
@@ -771,10 +768,18 @@ ms_BuildIndices_Algorithm5 <- function(
     }
     for(t in 1:T) {
         ##
-        ## do sweeping bit
+        ## OK, whatevs,
+        St <- n_symbols_per_grid[t]
+        ## get count of number of each
+        symbol_count <- get_count_of_number_of_symbols(X[, t], St, K)
+        observed_symbol_count <- integer(St)
+        start_count <- c(0, cumsum(symbol_count))
+        ##
+        ## 
         ##
         nso <- rep(0L, Smax) ## n_symbols_observed
         pqs <- rep(t, Smax) ## pqs - vector analogue to pq
+        val <- c()
         for(k in 0:(K - 1)) { ## haps (1-based)
             s <- X[a[k + 1, t] + 1, t] ## this symbol to consider
             match_start <- d[k + 1, t]
@@ -783,35 +788,14 @@ ms_BuildIndices_Algorithm5 <- function(
                     pqs[i + 1] <- match_start
                 }
             }
-            atemp[nso[s] + 1, s] <- a[k + 1, t]
-            dtemp[nso[s] + 1, s] <- pqs[s]
+            ## now - where it goes - 0 based
+            val <- c(val, start_count[s] + nso[s] + 1)
+            a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
+            d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
             pqs[s] <- 0
             nso[s] <- nso[s] + 1
             us[k + 1 + 1, , t] <- us[k + 1, , t]
             us[k + 1 + 1, s, t] <- us[k + 1 + 1, s, t] + 1
-        }
-        ## rebuild from the us (in-efficient now but OK future?)
-        ## k <- 0
-        ## for(ic in 1:Smax) {
-        ##     for(ir in 0:(K - 1)) {
-        ##         if (us[ir + 1, ic] != us[ir + 1 + 1, ic]) {
-        ##             a[k + 1, t + 1] <-                     
-        ##         }
-        ##     }
-        ## }
-        ## now rebuild
-        k <- 0
-        ir <- 0
-        ic <- 0
-        for(ic in 0:(Smax - 1)) {
-            if (nso[ic + 1] > 0) {
-                for(ir in 0:(nso[ic + 1] - 1)) {
-                    ## I can make this more efficient using a list of vectors I think, can use (a lot?) less storage
-                    a[k + 1, t + 1] <- atemp[ir + 1, ic + 1]
-                    d[k + 1, t + 1] <- dtemp[ir + 1, ic + 1]
-                    k <- k + 1
-                }
-            }
         }
         if (t == 1) {
             ## Not sure
@@ -964,4 +948,20 @@ ms_MatchZ_Algorithm5 <- function(
     ## perform checks if wanted
     ##
     return(top_matches)
+}
+
+
+
+
+
+
+
+
+
+get_count_of_number_of_symbols <- function(symbols, St, K) {
+    count <- integer(St)
+    for(k in 0:(K - 1)) { ## haps (1-based)
+        count[symbols[k + 1]] <- count[symbols[k + 1]] + 1
+    }
+    count
 }

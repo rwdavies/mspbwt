@@ -48,7 +48,6 @@ test_that("can run multi-symbol version with 2 symbols", {
 
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1,
-        do_var_check = FALSE,
         check_vs_indices = TRUE,
         indices = indices
     )
@@ -120,8 +119,7 @@ test_that("can run multi-symbol version with multiple symbols", {
     hapMatcher <- out$hapMatcher
 
     ms_indices <- ms_BuildIndices_Algorithm5(
-        hapMatcher,
-        do_var_check = FALSE
+        X = hapMatcher
     )
 
     Z <- c(
@@ -147,4 +145,8 @@ test_that("can run multi-symbol version with multiple symbols", {
 
 
 
+## 
 
+## AM HERE
+## IMPLEMENT ALTERNATIVE VERSION THAT IS MORE EFFICIENT
+## CONSIDER GETTING LARGER DATA TO TEST ON?
