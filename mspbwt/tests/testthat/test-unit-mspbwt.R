@@ -191,7 +191,8 @@ test_that("can build and test efficient multi-symbol version", {
     ##
     ## AM HERE
     ## NOW NEED TO WRITE DECODE USL
-    ## OTHERWISE I THINK I AM DONE
+    ## THEN BUILD NOT FROM USL BUT DO MORE EFFICIENTLY
+    ## THEN I THINK I AM DONE
     ##
     usL_encoding[[1]]
     
