@@ -804,18 +804,7 @@ ms_BuildIndices_Algorithm5 <- function(
             usL[k + 1 + 1,] <- usL[k + 1, ]
             usL[k + 1 + 1, s] <- usL[k + 1 + 1, s] + 1
         }
-        if (us_what == "matrix") {
-            usA[[t]] <- usL
-        } else {
-            ## here consider a compressed version!
-
-            
-            ## so need to compress and de-compress
-
-            ## so if below a threshold, store values
-            ## if above a threshold, store every xth value, and 
-            
-        }
+        usA[[t]] <- usL
         if (t == 1) {
             ## Not sure
             d[0 + 1, t + 1] <- t + 1 ## don't override
@@ -1020,7 +1009,7 @@ make_hapMatcherA <- function(
 
 
 
-encode_column_of_u <- function(u, egs) {
+encode_column_of_u <- function(u, egs, efficient = TRUE) {
     n_rows <- ceiling(length(u) / egs)
     out_mat <- array(NA, c(n_rows, 4))
     colnames(out_mat) <- c("start1", "start0", "value", "vec_pos")
@@ -1029,43 +1018,59 @@ encode_column_of_u <- function(u, egs) {
     for(i in 0:(n_rows - 1)) {
         s0 <- egs * i
         e0 <- egs * (i + 1) - 1
-        if (e0 > length(u)) {
+        if ((e0 + 1) > length(u)) {
             e0 <- length(u) - 1
         }
         out_mat[i + 1, "start1"] <- s0 + 1 ## 1-based start
         out_mat[i + 1, "start0"] <- s0     ## 0-based start
-        ## now build runs from this
-        cs <- 0
-        rt <- TRUE ## true = +1, FALSE = 0+
-        for(j in s0:e0) {
-            d <- u[j + 1 + 1] - u[j + 1]
-            final <- j == e0
-            if (rt) {
-                if (d == 1 & !final) {
-                    cs <- cs + 1
-                } else {
-                    out_vec[vec_pos + 1] <- cs
-                    names(out_vec)[vec_pos + 1] <- i                    
-                    vec_pos <- vec_pos + 1
-                    cs <- 1
-                    rt <- FALSE
-                }
-            } else {
-                if (d == 0 & !final) {
-                    cs <- cs + 1                    
-                } else {
-                    out_vec[vec_pos + 1] <- cs
-                    names(out_vec)[vec_pos + 1] <- i
-                    vec_pos <- vec_pos + 1
-                    cs <- 1
-                    rt <- TRUE
-                }
+        out_mat[i + 1, "value"] <- u[s0 + 1]
+        do_encoding_this_SNP <- TRUE
+        if (i < (n_rows - 1)) {
+            if (
+            (u[e0 + 1 + 1] - u[s0 + 1]) == 0 |
+            (u[e0 + 1 + 1] - u[s0 + 1]) == (e0 + 1- s0)
+            ) {
+                out_mat[i + 1, "vec_pos"] <- vec_pos - 1
+                do_encoding_this_SNP <- FALSE
             }
         }
-        out_mat[i + 1, "value"] <- u[s0 + 1]
-        out_mat[i + 1, "vec_pos"] <- vec_pos - 1
+        if (do_encoding_this_SNP) {
+            ## now build runs from this
+            cs <- 0
+            rt <- TRUE ## true = +1, FALSE = 0+
+            for(j in s0:e0) {
+                d <- u[j + 1 + 1] - u[j + 1]
+                final <- j == e0
+                if (rt) {
+                    if (d == 1 & !final) {
+                        cs <- cs + 1
+                    } else {
+                        out_vec[vec_pos + 1] <- cs
+                        names(out_vec)[vec_pos + 1] <- i                    
+                        vec_pos <- vec_pos + 1
+                        cs <- 1
+                        rt <- FALSE
+                    }
+                } else {
+                    if (d == 0 & !final) {
+                        cs <- cs + 1                    
+                    } else {
+                        out_vec[vec_pos + 1] <- cs
+                        names(out_vec)[vec_pos + 1] <- i
+                        vec_pos <- vec_pos + 1
+                        cs <- 1
+                        rt <- TRUE
+                    }
+                }
+            }
+            out_mat[i + 1, "vec_pos"] <- vec_pos - 1            
+        }
     }
     out_vec <- out_vec[1:(vec_pos)]
+    if (efficient) {
+        names(out_vec) <- NULL
+        out_mat <- out_mat[, c("value", "vec_pos")]
+    }
     return(
         list(
             out_mat = out_mat,
@@ -1087,6 +1092,15 @@ decode_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
         return(out_mat[i_row + 1, "value"])
     } else {
         val <- out_mat[i_row + 1, "value"]
+        if ((i_row + 1) < nrow(out_mat)) {
+            ## these are constant - so don't need to check in between!
+            next_val <- out_mat[i_row + 1 + 1, "value"]
+            if (next_val == val) {
+                return(val)
+            } else if (((next_val) - val) == egs) {
+                return(val + remainder)
+            }
+        }
         if (i_row == 0) {
             vec_pos <- 0
         } else {
@@ -1119,3 +1133,17 @@ decode_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
 }
 
 
+encode_usL <- function(
+    usL,
+    symbol_count_at_grid,
+    egs,                                
+    n_min_symbols
+) {
+    lapply(1:nrow(symbol_count_at_grid), function(i_symbol) {
+        if (symbol_count_at_grid[i_symbol, 2] > n_min_symbols) {
+            return(encode_column_of_u(usL[, i_symbol], egs = egs))
+        } else {
+            which(diff(usL[, i_symbol]) > 0)
+        }
+    })
+}

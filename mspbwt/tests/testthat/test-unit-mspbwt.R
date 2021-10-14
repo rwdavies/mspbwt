@@ -159,7 +159,7 @@ test_that("can build and test efficient multi-symbol version", {
 
     skip("not for routine use")
     load("~/Download/rhb_t_small.RData")
-    rhb_t <- a[, 1:5]
+    rhb_t <- a[1:10000, 1:20]
     ## can I just use hapMatcher, and special lookup?
 
     ## simple hapMatcher
@@ -173,8 +173,52 @@ test_that("can build and test efficient multi-symbol version", {
         all_symbols = all_symbols
     )
 
-    ## AM HERE - FIGURE OUT HOW TO MAKE US MORE EFFICIENT
+    usA <- ms_indices$usA
 
+    ## maybe
+    iGrid <- 20
+    usL_encoding <- encode_usL(
+        usA[[iGrid]],
+        symbol_count_at_grid = all_symbols[[iGrid]],
+        egs = 256,
+        n_min_symbols = 100
+    )
+    object.size(usL_encoding)
+    object.size(1:nrow(usA[[iGrid]]))
+    ## OK, so pretty similar to just what a will be
+
+
+    ##
+    ## AM HERE
+    ## NOW NEED TO WRITE DECODE USL
+    ## OTHERWISE I THINK I AM DONE
+    ##
+    usL_encoding[[1]]
+    
+    
+    
+    ## so how many does this require
+    iGrid <- 100
+    all_symbols[[iGrid]]
+    ## so originally, requires 10000 * many integers
+    
+    sum(sapply(1:8, function(i) {
+        out <- encode_column_of_u(usA[[iGrid]][, i], egs = 1000)
+    }))
+
+
+    
+    
+
+    ## 
+    diff(usA[[iGrid]][, i])
+
+    ## or should I just use encoding / decoding?
+    ## store every 32nd value, then store 31 ups/downs?
+    
+    ## so requires ~1/10th - good, not amazing?
+    
+    
     lapply(ms_indices, dim)
 
     b <- hapMatcherA[ms_indices$a[, 4] + 1, ]
