@@ -46,12 +46,28 @@ test_that("can run multi-symbol version with 2 symbols", {
     X1 <- X + 1L
     Z1 <- Z + 1L
 
+    ## include in this repo?
+    out <- make_hapMatcherA(X)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    ## but for checks - want to keep the same order, so swap if not the same
+    for(iGrid in 1:ncol(hapMatcherA)) {
+        if (sum(abs(hapMatcherA[, iGrid] - X1[, iGrid])) > 0) {
+            hapMatcherA[, iGrid] <- 3L - hapMatcherA[, iGrid]
+            all_symbols[[iGrid]][1:2, ] <- all_symbols[[iGrid]][2:1, ]
+        }
+    }
+    stopifnot(sum(X1 != hapMatcherA) == 0)
+    
+    ## now build indices
     ms_indices <- ms_BuildIndices_Algorithm5(
-        X1,
+        X1C = hapMatcherA,
+        all_symbols = all_symbols,
         check_vs_indices = TRUE,
         indices = indices
     )
-    
+
+    ## this should still work, 
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = X1,
         ms_indices = ms_indices,
@@ -106,20 +122,55 @@ test_that("can run multi-symbol version with multiple symbols", {
     ## check - why not!
     check_Algorithm5(X, Z, top_matches, display = FALSE)
 
-    ## now - build symbol version
-    rhb_t <- make_rhb_t_from_rhi_t(X)
-    ## now build multi-symbol PBWT
-    out <- QUILT::make_rhb_t_equality(
-        rhb_t = rhb_t,
-        nSNPs = 32 * 6,
-        ref_error = 1e-3,
-        nMaxDH = 100,
-        verbose = FALSE
-    )
-    hapMatcher <- out$hapMatcher
-
+    rhb_t <- make_rhb_t_from_rhi_t(X)    
+    out <- make_hapMatcherA(rhb_t)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    
     ms_indices <- ms_BuildIndices_Algorithm5(
-        X = hapMatcher
+        X1C = hapMatcherA,
+        all_symbols = all_symbols
+    )
+
+    ## OK here as directly taking symbols
+    Z <- c(
+        hapMatcherA[2, 1:2],
+        hapMatcherA[10, 3],
+        hapMatcherA[17, 4:6]
+    )
+        
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+        X = hapMatcherA,
+        ms_indices = ms_indices,
+        Z = Z,
+        verbose = FALSE,
+        do_checks = FALSE,
+        check_vs_indices = FALSE
+    )
+
+    expect_equal(top_matches[, 2], ms_top_matches[, 2])
+    expect_equal(top_matches[, "start1"], 32 * (ms_top_matches[, "start1"] - 1) + 1)
+    expect_equal(top_matches[, "end1"], 32 * (ms_top_matches[, "end1"]))
+    
+})
+
+
+test_that("can build and test efficient multi-symbol version", {
+
+    skip("not for routine use")
+    load("~/Download/rhb_t_small.RData")
+    rhb_t <- a
+    ## can I just use hapMatcher, and special lookup?
+
+    ## simple hapMatcher
+    out <- make_hapMatcherA(rhb_t)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+
+    ## AM HERE
+    ## WORK ON MORE EFFICIENT u STORAGE GIVEN PREVIOUS IDEA
+    ms_indices <- ms_BuildIndices_Algorithm5(
+        X = hapMatcherA
     )
 
     Z <- c(
@@ -144,6 +195,12 @@ test_that("can run multi-symbol version with multiple symbols", {
 })
 
 
+
+## 
+
+## AM HERE
+## IMPLEMENT ALTERNATIVE VERSION THAT IS MORE EFFICIENT
+## CONSIDER GETTING LARGER DATA TO TEST ON?
 
 ## 
 

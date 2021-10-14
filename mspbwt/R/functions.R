@@ -722,11 +722,15 @@ check_Algorithm5 <- function(X, Z, top_matches, display = FALSE) {
     }
 }
 
-
-
+##
+## where X1C means it is X, but 1-based, and complete
+## i.e. every column of X contains entries from 1 to j for some arbitrary j >= 1
+## and every entry from 1 to j occurs at least once
+##
 #' @export
 ms_BuildIndices_Algorithm5 <- function(
-    X,
+    X1C,
+    all_symbols,
     verbose = FALSE,
     do_checks = FALSE,
     check_vs_indices = FALSE,
@@ -734,23 +738,23 @@ ms_BuildIndices_Algorithm5 <- function(
 ) {
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
-    n_symbols_per_grid <- as.integer(apply(X, 2, function(x) length(unique(x))))
+    n_symbols_per_grid <- as.integer(sapply(all_symbols, nrow))
     Smax <- max(n_symbols_per_grid)
     ## build arrays including a, d and now u, v, c
-    K <- nrow(X)
-    T <- ncol(X)
+    K <- nrow(X1C)
+    T <- ncol(X1C)
     a <- array(NA, c(K, T + 1)) ## orders
     d <- array(NA, c(K + 1, T + 1)) ## distances
     dtemp <- array(NA, K) ## temp for filler
     c <- array(NA, T + 1) ## not sure why
     b <- array(NA, K)
     a[, 1] <- 0:(K - 1) ## by definition for some reason
-    a[, 2] <- order(X[, 1]) - 1 ## 0-based
+    a[, 2] <- order(X1C[, 1]) - 1 ## 0-based
     ## d is a 0, except first entry, and on (ordered) switch
     d[, 1] <- 0
     d[, 2] <- 0
     for(k in 1:(K - 1)) {
-        if (X[a[k, 2] + 1, 1] != X[a[k + 1, 2] + 1, 1]) {
+        if (X1C[a[k, 2] + 1, 1] != X1C[a[k + 1, 2] + 1, 1]) {
             d[k + 1, 2] <- 1
         }
     }
@@ -771,7 +775,7 @@ ms_BuildIndices_Algorithm5 <- function(
         ## OK, whatevs,
         St <- n_symbols_per_grid[t]
         ## get count of number of each
-        symbol_count <- get_count_of_number_of_symbols(X[, t], St, K)
+        symbol_count <- all_symbols[[t]][, "count"]
         observed_symbol_count <- integer(St)
         start_count <- c(0, cumsum(symbol_count))
         ##
@@ -781,7 +785,7 @@ ms_BuildIndices_Algorithm5 <- function(
         pqs <- rep(t, Smax) ## pqs - vector analogue to pq
         val <- c()
         for(k in 0:(K - 1)) { ## haps (1-based)
-            s <- X[a[k + 1, t] + 1, t] ## this symbol to consider
+            s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
             match_start <- d[k + 1, t]
             for(i in 0:(Smax - 1)) {
                 if (match_start > pqs[i + 1]) {
@@ -810,7 +814,7 @@ ms_BuildIndices_Algorithm5 <- function(
         ##
         c <- c(0, cumsum(us[K + 1, , t])) ## sort of
         for(k in 0:(K - 1)) {
-            s <- X[a[k + 1, t] + 1, t] ## symbol here
+            s <- X1C[a[k + 1, t] + 1, t] ## symbol here
             w <- us[k + 1 + 1, s, t] + c[s]
             if (verbose) {
                 message(paste0(
@@ -958,10 +962,43 @@ ms_MatchZ_Algorithm5 <- function(
 
 
 
-get_count_of_number_of_symbols <- function(symbols, St, K) {
-    count <- integer(St)
-    for(k in 0:(K - 1)) { ## haps (1-based)
-        count[symbols[k + 1]] <- count[symbols[k + 1]] + 1
+
+
+
+
+##
+## more of a QUILT style function
+## here take a matrix with arbitrary integer symbols
+## and build 1-based symbol version
+##
+#' @export
+make_hapMatcherA <- function(
+    rhb_t
+) {
+    K <- nrow(rhb_t)
+    nGrids <- ncol(rhb_t)
+    ## --- hapMatcherA
+    ## matrix K x nGrids
+    ## i is 1-based index of symbol
+    ## this includes all possible symbols
+    hapMatcherA <- array(0L, c(K, nGrids))
+    all_symbols <- list(1:nGrids)
+    for(iGrid in 1:nGrids) {
+        ## can safely ignore the end, it will be zeros what is not captured
+        a <- table(rhb_t[, iGrid], useNA = "always")
+        a <- a[order(-a)]
+        a <- a[a > 0]
+        a <- cbind(as.integer(names(a)), a)
+        rownames(a) <- NULL
+        colnames(a) <- c("symbol", "count")
+        hapMatcherA[, iGrid] <- as.integer(match(rhb_t[, iGrid], a[, "symbol"]))
+        ## here store both the count and the label
+        all_symbols[[iGrid]] <- a
     }
-    count
+    return(
+        list(
+            hapMatcherA = hapMatcherA,
+            all_symbols = all_symbols
+        )
+    )
 }
