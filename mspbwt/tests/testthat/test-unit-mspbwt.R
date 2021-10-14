@@ -159,7 +159,7 @@ test_that("can build and test efficient multi-symbol version", {
 
     skip("not for routine use")
     load("~/Download/rhb_t_small.RData")
-    rhb_t <- a[, 1:3]
+    rhb_t <- a[, 1:5]
     ## can I just use hapMatcher, and special lookup?
 
     ## simple hapMatcher

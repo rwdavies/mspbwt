@@ -775,7 +775,7 @@ ms_BuildIndices_Algorithm5 <- function(
     for(t in 1:T) {
         ##
         ## OK, whatevs,
-        St <- n_symbols_per_grid[t]
+        St <- n_symbols_per_grid[t] ## number of symbols in this grid
         ## get count of number of each
         symbol_count <- all_symbols[[t]][, "count"]
         observed_symbol_count <- integer(St)
@@ -783,14 +783,14 @@ ms_BuildIndices_Algorithm5 <- function(
         ##
         ## 
         ##
-        nso <- rep(0L, Smax) ## n_symbols_observed
-        pqs <- rep(t, Smax) ## pqs - vector analogue to pq
+        nso <- rep(0L, St) ## n_symbols_observed
+        pqs <- rep(t, St) ## pqs - vector analogue to pq
         val <- c()
         usL[] <- 0
         for(k in 0:(K - 1)) { ## haps (1-based)
             s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
             match_start <- d[k + 1, t]
-            for(i in 0:(Smax - 1)) {
+            for(i in 0:(St - 1)) {
                 if (match_start > pqs[i + 1]) {
                     pqs[i + 1] <- match_start
                 }
@@ -804,7 +804,18 @@ ms_BuildIndices_Algorithm5 <- function(
             usL[k + 1 + 1,] <- usL[k + 1, ]
             usL[k + 1 + 1, s] <- usL[k + 1 + 1, s] + 1
         }
-        usA[[t]] <- usL
+        if (us_what == "matrix") {
+            usA[[t]] <- usL
+        } else {
+            ## here consider a compressed version!
+
+            
+            ## so need to compress and de-compress
+
+            ## so if below a threshold, store values
+            ## if above a threshold, store every xth value, and 
+            
+        }
         if (t == 1) {
             ## Not sure
             d[0 + 1, t + 1] <- t + 1 ## don't override
@@ -1006,3 +1017,105 @@ make_hapMatcherA <- function(
         )
     )
 }
+
+
+
+encode_column_of_u <- function(u, egs) {
+    n_rows <- ceiling(length(u) / egs)
+    out_mat <- array(NA, c(n_rows, 4))
+    colnames(out_mat) <- c("start1", "start0", "value", "vec_pos")
+    out_vec <- integer(length(u))
+    vec_pos <- 0
+    for(i in 0:(n_rows - 1)) {
+        s0 <- egs * i
+        e0 <- egs * (i + 1) - 1
+        if (e0 > length(u)) {
+            e0 <- length(u) - 1
+        }
+        out_mat[i + 1, "start1"] <- s0 + 1 ## 1-based start
+        out_mat[i + 1, "start0"] <- s0     ## 0-based start
+        ## now build runs from this
+        cs <- 0
+        rt <- TRUE ## true = +1, FALSE = 0+
+        for(j in s0:e0) {
+            d <- u[j + 1 + 1] - u[j + 1]
+            final <- j == e0
+            if (rt) {
+                if (d == 1 & !final) {
+                    cs <- cs + 1
+                } else {
+                    out_vec[vec_pos + 1] <- cs
+                    names(out_vec)[vec_pos + 1] <- i                    
+                    vec_pos <- vec_pos + 1
+                    cs <- 1
+                    rt <- FALSE
+                }
+            } else {
+                if (d == 0 & !final) {
+                    cs <- cs + 1                    
+                } else {
+                    out_vec[vec_pos + 1] <- cs
+                    names(out_vec)[vec_pos + 1] <- i
+                    vec_pos <- vec_pos + 1
+                    cs <- 1
+                    rt <- TRUE
+                }
+            }
+        }
+        out_mat[i + 1, "value"] <- u[s0 + 1]
+        out_mat[i + 1, "vec_pos"] <- vec_pos - 1
+    }
+    out_vec <- out_vec[1:(vec_pos)]
+    return(
+        list(
+            out_mat = out_mat,
+            out_vec = out_vec
+        )
+    )
+}
+
+## 0-based v here
+decode_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
+    ## remainder is how many more to go
+    ## e.g. 14 means you have to go 14 into the creation of this thing
+    remainder <- (v) %% egs
+    i_row <- (v - remainder) / egs ## how many multiples you have
+    if (do_checks) {
+        stopifnot((i_row * egs + remainder) == v)
+    }
+    if (remainder == 0) {
+        return(out_mat[i_row + 1, "value"])
+    } else {
+        val <- out_mat[i_row + 1, "value"]
+        if (i_row == 0) {
+            vec_pos <- 0
+        } else {
+            vec_pos <- out_mat[i_row, "vec_pos"] + 1 ## 0-based
+        }
+        if (do_checks) {
+            stopifnot(which.max(names(out_vec) == i_row) == (vec_pos + 1))
+        }
+        u <- 0
+        is_plus <- TRUE
+        while(u < remainder) {
+            next_u <- u + out_vec[vec_pos + 1]
+            if (remainder <= next_u) {
+                if (is_plus) {
+                    val <- val + remainder - u
+                }
+                return(val)
+            } else {
+                u <- next_u
+                if (is_plus) {
+                    val <- val + out_vec[vec_pos + 1]
+                    is_plus <- FALSE
+                } else {
+                    is_plus <- TRUE
+                }
+                vec_pos <- vec_pos + 1
+            }
+        }
+    }
+}
+
+
