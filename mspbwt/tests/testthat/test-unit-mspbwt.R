@@ -159,7 +159,7 @@ test_that("can build and test efficient multi-symbol version", {
 
     skip("not for routine use")
     load("~/Download/rhb_t_small.RData")
-    rhb_t <- a
+    rhb_t <- a[, 1:3]
     ## can I just use hapMatcher, and special lookup?
 
     ## simple hapMatcher
@@ -167,43 +167,18 @@ test_that("can build and test efficient multi-symbol version", {
     hapMatcherA <- out[["hapMatcherA"]]
     all_symbols <- out[["all_symbols"]]
 
-    ## AM HERE
-    ## WORK ON MORE EFFICIENT u STORAGE GIVEN PREVIOUS IDEA
+    ##
     ms_indices <- ms_BuildIndices_Algorithm5(
-        X = hapMatcherA
+        X1C = hapMatcherA,
+        all_symbols = all_symbols
     )
 
-    Z <- c(
-        hapMatcher[2, 1:2],
-        hapMatcher[10, 3],
-        hapMatcher[17, 4:6]
-    )
-        
-    ms_top_matches <- ms_MatchZ_Algorithm5(
-        X = hapMatcher,
-        ms_indices = ms_indices,
-        Z = Z,
-        verbose = FALSE,
-        do_checks = FALSE,
-        check_vs_indices = FALSE
-    )
+    ## AM HERE - FIGURE OUT HOW TO MAKE US MORE EFFICIENT
 
-    expect_equal(top_matches[, 2], ms_top_matches[, 2])
-    expect_equal(top_matches[, "start1"], 32 * (ms_top_matches[, "start1"] - 1) + 1)
-    expect_equal(top_matches[, "end1"], 32 * (ms_top_matches[, "end1"]))
+    lapply(ms_indices, dim)
+
+    b <- hapMatcherA[ms_indices$a[, 4] + 1, ]
+    ## nrow(unique(b)) wow only 222 here already
     
 })
 
-
-
-## 
-
-## AM HERE
-## IMPLEMENT ALTERNATIVE VERSION THAT IS MORE EFFICIENT
-## CONSIDER GETTING LARGER DATA TO TEST ON?
-
-## 
-
-## AM HERE
-## IMPLEMENT ALTERNATIVE VERSION THAT IS MORE EFFICIENT
-## CONSIDER GETTING LARGER DATA TO TEST ON?

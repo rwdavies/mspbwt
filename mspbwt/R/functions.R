@@ -764,7 +764,9 @@ ms_BuildIndices_Algorithm5 <- function(
     ##
     ns_obs <- rep(0L, Smax)
     ##
-    us <- array(0L, c(K + 1, Smax, T))
+    usA <- list(1:T) ## us, but all of them
+    usL <- array(0L, c(K + 1, Smax))
+    ## 
     if (check_vs_indices) {
         t <- 1
         expect_equal(a[, t + 1], indices$a[, t + 1])
@@ -784,6 +786,7 @@ ms_BuildIndices_Algorithm5 <- function(
         nso <- rep(0L, Smax) ## n_symbols_observed
         pqs <- rep(t, Smax) ## pqs - vector analogue to pq
         val <- c()
+        usL[] <- 0
         for(k in 0:(K - 1)) { ## haps (1-based)
             s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
             match_start <- d[k + 1, t]
@@ -798,9 +801,10 @@ ms_BuildIndices_Algorithm5 <- function(
             d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
             pqs[s] <- 0
             nso[s] <- nso[s] + 1
-            us[k + 1 + 1, , t] <- us[k + 1, , t]
-            us[k + 1 + 1, s, t] <- us[k + 1 + 1, s, t] + 1
+            usL[k + 1 + 1,] <- usL[k + 1, ]
+            usL[k + 1 + 1, s] <- usL[k + 1 + 1, s] + 1
         }
+        usA[[t]] <- usL
         if (t == 1) {
             ## Not sure
             d[0 + 1, t + 1] <- t + 1 ## don't override
@@ -812,10 +816,10 @@ ms_BuildIndices_Algorithm5 <- function(
         ## 
         ## do checks
         ##
-        c <- c(0, cumsum(us[K + 1, , t])) ## sort of
+        c <- c(0, cumsum(usA[[t]][K + 1, ])) ## sort of
         for(k in 0:(K - 1)) {
             s <- X1C[a[k + 1, t] + 1, t] ## symbol here
-            w <- us[k + 1 + 1, s, t] + c[s]
+            w <- usA[[t]][k + 1 + 1, s] + c[s]
             if (verbose) {
                 message(paste0(
                     "k=", k, ", ",
@@ -833,7 +837,7 @@ ms_BuildIndices_Algorithm5 <- function(
         list(
             a = a,
             d = d,
-            us = us
+            usA = usA
         )
     )
 }
@@ -855,7 +859,7 @@ ms_MatchZ_Algorithm5 <- function(
     T <- ncol(X)
     a <- ms_indices[["a"]]
     d <- ms_indices[["d"]]
-    us <- ms_indices[["us"]]
+    usA <- ms_indices[["usA"]]
     if (length(Z) != (ncol(a) - 1)) {
         stop("Z not the right size")
     }
@@ -863,14 +867,14 @@ ms_MatchZ_Algorithm5 <- function(
     f <- array(NA, T) ## keep these 0-based
     g <- array(NA, T) ## keep these 0-based
     e[1] <- 0
-    f[1] <- c(0, cumsum(us[nrow(X) + 1, , 1]))[Z[1]]
-    g[1] <- c(0, cumsum(us[nrow(X) + 1, , 1]))[Z[1] + 1]
+    f[1] <- c(0, cumsum(usA[[1]][nrow(X) + 1, ]))[Z[1]]
+    g[1] <- c(0, cumsum(usA[[1]][nrow(X) + 1, ]))[Z[1] + 1]
     ##
     ## just do easy bit for now
     ##
-    wf <- function(k, t, s, us) {
-        c <- c(0, cumsum(us[K + 1, , t]))[s]
-        u <- us[k + 1, s, t] + c
+    wf <- function(k, t, s, usL) {
+        c <- c(0, cumsum(usL[K + 1, ]))[s]
+        u <- usL[k + 1, s] + c
         if (check_vs_indices) {
             if (s == 1) {
                 return_val <- indices$u[k + 1, t]
@@ -892,8 +896,8 @@ ms_MatchZ_Algorithm5 <- function(
     e1 <- NA
     top_matches <- NULL
     for(t in 2:T) {
-        f1 <- wf(fc, t, Z[t], us)
-        g1 <- wf(gc, t, Z[t], us)
+        f1 <- wf(fc, t, Z[t], usA[[t]])
+        g1 <- wf(gc, t, Z[t], usA[[t]])
         if (verbose) {
             message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         } 
