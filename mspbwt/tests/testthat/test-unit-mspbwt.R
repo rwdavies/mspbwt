@@ -4,8 +4,8 @@ if (1 == 0) {
     library("crayon")
     library("testthat")
     library("mspbwt")
-    dir <- "~/proj/QUILT/"
-    setwd(paste0(dir, "/QUILT/R"))
+    dir <- "~/proj/STITCH/"
+    setwd(paste0(dir, "/STITCH/R"))
     a <- dir(pattern = "*.R")
     b <- grep("~", a)
     if (length(b) > 0) {
@@ -28,7 +28,7 @@ if (1 == 0) {
 
 test_that("can run multi-symbol version with 2 symbols", {
 
-    K <- 200 ## number of haps
+    K <- 250 ## number of haps
     T <- 50 ## number of SNPs
     set.seed(2021)
     X <- array(sample(c(0L, 1L), K * T, replace = TRUE), c(K, T))
@@ -38,7 +38,9 @@ test_that("can run multi-symbol version with 2 symbols", {
     X[c(15, 20), 1:20] <- 1L
     X[c(10, 18, 25), 11:30] <- 1L
     X[c(40), 26:50] <- 1L
+    X[170:250, ] <- 0L
 
+    ## change symbols so 0 is always the more common one
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
@@ -51,17 +53,19 @@ test_that("can run multi-symbol version with 2 symbols", {
     hapMatcherA <- out[["hapMatcherA"]]
     all_symbols <- out[["all_symbols"]]
     ## but for checks - want to keep the same order, so swap if not the same
-    for(iGrid in 1:ncol(hapMatcherA)) {
-        if (sum(abs(hapMatcherA[, iGrid] - X1[, iGrid])) > 0) {
-            hapMatcherA[, iGrid] <- 3L - hapMatcherA[, iGrid]
-            all_symbols[[iGrid]][1:2, ] <- all_symbols[[iGrid]][2:1, ]
-        }
-    }
-    stopifnot(sum(X1 != hapMatcherA) == 0)
+    ## for(iGrid in 1:ncol(hapMatcherA)) {
+    ##     if (sum(abs(hapMatcherA[, iGrid] - X1[, iGrid])) > 0) {
+    ##         hapMatcherA[, iGrid] <- 3L - hapMatcherA[, iGrid]
+    ##         all_symbols[[iGrid]][1:2, ] <- all_symbols[[iGrid]][2:1, ]
+    ##     }
+    ## }
+    ## stopifnot(sum(X1 != hapMatcherA) == 0)
     
     ## now build indices
+    X1C <- hapMatcherA
+    
     ms_indices <- ms_BuildIndices_Algorithm5(
-        X1C = hapMatcherA,
+        X1C = X1C,
         all_symbols = all_symbols,
         check_vs_indices = TRUE,
         indices = indices
@@ -129,7 +133,10 @@ test_that("can run multi-symbol version with multiple symbols", {
     
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = hapMatcherA,
-        all_symbols = all_symbols
+        all_symbols = all_symbols,
+        egs = 5,
+        n_min_symbols = 5,
+        do_checks = TRUE
     )
 
     ## OK here as directly taking symbols
@@ -190,9 +197,10 @@ test_that("can build and test efficient multi-symbol version", {
 
     ##
     ## AM HERE
-    ## NOW NEED TO WRITE DECODE USL
+    ## NOW NEED TO WRITE DECODE USL_ENCODING
     ## THEN BUILD NOT FROM USL BUT DO MORE EFFICIENTLY
     ## THEN I THINK I AM DONE
+    ## OTHER THAN C++
     ##
     usL_encoding[[1]]
     
@@ -206,6 +214,7 @@ test_that("can build and test efficient multi-symbol version", {
     sum(sapply(1:8, function(i) {
         out <- encode_column_of_u(usA[[iGrid]][, i], egs = 1000)
     }))
+
 
 
     

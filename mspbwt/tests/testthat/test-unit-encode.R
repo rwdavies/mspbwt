@@ -14,7 +14,7 @@ if (1 == 0) {
 
 
 
-test_that("can encode and decode columns of u", {
+test_that("can encode and decode columns of u, stored maximally", {
 
     ## these are vectors with entries 0 through some maximum value
     ## here we focus on the complete ones
@@ -35,13 +35,14 @@ test_that("can encode and decode columns of u", {
             u <- u[1:(97 + i_egs)]
         }
 
-        out <- encode_column_of_u(u, egs, efficient = FALSE)    
+        ## maximal encoding
+        out <- encode_maximal_column_of_u(u, egs, efficient = FALSE)    
         out_mat <- out[["out_mat"]]
         out_vec <- out[["out_vec"]]
         
         ## check all values
         recoded <- sapply(0:(length(u) - 1), function(v) {
-            as.integer(decode_value_of_u(out_mat, out_vec, v, egs, do_checks = FALSE))
+            as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = FALSE))
         })
         
         expect_equal(u, recoded)
@@ -51,6 +52,31 @@ test_that("can encode and decode columns of u", {
 })
 
 
+
+
+test_that("can encode and decode columns of u, stored minimally", {
+
+    ## so the encoding is something like this
+    u <- integer(102)
+    u[c(4:11, 13:14, 16:17, 50:55)] <- 1L
+    uori <- cumsum(u)
+    u <- uori
+
+    out <- encode_minimal_column_of_u(u) 
+    
+    ## check all values
+    recoded <- sapply(0:(length(u) - 1), function(v) {
+        as.integer(decode_minimal_value_of_u(out, v))
+    })
+        
+    expect_equal(u, recoded)
+
+})
+
+
+
+
+
 test_that("can encode and decode a usL", {
 
     ##
@@ -58,15 +84,15 @@ test_that("can encode and decode a usL", {
     ##
     K <- 10000
     Smax <- 10
-    usL <- array(0L, c(K + 1, Smax))    
-    usL[] <- 0
+    usg <- array(0L, c(K + 1, Smax)) ## us, for a grid
+    usg[] <- 0
     prob <- 2 ** (10:1)
     prob <- prob / 10
-    s <- sample(1:10, 10000, prob = prob, replace = TRUE)
+    sx <- sample(1:10, 10000, prob = prob, replace = TRUE)
     ## want to semi-sort s
-    s <- s[order(s + rnorm(10000) / 5)]
+    sx <- sx[order(sx + rnorm(10000) / 5)]
     
-    a <- table(s, useNA = "always")
+    a <- table(sx, useNA = "always")
     a <- a[order(-a)]
     a <- a[a > 0]
     a <- cbind(as.integer(names(a)), a)
@@ -75,20 +101,40 @@ test_that("can encode and decode a usL", {
     symbol_count_at_grid <-  a
     for(k in 0:(K - 1)) { ## haps (1-based)
         ## now - where it goes - 0 based
-        usL[k + 1 + 1,] <- usL[k + 1, ]
-        usL[k + 1 + 1, s[k]] <- usL[k + 1 + 1, s[k]] + 1
+        usg[k + 1 + 1,] <- usg[k + 1, ]
+        usg[k + 1 + 1, sx[k]] <- usg[k + 1 + 1, sx[k]] + 1
     }
 
+    egs <- 100
+    n_min_symbols <- 100
     
-    usL_encoding <- encode_usL(
-        usL,
-        symbol_count_at_grid,
-        egs = 100,
-        n_min_symbols = 100
+    usge <- encode_usg(
+        usg = usg,
+        symbol_count_at_grid = symbol_count_at_grid,
+        egs = egs,
+        n_min_symbols = n_min_symbols
     )
 
-    object.size(usL_encoding)
-    object.size(s)
+    v <- 0
     
+    for(v in c(0, 1, 2, K + -2:0)) {
+        
+        decoded <- sapply(1:nrow(symbol_count_at_grid), function(s) {
+            decode_value_of_usge(
+                usge = usge,
+                symbol_count_at_grid = symbol_count_at_grid,
+                s = s,
+                v = v,
+                egs = egs,
+                n_min_symbols = n_min_symbols
+            )
+        })
+
+        expect_equivalent(
+            usg[v + 1, ],
+            decoded
+        )
+
+    }
 
 })

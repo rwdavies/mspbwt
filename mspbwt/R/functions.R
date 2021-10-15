@@ -734,7 +734,9 @@ ms_BuildIndices_Algorithm5 <- function(
     verbose = FALSE,
     do_checks = FALSE,
     check_vs_indices = FALSE,
-    indices = NULL
+    indices = NULL,
+    egs = 100,
+    n_min_symbols = 100
 ) {
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
@@ -764,8 +766,15 @@ ms_BuildIndices_Algorithm5 <- function(
     ##
     ns_obs <- rep(0L, Smax)
     ##
-    usA <- list(1:T) ## us, but all of them
-    usL <- array(0L, c(K + 1, Smax))
+    usge_all <- list(1:T) ## us, but all of them    
+    Smax_for_usl <- 0
+    for(t in 1:T) {
+        x <- sum(all_symbols[[t]][, 2] > n_min_symbols)
+        if (x > Smax_for_usl) {
+            Smax_for_usl <- x
+        }
+    }
+    usg <- array(0L, c(K + 1, Smax_for_usl))
     ## 
     if (check_vs_indices) {
         t <- 1
@@ -774,11 +783,20 @@ ms_BuildIndices_Algorithm5 <- function(
     }
     for(t in 1:T) {
         ##
-        ## OK, whatevs,
+        ## OK, whatevs
         St <- n_symbols_per_grid[t] ## number of symbols in this grid
+        ## 
         ## get count of number of each
+        usge <- list(1:St) ## us for this (g)rid (e)ncoded
         symbol_count <- all_symbols[[t]][, "count"]
-        observed_symbol_count <- integer(St)
+        first_usg_minimal_symbol <- 1 ## 1-based
+        for(s in 1:St) {
+            if (symbol_count[s] > n_min_symbols) {
+                first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
+            } else {
+                usge[[s]] <- rep(-1, symbol_count[s])
+            }
+        }
         start_count <- c(0, cumsum(symbol_count))
         ##
         ## 
@@ -786,7 +804,11 @@ ms_BuildIndices_Algorithm5 <- function(
         nso <- rep(0L, St) ## n_symbols_observed
         pqs <- rep(t, St) ## pqs - vector analogue to pq
         val <- c()
-        usL[] <- 0
+        usg[] <- 0
+        if (do_checks) {
+            usg_check <- array(0L, c(K + 1, St))
+        }
+        ## fill in the rest of this one!
         for(k in 0:(K - 1)) { ## haps (1-based)
             s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
             match_start <- d[k + 1, t]
@@ -799,12 +821,36 @@ ms_BuildIndices_Algorithm5 <- function(
             val <- c(val, start_count[s] + nso[s] + 1)
             a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
             d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
+            usg[k + 1 + 1,] <- usg[k + 1, ]
+            if (s < first_usg_minimal_symbol) {
+                usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1
+            } else {
+                usge[[s]][nso[s] + 1] <- k + 1
+            }
             pqs[s] <- 0
             nso[s] <- nso[s] + 1
-            usL[k + 1 + 1,] <- usL[k + 1, ]
-            usL[k + 1 + 1, s] <- usL[k + 1 + 1, s] + 1
+            if (do_checks) {
+                usg_check[k + 1 + 1,] <- usg_check[k + 1, ]
+                usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
+            }
         }
-        usA[[t]] <- usL
+        if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
+            for(s in 0:(first_usg_minimal_symbol - 1 - 1)) {
+                usge[[s + 1]] <- encode_maximal_column_of_u(usg[, s + 1], egs = egs)
+            }
+        }
+        usge_all[[t]] <- usge
+        if (do_checks) {
+            expect_equal(
+                usge,
+                encode_usg(
+                    usg = usg_check,
+                    symbol_count_at_grid = all_symbols[[t]],
+                    egs = egs,
+                    n_min_symbols = n_min_symbols
+                )
+            )
+        }
         if (t == 1) {
             ## Not sure
             d[0 + 1, t + 1] <- t + 1 ## don't override
@@ -816,10 +862,17 @@ ms_BuildIndices_Algorithm5 <- function(
         ## 
         ## do checks
         ##
-        c <- c(0, cumsum(usA[[t]][K + 1, ])) ## sort of
         for(k in 0:(K - 1)) {
             s <- X1C[a[k + 1, t] + 1, t] ## symbol here
-            w <- usA[[t]][k + 1 + 1, s] + c[s]
+            c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
+            w <- decode_value_of_usge(
+                usge = usge_all[[t]],
+                symbol_count_at_grid = all_symbols[[t]],
+                s = s,
+                v = k + 1,
+                egs = egs,
+                n_min_symbols = n_min_symbols
+            ) + c
             if (verbose) {
                 message(paste0(
                     "k=", k, ", ",
@@ -837,7 +890,10 @@ ms_BuildIndices_Algorithm5 <- function(
         list(
             a = a,
             d = d,
-            usA = usA
+            usge_all = usge_all,
+            egs = egs,
+            n_min_symbols = n_min_symbols,
+            all_symbols = all_symbols
         )
     )
 }
@@ -859,7 +915,10 @@ ms_MatchZ_Algorithm5 <- function(
     T <- ncol(X)
     a <- ms_indices[["a"]]
     d <- ms_indices[["d"]]
-    usA <- ms_indices[["usA"]]
+    usge_all <- ms_indices[["usge_all"]]
+    egs <- ms_indices[["egs"]]
+    n_min_symbols <- ms_indices[["n_min_symbols"]]
+    all_symbols <- ms_indices[["all_symbols"]]
     if (length(Z) != (ncol(a) - 1)) {
         stop("Z not the right size")
     }
@@ -867,14 +926,23 @@ ms_MatchZ_Algorithm5 <- function(
     f <- array(NA, T) ## keep these 0-based
     g <- array(NA, T) ## keep these 0-based
     e[1] <- 0
-    f[1] <- c(0, cumsum(usA[[1]][nrow(X) + 1, ]))[Z[1]]
-    g[1] <- c(0, cumsum(usA[[1]][nrow(X) + 1, ]))[Z[1] + 1]
+    x <- c(0, cumsum(all_symbols[[1]][, 2]))
+    f[1] <- x[Z[1]]
+    g[1] <- x[Z[1] + 1]
     ##
     ## just do easy bit for now
     ##
-    wf <- function(k, t, s, usL) {
-        c <- c(0, cumsum(usL[K + 1, ]))[s]
-        u <- usL[k + 1, s] + c
+    wf <- function(k, t, s, usge_all, all_symbols) {
+        c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
+        ## u <- usge[k + 1, s] + c
+        u <- decode_value_of_usge(
+            usge = usge_all[[t]],
+            symbol_count_at_grid = all_symbols[[t]],
+            s = s,
+            v = k,
+            egs = egs,
+            n_min_symbols = n_min_symbols
+        ) + c
         if (check_vs_indices) {
             if (s == 1) {
                 return_val <- indices$u[k + 1, t]
@@ -896,8 +964,8 @@ ms_MatchZ_Algorithm5 <- function(
     e1 <- NA
     top_matches <- NULL
     for(t in 2:T) {
-        f1 <- wf(fc, t, Z[t], usA[[t]])
-        g1 <- wf(gc, t, Z[t], usA[[t]])
+        f1 <- wf(fc, t, Z[t], usge_all, all_symbols)
+        g1 <- wf(gc, t, Z[t], usge_all, all_symbols)
         if (verbose) {
             message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         } 
@@ -1009,7 +1077,7 @@ make_hapMatcherA <- function(
 
 
 
-encode_column_of_u <- function(u, egs, efficient = TRUE) {
+encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
     n_rows <- ceiling(length(u) / egs)
     out_mat <- array(NA, c(n_rows, 4))
     colnames(out_mat) <- c("start1", "start0", "value", "vec_pos")
@@ -1079,8 +1147,10 @@ encode_column_of_u <- function(u, egs, efficient = TRUE) {
     )
 }
 
+
+
 ## 0-based v here
-decode_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
+decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
     ## remainder is how many more to go
     ## e.g. 14 means you have to go 14 into the creation of this thing
     remainder <- (v) %% egs
@@ -1132,18 +1202,67 @@ decode_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
     }
 }
 
+encode_minimal_column_of_u <- function(u) {
+    which(diff(u) > 0)
+}
 
-encode_usL <- function(
-    usL,
+
+encode_usg <- function(
+    usg,
     symbol_count_at_grid,
     egs,                                
     n_min_symbols
 ) {
     lapply(1:nrow(symbol_count_at_grid), function(i_symbol) {
         if (symbol_count_at_grid[i_symbol, 2] > n_min_symbols) {
-            return(encode_column_of_u(usL[, i_symbol], egs = egs))
+            return(encode_maximal_column_of_u(usg[, i_symbol], egs = egs))
         } else {
-            which(diff(usL[, i_symbol]) > 0)
+            return(encode_minimal_column_of_u(usg[, i_symbol]))
         }
     })
+}
+
+
+
+## x is
+## v is 0-based on position
+decode_minimal_value_of_u <- function(x, v) {
+    i <- 0
+    r <- x[i + 1]
+    while(v >= r) {
+        i <- i + 1
+        if ((i + 1) > length(x)) {
+            return(i)
+        }
+        r <- x[i + 1]
+    }
+    i
+}
+
+
+## s is the symbol
+## v is the position down we are getting from
+## e.g. if usg was the full matrix for a site, we would return
+## usg[v + 1, s] for 0-based v and 1-based s
+decode_value_of_usge <- function(
+    usge,
+    symbol_count_at_grid,
+    s,
+    v,
+    egs,
+    n_min_symbols
+) {
+    if (class(usge[[s]]) == "list") {
+        decode_maximal_value_of_u(
+            out_mat = usge[[s]][[1]],
+            out_vec = usge[[s]][[2]],
+            v = v,
+            egs = egs
+        )
+    } else {
+        decode_minimal_value_of_u(
+            x = usge[[s]],
+            v = v
+        )
+    }
 }
