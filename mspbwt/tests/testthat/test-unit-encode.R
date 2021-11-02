@@ -69,34 +69,25 @@ test_that("can more exhaustively encode and decode columns of u, stored maximall
             }
             
             ## maximal encoding
-            out <- encode_maximal_column_of_u(u, egs, efficient = FALSE)
+            out <- encode_maximal_column_of_u(u, egs, efficient = TRUE)
             out_mat <- out[["out_mat"]]
             out_vec <- out[["out_vec"]]
             
             ## check all values
             recoded <- sapply(0:(length(u) - 1), function(v) {
-                as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = TRUE))
+                as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = FALSE))
             })
             
             expect_equal(u, recoded)
             
+            ## check C++
+            out2 <- Rcpp_encode_maximal_column_of_u(u, egs, efficient = TRUE)
+            expect_equal(out[["out_mat"]], out2[["out_mat"]])
+            expect_equal(out[["out_vec"]], out2[["out_vec"]])
+            
+
         }
-
     }
-            
-    ##         ## check C++
-    ##         print("inside")
-    ##         out2 <- Rcpp_encode_maximal_column_of_u(u, egs, efficient = TRUE)
-    ##         print("outside")
-    ##         expect_equal(out[["out_mat"]], out2[["out_mat"]])
-    ##         expect_equal(out[["out_vec"]], out2[["out_vec"]])
-            
-    ##         print(out)
-    ##         print(out2)
-    ##         stop("done for now!")
-
-    ##     }
-    ## }
 
 })
 
