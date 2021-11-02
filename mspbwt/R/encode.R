@@ -125,6 +125,7 @@ decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALS
         u <- 0
         is_plus <- TRUE
         while(u < remainder) {
+            stopifnot((vec_pos + 1) <= length(out_vec))
             next_u <- u + out_vec[vec_pos + 1]
             if (remainder <= next_u) {
                 if (is_plus) {
@@ -134,6 +135,7 @@ decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALS
             } else {
                 u <- next_u
                 if (is_plus) {
+                    stopifnot((vec_pos + 1) <= length(out_vec))                    
                     val <- val + out_vec[vec_pos + 1]
                     is_plus <- FALSE
                 } else {

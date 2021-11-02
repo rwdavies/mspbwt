@@ -9,6 +9,11 @@ Then if that makes sense, port it to C++ for some more tests!
 
 todo:
 Start writing components in C++, starting with the encoding
+ - DONE - complicated encoding
+ - TODO - simple encoding
+ - TODO - decoding
+ - TODO - putting those both together
+ - TODO - puttingt the whole building the indices into C++ (confirm I can avoid type conversion stuff with lists?)
 
 
 todo:

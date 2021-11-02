@@ -103,3 +103,68 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
         Rcpp::Named("out_vec") = out_vec
     ));
 }
+
+
+
+
+//' @export
+// [[Rcpp::export]]
+int Rcpp_decode_maximal_value_of_u(
+    Rcpp::NumericMatrix out_mat,
+    Rcpp::NumericVector out_vec,
+    int v,
+    int egs,
+    bool do_checks = false
+) {
+    // remainder is how many more to go
+    // e.g. 14 means you have to go 14 into the creation of this thing
+    int i_row = (v) / egs;  
+    int remainder  = v - (i_row) * egs;
+    int out_mat_nrows = out_mat.nrow();
+    if (out_mat.ncol() != 2) {
+      std::cout << "Error in assumptions! Fix" << std::endl;
+      return(-1);
+    }
+    int val, next_val, vec_pos, u, next_u;
+    bool is_plus;
+    if (remainder == 0) {
+      return(out_mat(i_row, 0));
+    } else {
+        val = out_mat(i_row, 0);
+        if ((i_row + 1) < out_mat_nrows) {
+	    // these are constant - so don't need to check in between!
+	    next_val = out_mat(i_row + 1, 0); // "value" - assume efficient version!
+	    if (next_val == val) {
+	      return(val);
+	    } else if (((next_val) - val) == egs) {
+	      return(val + remainder);
+	    }
+        }
+        if (i_row == 0) {
+	  vec_pos = 0;
+        } else {
+	  vec_pos = out_mat(i_row - 1, 1) + 1; // ## 0-based
+        }
+        u = 0;
+        is_plus = true;
+        while(u < remainder) {
+	    next_u = u + out_vec(vec_pos);
+	    if (remainder <= next_u) {
+	      if (is_plus) {
+		val += remainder - u;
+	      }
+	      return(val);
+	    } else {
+	      u = next_u;
+	      if (is_plus) {
+		val += out_vec(vec_pos);
+		is_plus = false;
+	      } else {
+		is_plus = true;
+	      }
+	      vec_pos++;
+	    }
+        }
+    }
+    return(-1);
+}

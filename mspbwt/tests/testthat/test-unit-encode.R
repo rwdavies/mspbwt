@@ -12,8 +12,9 @@ if (1 == 0) {
 
 }
 
-test_that("can do simple case of encoding and decoding", {
-
+test_that("can do simple case of encoding and decoding, just in R", {
+    
+    ## helps with logic!
 
     u <- c(0, 0, 0, 1, 1, 2, 2, 3)
     u <- as.integer(u)
@@ -24,8 +25,8 @@ test_that("can do simple case of encoding and decoding", {
     out_mat <- out[["out_mat"]]
     out_vec <- out[["out_vec"]]
 
-    expect_equal(out_mat[, "vec_pos"], c(2, 5))
     expect_equal(out_mat[, "value"], c(0, 1))
+    expect_equal(out_mat[, "vec_pos"], c(2, 5))
     expect_equal(as.integer(out_vec), as.integer(c(0, 2, 1, 1, 1, 1)))
     
     
@@ -84,6 +85,13 @@ test_that("can more exhaustively encode and decode columns of u, stored maximall
             out2 <- Rcpp_encode_maximal_column_of_u(u, egs, efficient = TRUE)
             expect_equal(out[["out_mat"]], out2[["out_mat"]])
             expect_equal(out[["out_vec"]], out2[["out_vec"]])
+
+            ## check all values using C++
+            recoded2 <- sapply(0:(length(u) - 1), function(v) {
+                as.integer(Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = FALSE))
+            })
+            expect_equal(u, recoded2)            
+            
             
 
         }

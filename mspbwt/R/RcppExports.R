@@ -7,6 +7,11 @@ Rcpp_encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
 }
 
 #' @export
+Rcpp_decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALSE) {
+    .Call('_mspbwt_Rcpp_decode_maximal_value_of_u', PACKAGE = 'mspbwt', out_mat, out_vec, v, egs, do_checks)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }

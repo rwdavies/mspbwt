@@ -23,6 +23,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_decode_maximal_value_of_u
+int Rcpp_decode_maximal_value_of_u(Rcpp::NumericMatrix out_mat, Rcpp::NumericVector out_vec, int v, int egs, bool do_checks);
+RcppExport SEXP _mspbwt_Rcpp_decode_maximal_value_of_u(SEXP out_matSEXP, SEXP out_vecSEXP, SEXP vSEXP, SEXP egsSEXP, SEXP do_checksSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type out_mat(out_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type out_vec(out_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks));
+    return rcpp_result_gen;
+END_RCPP
+}
 // BuildIndices_Algorithm5_Rcpp
 Rcpp::List BuildIndices_Algorithm5_Rcpp(Rcpp::IntegerMatrix& X);
 RcppExport SEXP _mspbwt_BuildIndices_Algorithm5_Rcpp(SEXP XSEXP) {
@@ -57,6 +72,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_encode_maximal_column_of_u", (DL_FUNC) &_mspbwt_Rcpp_encode_maximal_column_of_u, 3},
+    {"_mspbwt_Rcpp_decode_maximal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_maximal_value_of_u, 5},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}
