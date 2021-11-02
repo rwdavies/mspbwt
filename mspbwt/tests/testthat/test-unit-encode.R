@@ -12,9 +12,35 @@ if (1 == 0) {
 
 }
 
+test_that("can do simple case of encoding and decoding", {
 
 
-test_that("can encode and decode columns of u, stored maximally", {
+    u <- c(0, 0, 0, 1, 1, 2, 2, 3)
+    u <- as.integer(u)
+    egs <- 4
+
+    ## maximal encoding
+    out <- encode_maximal_column_of_u(u, egs, efficient = FALSE)
+    out_mat <- out[["out_mat"]]
+    out_vec <- out[["out_vec"]]
+
+    expect_equal(out_mat[, "vec_pos"], c(2, 5))
+    expect_equal(out_mat[, "value"], c(0, 1))
+    expect_equal(as.integer(out_vec), as.integer(c(0, 2, 1, 1, 1, 1)))
+    
+    
+    ## check all values
+    recoded <- sapply(0:(length(u) - 1), function(v) {
+        as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = TRUE))
+    })
+    
+    expect_equal(u, recoded)
+    
+
+})
+
+
+test_that("can more exhaustively encode and decode columns of u, stored maximally", {
 
     ## these are vectors with entries 0 through some maximum value
     ## here we focus on the complete ones
@@ -24,34 +50,55 @@ test_that("can encode and decode columns of u, stored maximally", {
     uori <- cumsum(u)
 
     egs <- 20 ## encode grid size
+    i_egs <- 1
+    i_end <- 1
     
     for(i_egs in 1:7) {
+        
+        for(i_end in 1:2) {
 
-        u <- uori
-
-        ## make sure to test exact, minus 1, plus 1, and also 2's on length
-        egs <- c(20, 20, 20, 20, 20, 5, 17)[i_egs]
-        if (egs == 20) {
-            u <- u[1:(97 + i_egs)]
+            u <- uori
+            ## make sure to test exact, minus 1, plus 1, and also 2's on length
+            egs <- c(20, 20, 20, 20, 20, 5, 17)[i_egs]
+            if (egs == 20) {
+                u <- u[1:(97 + i_egs)]
+            }
+            ## also check tricky final value behaviour
+            if (i_end == 2) {
+                u[length(u)] <- u[length(u) - 1] + 1
+            }
+            
+            ## maximal encoding
+            out <- encode_maximal_column_of_u(u, egs, efficient = FALSE)
+            out_mat <- out[["out_mat"]]
+            out_vec <- out[["out_vec"]]
+            
+            ## check all values
+            recoded <- sapply(0:(length(u) - 1), function(v) {
+                as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = TRUE))
+            })
+            
+            expect_equal(u, recoded)
+            
         }
 
-        ## maximal encoding
-        out <- encode_maximal_column_of_u(u, egs, efficient = FALSE)    
-        out_mat <- out[["out_mat"]]
-        out_vec <- out[["out_vec"]]
-        
-        ## check all values
-        recoded <- sapply(0:(length(u) - 1), function(v) {
-            as.integer(decode_maximal_value_of_u(out_mat, out_vec, v, egs, do_checks = FALSE))
-        })
-        
-        expect_equal(u, recoded)
-
     }
+            
+    ##         ## check C++
+    ##         print("inside")
+    ##         out2 <- Rcpp_encode_maximal_column_of_u(u, egs, efficient = TRUE)
+    ##         print("outside")
+    ##         expect_equal(out[["out_mat"]], out2[["out_mat"]])
+    ##         expect_equal(out[["out_vec"]], out2[["out_vec"]])
+            
+    ##         print(out)
+    ##         print(out2)
+    ##         stop("done for now!")
+
+    ##     }
+    ## }
 
 })
-
-
 
 
 test_that("can encode and decode columns of u, stored minimally", {

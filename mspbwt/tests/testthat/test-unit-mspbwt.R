@@ -166,7 +166,7 @@ test_that("can build and test efficient multi-symbol version", {
 
     skip("not for routine use")
     load("~/Download/rhb_t_small.RData")
-    rhb_t <- a[1:10000, 1:20]
+    rhb_t <- a[, 1:20]
     ## can I just use hapMatcher, and special lookup?
 
     ## simple hapMatcher
@@ -177,13 +177,34 @@ test_that("can build and test efficient multi-symbol version", {
     ##
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = hapMatcherA,
-        all_symbols = all_symbols
+        all_symbols = all_symbols,
+        egs = 100,
+        n_min_symbols = 100
     )
+    usge_all <- ms_indices$usge_all
 
-    usA <- ms_indices$usA
-
+    ## kind of surprised so slow? 
+    object.size(usge_all)
+    object.size(ms_indices$d)
+    
+    ## check it can work!
+    Z <- c(hapMatcherA[100, 1:20])
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+        X = hapMatcherA,
+        ms_indices = ms_indices,
+        Z = Z,
+        verbose = FALSE,
+        do_checks = FALSE,
+        check_vs_indices = FALSE
+    )
+    
+    ## does this make sense?
+    
+    object.size(ms_indices$a) 
+    object.size(usge_all) ## aw yeah
+    
     ## maybe
-    iGrid <- 20
+    iGrid <- 100
     usL_encoding <- encode_usL(
         usA[[iGrid]],
         symbol_count_at_grid = all_symbols[[iGrid]],
@@ -194,18 +215,6 @@ test_that("can build and test efficient multi-symbol version", {
     object.size(1:nrow(usA[[iGrid]]))
     ## OK, so pretty similar to just what a will be
 
-
-    ##
-    ## AM HERE
-    ## NOW NEED TO WRITE DECODE USL_ENCODING
-    ## THEN BUILD NOT FROM USL BUT DO MORE EFFICIENTLY
-    ## THEN I THINK I AM DONE
-    ## OTHER THAN C++
-    ##
-    usL_encoding[[1]]
-    
-    
-    
     ## so how many does this require
     iGrid <- 100
     all_symbols[[iGrid]]

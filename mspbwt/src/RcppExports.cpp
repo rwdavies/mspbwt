@@ -10,6 +10,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// Rcpp_encode_maximal_column_of_u
+Rcpp::List Rcpp_encode_maximal_column_of_u(Rcpp::IntegerVector u, int egs, bool efficient);
+RcppExport SEXP _mspbwt_Rcpp_encode_maximal_column_of_u(SEXP uSEXP, SEXP egsSEXP, SEXP efficientSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type u(uSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< bool >::type efficient(efficientSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_encode_maximal_column_of_u(u, egs, efficient));
+    return rcpp_result_gen;
+END_RCPP
+}
 // BuildIndices_Algorithm5_Rcpp
 Rcpp::List BuildIndices_Algorithm5_Rcpp(Rcpp::IntegerMatrix& X);
 RcppExport SEXP _mspbwt_BuildIndices_Algorithm5_Rcpp(SEXP XSEXP) {
@@ -43,6 +56,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_mspbwt_Rcpp_encode_maximal_column_of_u", (DL_FUNC) &_mspbwt_Rcpp_encode_maximal_column_of_u, 3},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}

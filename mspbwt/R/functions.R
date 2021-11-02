@@ -1077,17 +1077,22 @@ make_hapMatcherA <- function(
 
 
 
-encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
+encode_maximal_column_of_u <- function(u, egs, efficient = TRUE, verbose = FALSE) {
     n_rows <- ceiling(length(u) / egs)
     out_mat <- array(NA, c(n_rows, 4))
     colnames(out_mat) <- c("start1", "start0", "value", "vec_pos")
     out_vec <- integer(length(u))
+    if (!efficient) {
+        names(out_vec) <- 1:length(u)
+    }
     vec_pos <- 0
     for(i in 0:(n_rows - 1)) {
         s0 <- egs * i
         e0 <- egs * (i + 1) - 1
+        e0c <- e0 ## check value for no change
         if ((e0 + 1) > length(u)) {
             e0 <- length(u) - 1
+            e0c <- e0 - 1
         }
         out_mat[i + 1, "start1"] <- s0 + 1 ## 1-based start
         out_mat[i + 1, "start0"] <- s0     ## 0-based start
@@ -1095,24 +1100,38 @@ encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
         do_encoding_this_SNP <- TRUE
         if (i < (n_rows - 1)) {
             if (
-            (u[e0 + 1 + 1] - u[s0 + 1]) == 0 |
-            (u[e0 + 1 + 1] - u[s0 + 1]) == (e0 + 1- s0)
+            (u[e0c + 1 + 1] - u[s0 + 1]) == 0 |
+            (u[e0c + 1 + 1] - u[s0 + 1]) == (e0c + 1 - s0)
             ) {
                 out_mat[i + 1, "vec_pos"] <- vec_pos - 1
                 do_encoding_this_SNP <- FALSE
             }
+        }
+        if (verbose) {
+            print(paste0("i = ", i, ", do_encoding_this_SNP = ", do_encoding_this_SNP))
         }
         if (do_encoding_this_SNP) {
             ## now build runs from this
             cs <- 0
             rt <- TRUE ## true = +1, FALSE = 0+
             for(j in s0:e0) {
-                d <- u[j + 1 + 1] - u[j + 1]
+                if (verbose) {
+                    print(paste0("rt = ", rt, ", cs = ", cs, " j = ", j))
+                }
+                if (j == (length(u) - 1)) {
+                    ## trigger a storage here
+                    d <- 2
+                } else {
+                    d <- u[j + 1 + 1] - u[j + 1]
+                }
                 final <- j == e0
                 if (rt) {
                     if (d == 1 & !final) {
                         cs <- cs + 1
                     } else {
+                        if (verbose) {
+                            print(paste0("save 1, j = ", j))
+                        }
                         out_vec[vec_pos + 1] <- cs
                         names(out_vec)[vec_pos + 1] <- i                    
                         vec_pos <- vec_pos + 1
@@ -1123,6 +1142,9 @@ encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
                     if (d == 0 & !final) {
                         cs <- cs + 1                    
                     } else {
+                        if (verbose) {
+                            print(paste0("save 0, j = ", j))
+                        }
                         out_vec[vec_pos + 1] <- cs
                         names(out_vec)[vec_pos + 1] <- i
                         vec_pos <- vec_pos + 1

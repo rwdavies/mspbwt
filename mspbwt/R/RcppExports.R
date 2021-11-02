@@ -2,6 +2,11 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
+Rcpp_encode_maximal_column_of_u <- function(u, egs, efficient = TRUE) {
+    .Call('_mspbwt_Rcpp_encode_maximal_column_of_u', PACKAGE = 'mspbwt', u, egs, efficient)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }
