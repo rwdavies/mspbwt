@@ -168,3 +168,23 @@ int Rcpp_decode_maximal_value_of_u(
     }
     return(-1);
 }
+
+
+
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(
+    Rcpp::IntegerVector u
+) {
+  int u_len = u.length();
+  Rcpp::IntegerVector out(u(u_len - 1) - u(0));
+  int j = 0;
+  for(int i = 0; i < (u_len - 1); i++) {
+      if ((u(i + 1) - u(i)) == 1) {
+        out(j) = i + 1;
+        j++;
+      }
+  }
+  return(out);
+}

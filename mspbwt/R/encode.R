@@ -148,7 +148,15 @@ decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks = FALS
 }
 
 encode_minimal_column_of_u <- function(u) {
-    which(diff(u) > 0)
+    out <- integer(u[length(u)] - u[1])
+    j <- 1
+    for(i in 1:(length(u) - 1)) {
+        if ((u[i + 1] - u[i]) == 1) {
+            out[j] <- i
+            j <- j + 1
+        }
+    }
+    out
 }
 
 

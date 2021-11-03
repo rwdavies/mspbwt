@@ -12,6 +12,11 @@ Rcpp_decode_maximal_value_of_u <- function(out_mat, out_vec, v, egs, do_checks =
 }
 
 #' @export
+Rcpp_encode_minimal_column_of_u <- function(u) {
+    .Call('_mspbwt_Rcpp_encode_minimal_column_of_u', PACKAGE = 'mspbwt', u)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }

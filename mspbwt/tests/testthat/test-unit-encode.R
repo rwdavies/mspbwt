@@ -108,11 +108,15 @@ test_that("can encode and decode columns of u, stored minimally", {
     uori <- cumsum(u)
     u <- uori
 
-    out <- encode_minimal_column_of_u(u) 
+    out1 <- encode_minimal_column_of_u(u)
+    out2 <- as.integer(which(diff(u) > 0))
+    out3 <- Rcpp_encode_minimal_column_of_u(u)    
+    expect_equal(out1, out2)
+    expect_equal(out1, out3)    
     
     ## check all values
     recoded <- sapply(0:(length(u) - 1), function(v) {
-        as.integer(decode_minimal_value_of_u(out, v))
+        as.integer(decode_minimal_value_of_u(out1, v))
     })
         
     expect_equal(u, recoded)
