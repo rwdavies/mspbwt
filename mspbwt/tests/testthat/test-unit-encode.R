@@ -139,6 +139,34 @@ test_that("can encode and decode columns of u, stored minimally", {
 })
 
 
+test_that("can decode columns of U stored with offsets", {
+
+    ## so the encoding is something like this
+    u <- integer(102)
+    u[c(4:11, 13:14, 16:17, 50:55)] <- 1L
+    uori <- cumsum(u)
+    u <- uori
+
+    out1 <- encode_minimal_column_of_u(u)
+    out1_bigger <- integer(200)
+    out1_bigger[100 + 1:length(out1)] <- out1
+    ## offsets are 0-based, these are inclusive
+    offsets <- as.integer(range(100 + 1:length(out1)) - 1)
+
+    ## check all values
+    recoded1 <- sapply(0:(length(u) - 1), function(v) {
+        as.integer(decode_minimal_value_of_u(out1, v))
+    })
+    recoded2 <- sapply(0:(length(u) - 1), function(v) {
+        as.integer(decode_minimal_value_of_u(out1_bigger, v, use_offsets = TRUE, offsets))
+    })
+        
+    expect_equal(u, recoded1)
+    expect_equal(u, recoded2)
+        
+})
+
+
 
 
 

@@ -22,6 +22,11 @@ Rcpp_decode_minimal_value_of_u <- function(x, v) {
 }
 
 #' @export
+Rcpp_ms_BuildIndices_Algorithm5 <- function(X1C, all_symbols, verbose = FALSE, do_checks = FALSE, egs = 100L, n_min_symbols = 100L) {
+    .Call('_mspbwt_Rcpp_ms_BuildIndices_Algorithm5', PACKAGE = 'mspbwt', X1C, all_symbols, verbose, do_checks, egs, n_min_symbols)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }

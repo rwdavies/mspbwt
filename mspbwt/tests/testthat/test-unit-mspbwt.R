@@ -165,7 +165,8 @@ test_that("can run multi-symbol version with multiple symbols", {
 test_that("can build and test efficient multi-symbol version", {
 
     skip("not for routine use")
-    load("~/Download/rhb_t_small.RData")
+    
+    load("~/Downloads/rhb_t_small.RData")
     rhb_t <- a[, 1:20]
     ## can I just use hapMatcher, and special lookup?
 
