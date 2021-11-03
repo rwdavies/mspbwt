@@ -188,3 +188,25 @@ Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(
   }
   return(out);
 }
+
+
+//' @export
+// [[Rcpp::export]]
+int Rcpp_decode_minimal_value_of_u(
+    Rcpp::IntegerVector x,
+    int v
+) {
+    // x is
+    // v is 0-based on position
+    int i = 0;
+    int r = x(i);
+    int x_len = x.length();
+    while(v >= r) {
+        i++;
+        if ((i + 1) > x_len) {
+            return(i);
+	}
+	r = x(i);
+    }
+    return(i);
+}

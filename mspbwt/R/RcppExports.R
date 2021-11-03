@@ -17,6 +17,11 @@ Rcpp_encode_minimal_column_of_u <- function(u) {
 }
 
 #' @export
+Rcpp_decode_minimal_value_of_u <- function(x, v) {
+    .Call('_mspbwt_Rcpp_decode_minimal_value_of_u', PACKAGE = 'mspbwt', x, v)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }

@@ -102,25 +102,40 @@ test_that("can more exhaustively encode and decode columns of u, stored maximall
 
 test_that("can encode and decode columns of u, stored minimally", {
 
-    ## so the encoding is something like this
-    u <- integer(102)
-    u[c(4:11, 13:14, 16:17, 50:55)] <- 1L
-    uori <- cumsum(u)
-    u <- uori
+    for(i in 1:3) {
 
-    out1 <- encode_minimal_column_of_u(u)
-    out2 <- as.integer(which(diff(u) > 0))
-    out3 <- Rcpp_encode_minimal_column_of_u(u)    
-    expect_equal(out1, out2)
-    expect_equal(out1, out3)    
-    
-    ## check all values
-    recoded <- sapply(0:(length(u) - 1), function(v) {
-        as.integer(decode_minimal_value_of_u(out1, v))
-    })
+        if (i == 1) {
+            ## so the encoding is something like this
+            u <- integer(102)
+            u[c(4:11, 13:14, 16:17, 50:55)] <- 1L
+        } else if (i == 2) {
+            u <- integer(102)
+            u[2] <- 1L
+        } else if (i == 3) {
+            u <- integer(102)
+            u[length(u)] <- 1L
+        }
+        uori <- cumsum(u)
+        u <- uori
+
+        out1 <- encode_minimal_column_of_u(u)
+        out2 <- as.integer(which(diff(u) > 0))
+        out3 <- Rcpp_encode_minimal_column_of_u(u)    
+        expect_equal(out1, out2)
+        expect_equal(out1, out3)
         
-    expect_equal(u, recoded)
+        ## check all values
+        recoded1 <- sapply(0:(length(u) - 1), function(v) {
+            as.integer(decode_minimal_value_of_u(out1, v))
+        })
+        recoded2 <- sapply(0:(length(u) - 1), function(v) {
+            Rcpp_decode_minimal_value_of_u(out3, v)
+        })
+        
+        expect_equal(u, recoded1)
+        expect_equal(u, recoded2)    
 
+    }
 })
 
 
