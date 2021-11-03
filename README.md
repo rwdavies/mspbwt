@@ -11,7 +11,7 @@ todo:
 Start writing components in C++, starting with the encoding
  - DONE - complicated encoding
  - TODO - simple encoding
- - TODO - decoding
+ - DONE - decoding
  - TODO - putting those both together
  - TODO - puttingt the whole building the indices into C++ (confirm I can avoid type conversion stuff with lists?)
 
