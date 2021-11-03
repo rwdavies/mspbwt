@@ -1,6 +1,6 @@
 encode_maximal_column_of_u <- function(u, egs, efficient = TRUE, verbose = FALSE) {
     n_rows <- ceiling(length(u) / egs)
-    out_mat <- array(NA, c(n_rows, 4))
+    out_mat <- matrix(as.integer(NA), nrow = n_rows, ncol = 4)
     colnames(out_mat) <- c("start1", "start0", "value", "vec_pos")
     out_vec <- integer(length(u))
     if (!efficient) {
@@ -100,6 +100,7 @@ decode_maximal_value_of_u <- function(
     v,
     egs,
     do_checks = FALSE,
+    use_offsets = FALSE,
     offsets = c(0, 0, 0, 0)
 ) {
     ## remainder is how many more to go
@@ -109,13 +110,20 @@ decode_maximal_value_of_u <- function(
     if (do_checks) {
         stopifnot((i_row * egs + remainder) == v)
     }
-    if (remainder == 0) {
-        return(out_mat[i_row + 1, "value"])
+    if (!use_offsets) {
+        nrow_out_mat <- nrow(out_mat)
+        len_out_vec <- length(out_vec)
     } else {
-        val <- out_mat[i_row + 1, "value"]
-        if ((i_row + 1) < nrow(out_mat)) {
+        nrow_out_mat <- offsets[2] - offsets[1] + 1
+        len_out_vec <- offsets[4] - offsets[3] + 1
+    }
+    if (remainder == 0) {
+        return(out_mat[offsets[1] + i_row + 1, "value"])
+    } else {
+        val <- out_mat[offsets[1] + i_row + 1, "value"]
+        if ((i_row + 1) < nrow_out_mat) {
             ## these are constant - so don't need to check in between!
-            next_val <- out_mat[i_row + 1 + 1, "value"]
+            next_val <- out_mat[offsets[1] + i_row + 1 + 1, "value"]
             if (next_val == val) {
                 return(val)
             } else if (((next_val) - val) == egs) {
@@ -125,15 +133,16 @@ decode_maximal_value_of_u <- function(
         if (i_row == 0) {
             vec_pos <- 0
         } else {
-            vec_pos <- out_mat[i_row, "vec_pos"] + 1 ## 0-based
+            vec_pos <- out_mat[offsets[1] + i_row, "vec_pos"] + 1 ## 0-based
         }
+        vec_pos <- vec_pos + offsets[3] ## 0-based offset
         if (do_checks) {
-            stopifnot(which.max(names(out_vec) == i_row) == (vec_pos + 1))
+            stopifnot(which.max(names(out_vec) == i_row) == (vec_pos + 1 - offsets[3]))
         }
         u <- 0
         is_plus <- TRUE
         while(u < remainder) {
-            stopifnot((vec_pos + 1) <= length(out_vec))
+            stopifnot((vec_pos - offsets[3] + 1) <= len_out_vec)
             next_u <- u + out_vec[vec_pos + 1]
             if (remainder <= next_u) {
                 if (is_plus) {
@@ -143,7 +152,6 @@ decode_maximal_value_of_u <- function(
             } else {
                 u <- next_u
                 if (is_plus) {
-                    stopifnot((vec_pos + 1) <= length(out_vec))                    
                     val <- val + out_vec[vec_pos + 1]
                     is_plus <- FALSE
                 } else {
@@ -247,7 +255,6 @@ build_super_encoding <- function(
     usge_all,
     all_symbols
 ) {
-
     ## collapse into new output
     nSNPs <- length(usge_all)
     ## figure out size of new containers
@@ -263,13 +270,14 @@ build_super_encoding <- function(
                 n_out_mat <- n_out_mat + nrow(usge[[1]])
                 n_out_vec <- n_out_vec + length(usge[[2]])
             } else {
-                n_minimal <- n_minimal + length(usge[[1]])
+                n_minimal <- n_minimal + length(usge)
             }
             n_counter <- n_counter + 1
         }
     }
     ## new containers
     out_mat <- matrix(as.integer(NA), nrow = n_out_mat, ncol = 2)
+    colnames(out_mat) <- c("value", "vec_pos")
     out_vec <- numeric(n_out_vec)
     minimal <- numeric(n_minimal)
     ## new explanation
@@ -291,23 +299,29 @@ build_super_encoding <- function(
             if (class(usge) == "list") {
                 storage_info[count, 4] <- 1L
                 ##
-                storage_info[count, 5:6] <- as.integer(c(count_out_mat - 1, count_out_mat + nrow(usge[[1]]) - 1 - 1))
-                out_mat[count_out_mat - 1 + 1:nrow(usge[[1]]), ] <- usge[[1]]
-                count_out_mat <- count_out_mat + nrow(usge[[1]])
+                n <- nrow(usge[[1]])
+                storage_info[count, 5:6] <- as.integer(c(count_out_mat - 1, count_out_mat + n - 1 - 1))
+                out_mat[count_out_mat - 1 + 1:n, ] <- usge[[1]]
+                count_out_mat <- count_out_mat + n
                 ##
-                storage_info[count, 7:8] <- as.integer(c(count_out_vec - 1, count_out_vec + length(usge[[2]]) - 1 - 1))
-                out_vec[count_out_vec - 1 + 1:length(usge[[2]])] <- usge[[2]]
-                count_out_vec <- count_out_vec + length(usge[[2]])
+                n <- length(usge[[2]])
+                storage_info[count, 7:8] <- as.integer(c(count_out_vec - 1, count_out_vec + n - 1 - 1))
+                out_vec[count_out_vec - 1 + 1:n] <- usge[[2]]
+                count_out_vec <- count_out_vec + n
                 ##
             } else {
+                n <- length(usge)
                 storage_info[count, 4] <- 0L
-                storage_info[count, 5:6] <- as.integer(c(count_minimal - 1, count_minimal + length(usge[[1]]) - 1 - 1))
-                minimal[count_minimal - 1 + 1:length(usge[[1]])] <- usge[[1]]
-                count_minimal <- count_minimal + length(usge[[1]])
+                storage_info[count, 5:6] <- as.integer(c(count_minimal - 1, count_minimal + n - 1 - 1))
+                if (n == 0) {
+                    print(usge)
+                    stop("WER")
+                }
+                minimal[count_minimal - 1 + 1:n] <- usge
+                count_minimal <- count_minimal + n
             }
         }
     }
-    
     ## finally this
     cumsum_n_symbols_per_grid <- c(0L, as.integer(cumsum(sapply(all_symbols, nrow))))
     stopifnot(count_minimal == (n_minimal + 1))
@@ -349,21 +363,21 @@ decode_value_from_super_encoding <- function(
     i_entry0 <- cumsum_n_symbols_per_grid[iSNP0 + 1] + s - 1
     stopifnot(storage_info[i_entry0 + 1, "s"] == s)
     ## now, decode!
-    
-    
     if (storage_info[i_entry0 + 1, "isLarge"] == 1L) {
         decode_maximal_value_of_u(
             out_mat = out_mat,
             out_vec = out_vec,
             v = v,
             egs = egs,
-            offsets = offsets
+            use_offsets = TRUE,            
+            offsets = storage_info[i_entry0 + 1, 5:8]
         )
     } else {
         decode_minimal_value_of_u(
             x = minimal,
             v = v,
-            offsets = offsets
+            use_offsets = TRUE,
+            offsets = storage_info[i_entry0 + 1, 5:6]
         )
     }
 }
