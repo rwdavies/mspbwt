@@ -251,6 +251,11 @@ decode_value_of_usge <- function(
 
 
 
+## out_mat
+## out_vec
+## minimal
+## storage_info
+## cumsum_n_symbols_per_grid
 build_super_encoding <- function(
     usge_all,
     all_symbols
@@ -314,8 +319,7 @@ build_super_encoding <- function(
                 storage_info[count, 4] <- 0L
                 storage_info[count, 5:6] <- as.integer(c(count_minimal - 1, count_minimal + n - 1 - 1))
                 if (n == 0) {
-                    print(usge)
-                    stop("WER")
+                    stop("Something has gone wrong, a symbol is trying to be stored with no entries")
                 }
                 minimal[count_minimal - 1 + 1:n] <- usge
                 count_minimal <- count_minimal + n

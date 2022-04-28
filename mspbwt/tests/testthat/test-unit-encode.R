@@ -249,12 +249,16 @@ test_that("can encode and decode a usL", {
     rownames(a) <- NULL
     colnames(a) <- c("symbol", "count")
     symbol_count_at_grid <-  a
-    for(k in 0:(K - 1)) { ## haps (1-based)
+    for(k in 0:K) { ## haps (1-based)
         ## now - where it goes - 0 based
-        usg[k + 1 + 1,] <- usg[k + 1, ]
-        usg[k + 1 + 1, sx[k]] <- usg[k + 1 + 1, sx[k]] + 1
+        if (k > 0) {
+            usg[k + 1,] <- usg[k, ]
+        }
+        usg[k + 1, sx[k]] <- usg[k + 1, sx[k]] + 1
     }
-
+    ## check usg properly made
+    expect_equivalent(usg[K + 1, ], a[, 2])
+    
     egs <- 100
     n_min_symbols <- 100
     
@@ -312,7 +316,6 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
     all_symbols <- list(1:5)
     egs <- 100
     n_min_symbols <- 100
-    
     for(iSNP in 1:5) {
         K <- 10000
         Smax <- sample(7:12, 1)
@@ -321,21 +324,33 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
         prob <- 2 ** (Smax:1)
         prob <- prob / Smax
         sx <- sample(1:Smax, K, prob = prob, replace = TRUE)
+        if (iSNP == 3) {
+            ## here force the max to be just 1 of them
+            w <- which(sx == max(sx))
+            if (length(w) > 1) {
+                sx[w[-1]] <- max(sx) - 1
+            }
+        }
         ## want to semi-sort s
         sx <- sx[order(sx + rnorm(K) / 5)]
         ## now build
         a <- table(sx, useNA = "always")
-        a <- a[order(-a)]
+        ## a <- a[order(-a)]
         a <- a[a > 0]
         a <- cbind(as.integer(names(a)), as.integer(a))
         rownames(a) <- NULL
         colnames(a) <- c("symbol", "count")
         symbol_count_at_grid <-  a
-        for(k in 0:(K - 1)) { ## haps (1-based)
+        for(k in 0:K) { ## haps (1-based)
             ## now - where it goes - 0 based
-            usg[k + 1 + 1,] <- usg[k + 1, ]
-            usg[k + 1 + 1, sx[k]] <- usg[k + 1 + 1, sx[k]] + 1
+            if (k > 0) {
+                usg[k + 1,] <- usg[k, ]
+            }
+            usg[k + 1, sx[k]] <- usg[k + 1, sx[k]] + 1
         }
+        ## check usg properly made
+        expect_equivalent(usg[K + 1, ], a[, 2])
+        ##
         usge <- encode_usg(
             usg = usg,
             symbol_count_at_grid = symbol_count_at_grid,

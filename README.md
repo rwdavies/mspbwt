@@ -4,10 +4,12 @@ todo:
 I have the first part working, in that the multi-symbol version is the same as the two symbol version, when run on two symbols
 It also works on a larger SNP set, when there are a few symbols, which is great
 
+Now, for the more efficient version, that is now available as an encoding (and is working)
+i.e. there is a storage_info matrix, then an out_matrix, then out vector
+Want to store the ms-PBWT indices using this and try it out!
+
 The next steps are to make it more efficient, figure out a better storage mechanism
 Then if that makes sense, port it to C++ for some more tests!
-
-First, fix bug, then keep going
 
 High level goals for TODO, with partial information
  - DONE - regular encoding
@@ -21,6 +23,8 @@ High level goals for TODO, with partial information
    - test them!
 
 
+
+
 todo:
 I can now make a and d efficiently
 I now have the alternative version for "us" now which is usge_all
@@ -28,3 +32,12 @@ Only unclear bit in building is whether the usg matrix gets too big / unweildly?
 Next is to look at the R code a bit more and simplify
 Next is to turn into C++
 Works pretty well it looks like!
+
+
+About the bug
+========================
+
+Seems usg contains the matrix
+To confirm - what should the format be
+i.e. should first row be 0?
+
