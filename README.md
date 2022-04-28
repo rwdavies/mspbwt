@@ -26,7 +26,7 @@ High level goals for TODO, with partial information
 
 
 todo:
-I can now make a and d efficiently
+I can now make a and d efficiently (how? same approach?)
 I now have the alternative version for "us" now which is usge_all
 Only unclear bit in building is whether the usg matrix gets too big / unweildly? Not sure. Probably worth profiling etc at some point
 Next is to look at the R code a bit more and simplify
@@ -34,10 +34,12 @@ Next is to turn into C++
 Works pretty well it looks like!
 
 
-About the bug
-========================
+About where I am
+================
+In test-unit-mspbwt.R, in mspbwt.R, change it from returning usge_all to returning the super encoding (this can be done at the end? possibly with some C++ thrown in)
+Then try on the test stuff at least, with maybe some more C++, that it works
+Then see if a and d can also be made in the same way?
 
-Seems usg contains the matrix
-To confirm - what should the format be
-i.e. should first row be 0?
+Then make sure the new super format works
 
+Figure out exactly how I store a and d, is it the same way?
