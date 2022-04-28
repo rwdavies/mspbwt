@@ -33,8 +33,5 @@ jobs:
       - name: Unit tests
         run: ./scripts/test-unit.sh
 
-      - name: Acceptance tests
-        run: ./scripts/test-acceptance.sh
-
       - name: Test the build
         run: ./scripts/build-and-install.R

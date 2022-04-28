@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-required_packages <- c("Rcpp", "data.table")
+required_packages <- c("Rcpp", "data.table", "devtools")
 for(package in required_packages) {
     if (!suppressPackageStartupMessages(require(package, character.only = TRUE))) {
         out <- install.packages(package, repos="http://cran.rstudio.com/")
