@@ -42,6 +42,7 @@ ms_BuildIndices_Algorithm5 <- function(
     ##
     ns_obs <- rep(0L, Smax)
     ##
+    d_store <- list(1:T)
     usge_all <- list(1:T) ## us, but all of them    
     Smax_for_usl <- 0
     for(t in 1:T) {
@@ -57,6 +58,7 @@ ms_BuildIndices_Algorithm5 <- function(
         expect_equal(a[, t + 1], indices$a[, t + 1])
         expect_equal(d[, t + 1], indices$d[, t + 1])
     }
+    d_store[[1]] <- compress_d_one_grid(d[, 1])    
     for(t in 1:T) {
         ##
         ## OK, whatevs
@@ -105,7 +107,7 @@ ms_BuildIndices_Algorithm5 <- function(
             }
             pqs[s] <- 0
             nso[s] <- nso[s] + 1
-            if (do_checks) {
+            if (do_checks) {        
                 usg_check[k + 1 + 1,] <- usg_check[k + 1, ]
                 usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
             }
@@ -131,6 +133,10 @@ ms_BuildIndices_Algorithm5 <- function(
             ## Not sure
             d[0 + 1, t + 1] <- t + 1 ## don't override
         }
+        ## how d is compressed
+        vec <- d[, t + 1]
+        d_store[[t + 1]] <- compress_d_one_grid(d[, t + 1])
+        ## 
         if (check_vs_indices) {
             expect_equal(a[, t + 1], indices$a[, t + 1])
             expect_equal(d[, t + 1], indices$d[, t + 1]) ## 160
@@ -138,28 +144,36 @@ ms_BuildIndices_Algorithm5 <- function(
         ## 
         ## do checks
         ##
-        for(k in 0:(K - 1)) {
-            s <- X1C[a[k + 1, t] + 1, t] ## symbol here
-            c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
-            w <- decode_value_of_usge(
-                usge = usge_all[[t]],
-                symbol_count_at_grid = all_symbols[[t]],
-                s = s,
-                v = k + 1,
-                egs = egs,
-                n_min_symbols = n_min_symbols
-            ) + c
-            if (verbose) {
-                message(paste0(
-                    "k=", k, ", ",
-                    "X=", X[a[k + 1, t] + 1, t], ", ",
-                    "a[w,t+1]=", a[w, t + 1], ", ",
-                    "a[k+1,t]=", a[k + 1, t]
-                ))
-            }
-            if (do_checks) {
+        if (do_checks) {
+            for(k in 0:(K - 1)) {
+                s <- X1C[a[k + 1, t] + 1, t] ## symbol here
+                c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
+                w <- decode_value_of_usge(
+                    usge = usge_all[[t]],
+                    symbol_count_at_grid = all_symbols[[t]],
+                    s = s,
+                    v = k + 1,
+                    egs = egs,
+                    n_min_symbols = n_min_symbols
+                ) + c
+                if (verbose) {
+                    message(paste0(
+                        "k=", k, ", ",
+                        "X=", X[a[k + 1, t] + 1, t], ", ",
+                        "a[w,t+1]=", a[w, t + 1], ", ",
+                        "a[k+1,t]=", a[k + 1, t]
+                    ))
+                }
                 stopifnot(a[w, t + 1] == a[k + 1, t])
             }
+        }
+    }
+    if (do_checks) {
+        for(iGrid1 in 1:ncol(d)) {
+            expect_equal(
+                d[, iGrid1],
+                decompress_d(d_store, iGrid1, K)
+            )
         }
     }
     return(
@@ -167,6 +181,7 @@ ms_BuildIndices_Algorithm5 <- function(
             a = a,
             d = d,
             usge_all = usge_all,
+            d_store = d_store,
             egs = egs,
             n_min_symbols = n_min_symbols,
             all_symbols = all_symbols
@@ -189,12 +204,16 @@ ms_MatchZ_Algorithm5 <- function(
 ) {
     K <- nrow(X)
     T <- ncol(X)
+    ## indices
     a <- ms_indices[["a"]]
-    d <- ms_indices[["d"]]
+    ## d <- ms_indices[["d"]]
+    d_store <- ms_indices[["d_store"]]
     usge_all <- ms_indices[["usge_all"]]
+    ## things needed as well
     egs <- ms_indices[["egs"]]
     n_min_symbols <- ms_indices[["n_min_symbols"]]
     all_symbols <- ms_indices[["all_symbols"]]
+    ##
     if (length(Z) != (ncol(a) - 1)) {
         stop("Z not the right size")
     }
@@ -255,23 +274,25 @@ ms_MatchZ_Algorithm5 <- function(
                     matrix(c(k, a[k + 1, t], ec + 1, t - 1), nrow = 1)
                 )
             }
-            e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+            d_vec <- decompress_d(d_store, t + 1, K)
+            ## e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+            e1 <- d_vec[f1 + 1] - 1 ## this is 0-based, probably!
             if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
                 f1 <- g1 - 1
-                index <- a[f1 + 1, t + 1]
+                index <- a[f1 + 1, t + 1] ## a
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                 }
-                while (d[f1 + 1, t + 1] <= e1) {
+                while (d_vec[f1 + 1] <= e1) { ## d
                     f1 <- f1 - 1
                 }
             } else if (f1 < K) {
                 g1 <- f1 + 1
-                index <- a[f1 + 1, t + 1]
+                index <- a[f1 + 1, t + 1] ## a
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                 }
-                while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) {
+                while ((g1 < K) && (d_vec[g1 + 1] <= e1)) { ## d
                     g1 <- g1 + 1
                 }
             }
