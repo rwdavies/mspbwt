@@ -36,6 +36,8 @@ ms_BuildIndices_Algorithm5 <- function(
         d <- array(NA, c(K + 1, T + 1)) ## distances
         d[1, ] <- 1:(T + 1)
         d[K + 1, ] <- 1:(T + 1)
+    } else {
+        d <- NULL
     }
     d_store <- list(1:T)
     d_vec <- integer(K + 1)
@@ -83,7 +85,6 @@ ms_BuildIndices_Algorithm5 <- function(
     if (return_d) {
         d[, 1] <- d_vec
     }
-    
     for(t in 1:T) {
         ##
         ## re-set
@@ -93,63 +94,29 @@ ms_BuildIndices_Algorithm5 <- function(
         d_vec[1] <- t + 1
         d_vec[K + 1] <- t + 1
         ##
-        ## OK, whatevs
         St <- n_symbols_per_grid[t] ## number of symbols in this grid
-        ## 
-        ## get count of number of each
-        usge <- list(1:St) ## us for this (g)rid (e)ncoded
         symbol_count <- all_symbols[[t]][, "count"]
-        first_usg_minimal_symbol <- 1 ## 1-based
-        for(s in 1:St) {
-            if (symbol_count[s] > n_min_symbols) {
-                first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
-            } else {
-                usge[[s]] <- rep(-1, symbol_count[s])
-            }
-        }
-        start_count <- c(0, cumsum(symbol_count))
         ##
+        out <- one_move_forward_buildindices(
+            X1C = X1C,
+            a = a,
+            usg = usg,
+            d_vec = d_vec,
+            prev_d = prev_d,
+            t = t,
+            K = K,
+            symbol_count = symbol_count,
+            egs = egs,
+            St = St,
+            n_min_symbols = n_min_symbols,
+            do_checks = do_checks
+        )
+        a <- out$a
+        usg <- out$usg
+        usge <- out$usge
+        usg_check <- out$usg_check
+        d_vec <- out$d_vec
         ## 
-        ##
-        nso <- rep(0L, St) ## n_symbols_observed
-        pqs <- rep(t, St) ## pqs - vector analogue to pq
-        val <- c()
-        usg[] <- 0
-        if (do_checks) {
-            usg_check <- array(0L, c(K + 1, St))
-        }
-        ## fill in the rest of this one!
-        for(k in 0:(K - 1)) { ## haps (1-based)
-            s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
-            match_start <- prev_d[k + 1]
-            for(i in 0:(St - 1)) {
-                if (match_start > pqs[i + 1]) {
-                    pqs[i + 1] <- match_start
-                }
-            }
-            ## now - where it goes - 0 based
-            val <- c(val, start_count[s] + nso[s] + 1)
-            a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
-            ##d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
-            d_vec[start_count[s] + nso[s] + 1] <- pqs[s]
-            usg[k + 1 + 1,] <- usg[k + 1, ]
-            if (s < first_usg_minimal_symbol) {
-                usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1
-            } else {
-                usge[[s]][nso[s] + 1] <- k + 1
-            }
-            pqs[s] <- 0
-            nso[s] <- nso[s] + 1
-            if (do_checks) {        
-                usg_check[k + 1 + 1,] <- usg_check[k + 1, ]
-                usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
-            }
-        }
-        if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
-            for(s in 0:(first_usg_minimal_symbol - 1 - 1)) {
-                usge[[s + 1]] <- Rcpp_encode_maximal_column_of_u(usg[, s + 1], egs = egs)
-            }
-        }
         usge_all[[t]] <- usge
         if (do_checks) {
             expect_equal(
@@ -225,6 +192,85 @@ ms_BuildIndices_Algorithm5 <- function(
 }
 
 
+
+## implements most of the move-forwardness of the algorithm building
+one_move_forward_buildindices <- function(
+    X1C,
+    a,
+    usg,
+    d_vec,
+    prev_d,                                          
+    t,
+    K,
+    symbol_count,
+    egs,
+    St,
+    n_min_symbols,
+    do_checks
+) {
+    ##
+    ## 
+    ## get count of number of each
+    usge <- list(1:St) ## us for this (g)rid (e)ncoded
+    first_usg_minimal_symbol <- 1 ## 1-based
+    for(s in 1:St) {
+        if (symbol_count[s] > n_min_symbols) {
+            first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
+        } else {
+            usge[[s]] <- rep(-1, symbol_count[s])
+        }
+    }
+    start_count <- c(0, cumsum(symbol_count))
+    ##    
+    nso <- rep(0L, St) ## n_symbols_observed
+    pqs <- rep(t, St) ## pqs - vector analogue to pq
+    if (do_checks) {
+        usg_check <- array(0L, c(K + 1, St))
+    } else {
+        usg_check <- NULL
+    }
+    val <- c()
+    usg[] <- 0
+    ##    
+    for(k in 0:(K - 1)) { ## haps (1-based)
+        s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
+        match_start <- prev_d[k + 1]
+        for(i in 0:(St - 1)) {
+            if (match_start > pqs[i + 1]) {
+                pqs[i + 1] <- match_start
+            }
+        }
+        ## now - where it goes - 0 based
+        val <- c(val, start_count[s] + nso[s] + 1)
+        a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
+        ##d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
+        d_vec[start_count[s] + nso[s] + 1] <- pqs[s]
+        usg[k + 1 + 1,] <- usg[k + 1, ]
+        if (s < first_usg_minimal_symbol) {
+            usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1
+        } else {
+            usge[[s]][nso[s] + 1] <- k + 1
+        }
+        pqs[s] <- 0
+        nso[s] <- nso[s] + 1
+        if (do_checks) {        
+            usg_check[k + 1 + 1,] <- usg_check[k + 1, ]
+            usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
+        }
+    }
+    if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
+        for(s in 0:(first_usg_minimal_symbol - 1 - 1)) {
+            usge[[s + 1]] <- Rcpp_encode_maximal_column_of_u(usg[, s + 1], egs = egs)
+        }
+    }
+    list(
+        a = a,
+        usg = usg,
+        usge = usge,
+        usg_check = usg_check,
+        d_vec = d_vec
+    )
+}
 
 
 #' @export
