@@ -25,11 +25,11 @@ ms_BuildIndices_Algorithm5 <- function(
     ## build arrays including a, d and now u, v, c
     K <- nrow(X1C)
     T <- ncol(X1C)
-    a <- array(NA, c(K, T + 1)) ## orders
+    a <- array(as.integer(NA), c(K, T + 1)) ## orders
     c <- array(NA, T + 1) ## not sure why
     b <- array(NA, K)
-    a[, 1] <- 0:(K - 1) ## by definition for some reason
-    a[, 2] <- order(X1C[, 1]) - 1 ## 0-based
+    a[, 1] <- as.integer(0:(K - 1)) ## by definition for some reason
+    a[, 2] <- as.integer(order(X1C[, 1]) - 1) ## 0-based
     ## 
     ## related to d
     if (return_d) {
@@ -230,7 +230,7 @@ one_move_forward_buildindices <- function(
         usg_check <- NULL
     }
     val <- c()
-    usg[] <- 0
+    usg[] <- 0L
     ##    
     for(k in 0:(K - 1)) { ## haps (1-based)
         s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
@@ -247,7 +247,7 @@ one_move_forward_buildindices <- function(
         d_vec[start_count[s] + nso[s] + 1] <- pqs[s]
         usg[k + 1 + 1,] <- usg[k + 1, ]
         if (s < first_usg_minimal_symbol) {
-            usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1
+            usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
         } else {
             usge[[s]][nso[s] + 1] <- k + 1
         }

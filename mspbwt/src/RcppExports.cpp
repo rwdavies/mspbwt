@@ -61,19 +61,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Rcpp_ms_BuildIndices_Algorithm5
-Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(Rcpp::NumericMatrix X1C, Rcpp::List all_symbols, bool verbose, bool do_checks, int egs, int n_min_symbols);
-RcppExport SEXP _mspbwt_Rcpp_ms_BuildIndices_Algorithm5(SEXP X1CSEXP, SEXP all_symbolsSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP egsSEXP, SEXP n_min_symbolsSEXP) {
+// Rcpp_one_move_forward_buildindices
+Rcpp::List Rcpp_one_move_forward_buildindices(Rcpp::NumericMatrix X1C, Rcpp::IntegerMatrix a, Rcpp::IntegerMatrix usg, Rcpp::IntegerVector d_vec, Rcpp::IntegerVector prev_d, int t, int K, Rcpp::IntegerVector symbol_count, int egs, int St, int n_min_symbols, bool do_checks);
+RcppExport SEXP _mspbwt_Rcpp_one_move_forward_buildindices(SEXP X1CSEXP, SEXP aSEXP, SEXP usgSEXP, SEXP d_vecSEXP, SEXP prev_dSEXP, SEXP tSEXP, SEXP KSEXP, SEXP symbol_countSEXP, SEXP egsSEXP, SEXP StSEXP, SEXP n_min_symbolsSEXP, SEXP do_checksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type X1C(X1CSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type all_symbols(all_symbolsSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type a(aSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type usg(usgSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type d_vec(d_vecSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type prev_d(prev_dSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type symbol_count(symbol_countSEXP);
     Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< int >::type St(StSEXP);
     Rcpp::traits::input_parameter< int >::type n_min_symbols(n_min_symbolsSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_BuildIndices_Algorithm5(X1C, all_symbols, verbose, do_checks, egs, n_min_symbols));
+    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_one_move_forward_buildindices(X1C, a, usg, d_vec, prev_d, t, K, symbol_count, egs, St, n_min_symbols, do_checks));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -114,7 +120,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_decode_maximal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_maximal_value_of_u, 5},
     {"_mspbwt_Rcpp_encode_minimal_column_of_u", (DL_FUNC) &_mspbwt_Rcpp_encode_minimal_column_of_u, 1},
     {"_mspbwt_Rcpp_decode_minimal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_minimal_value_of_u, 2},
-    {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 6},
+    {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}
