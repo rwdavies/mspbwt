@@ -12,8 +12,12 @@ ms_BuildIndices_Algorithm5 <- function(
     check_vs_indices = FALSE,
     indices = NULL,
     egs = 100,
-    n_min_symbols = 100
+    n_min_symbols = 100,
+    return_d = FALSE
 ) {
+    if (do_checks | check_vs_indices) {
+        return_d <- TRUE
+    }
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
     n_symbols_per_grid <- as.integer(sapply(all_symbols, nrow))
@@ -22,27 +26,41 @@ ms_BuildIndices_Algorithm5 <- function(
     K <- nrow(X1C)
     T <- ncol(X1C)
     a <- array(NA, c(K, T + 1)) ## orders
-    d <- array(NA, c(K + 1, T + 1)) ## distances
-    dtemp <- array(NA, K) ## temp for filler
     c <- array(NA, T + 1) ## not sure why
     b <- array(NA, K)
     a[, 1] <- 0:(K - 1) ## by definition for some reason
     a[, 2] <- order(X1C[, 1]) - 1 ## 0-based
-    ## d is a 0, except first entry, and on (ordered) switch
-    d[, 1] <- 0
-    d[, 2] <- 0
+    ## 
+    ## related to d
+    if (return_d) {
+        d <- array(NA, c(K + 1, T + 1)) ## distances
+        d[1, ] <- 1:(T + 1)
+        d[K + 1, ] <- 1:(T + 1)
+    }
+    d_store <- list(1:T)
+    d_vec <- integer(K + 1)
+    d_vec[1] <- 1L
+    d_vec[K + 1] <- 1L
+    d_store[[1]] <- compress_d_one_grid(d_vec)
+    dtemp <- array(NA, K) ## temp for filler
+    if (return_d) {
+        ## d is a 0, except first entry, and on (ordered) switch
+        d[, 2] <- 0
+    }
     for(k in 1:(K - 1)) {
         if (X1C[a[k, 2] + 1, 1] != X1C[a[k + 1, 2] + 1, 1]) {
-            d[k + 1, 2] <- 1
+            d_vec[k + 1] <- 1L
         }
     }
+    if (return_d) {
+        d_vec[1] <- 2
+        d_vec[K + 1] <- 2
+        d[, 2] <- d_vec
+    }
     ## 
-    d[1, ] <- 1:(T + 1)
-    d[K + 1, ] <- 1:(T + 1)
     ##
     ns_obs <- rep(0L, Smax)
     ##
-    d_store <- list(1:T)
     usge_all <- list(1:T) ## us, but all of them    
     Smax_for_usl <- 0
     for(t in 1:T) {
@@ -58,8 +76,22 @@ ms_BuildIndices_Algorithm5 <- function(
         expect_equal(a[, t + 1], indices$a[, t + 1])
         expect_equal(d[, t + 1], indices$d[, t + 1])
     }
-    d_store[[1]] <- compress_d_one_grid(d[, 1])    
+    ## re-set - argh
+    d_vec[] <- 0L
+    d_vec[1] <- 1L
+    d_vec[K + 1] <- 1L
+    if (return_d) {
+        d[, 1] <- d_vec
+    }
+    
     for(t in 1:T) {
+        ##
+        ## re-set
+        ##
+        prev_d <- d_vec
+        d_vec[] <- 0L
+        d_vec[1] <- t + 1
+        d_vec[K + 1] <- t + 1
         ##
         ## OK, whatevs
         St <- n_symbols_per_grid[t] ## number of symbols in this grid
@@ -89,7 +121,7 @@ ms_BuildIndices_Algorithm5 <- function(
         ## fill in the rest of this one!
         for(k in 0:(K - 1)) { ## haps (1-based)
             s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
-            match_start <- d[k + 1, t]
+            match_start <- prev_d[k + 1]
             for(i in 0:(St - 1)) {
                 if (match_start > pqs[i + 1]) {
                     pqs[i + 1] <- match_start
@@ -98,7 +130,8 @@ ms_BuildIndices_Algorithm5 <- function(
             ## now - where it goes - 0 based
             val <- c(val, start_count[s] + nso[s] + 1)
             a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
-            d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
+            ##d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
+            d_vec[start_count[s] + nso[s] + 1] <- pqs[s]
             usg[k + 1 + 1,] <- usg[k + 1, ]
             if (s < first_usg_minimal_symbol) {
                 usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1
@@ -114,7 +147,7 @@ ms_BuildIndices_Algorithm5 <- function(
         }
         if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
             for(s in 0:(first_usg_minimal_symbol - 1 - 1)) {
-                usge[[s + 1]] <- encode_maximal_column_of_u(usg[, s + 1], egs = egs)
+                usge[[s + 1]] <- Rcpp_encode_maximal_column_of_u(usg[, s + 1], egs = egs)
             }
         }
         usge_all[[t]] <- usge
@@ -131,15 +164,16 @@ ms_BuildIndices_Algorithm5 <- function(
         }
         if (t == 1) {
             ## Not sure
-            d[0 + 1, t + 1] <- t + 1 ## don't override
+            d_vec[0 + 1] <- t + 1 ## don't override
         }
-        ## how d is compressed
-        vec <- d[, t + 1]
-        d_store[[t + 1]] <- compress_d_one_grid(d[, t + 1])
-        ## 
+        d_store[[t + 1]] <- compress_d_one_grid(d_vec)
+        ##
+        if (return_d) {
+            d[, t + 1] <- d_vec
+        }
         if (check_vs_indices) {
             expect_equal(a[, t + 1], indices$a[, t + 1])
-            expect_equal(d[, t + 1], indices$d[, t + 1]) ## 160
+            expect_equal(d_vec, indices$d[, t + 1]) ## 160
         }
         ## 
         ## do checks
@@ -176,17 +210,18 @@ ms_BuildIndices_Algorithm5 <- function(
             )
         }
     }
-    return(
-        list(
-            a = a,
-            d = d,
-            usge_all = usge_all,
-            d_store = d_store,
-            egs = egs,
-            n_min_symbols = n_min_symbols,
-            all_symbols = all_symbols
-        )
+    to_return <- list(
+        a = a,
+        usge_all = usge_all,
+        d_store = d_store,
+        egs = egs,
+        n_min_symbols = n_min_symbols,
+        all_symbols = all_symbols
     )
+    if (return_d) {
+        to_return <- append(to_return, list(d = d))
+    }
+    to_return
 }
 
 

@@ -168,6 +168,7 @@ test_that("can build and test efficient multi-symbol version", {
     
     load("~/Downloads/rhb_t_small.RData")
     rhb_t <- a[, 1:20]
+    K <- nrow(rhb_t)
     ## can I just use hapMatcher, and special lookup?
 
     ## simple hapMatcher
@@ -182,8 +183,45 @@ test_that("can build and test efficient multi-symbol version", {
         egs = 100,
         n_min_symbols = 100
     )
+
     usge_all <- ms_indices$usge_all
 
+    ## so for whatever reason "u" is now a matrix per-site
+    ## d is more straightforward - mostly 0
+    ## hence the crazy storage approach
+    ## other ones more straightforward? 
+
+    if (1 == 0) {
+
+        ## 
+        t <- sapply(ms_indices, object.size) / 1e6
+        data.frame(cbind(names(t), t))
+        ## ? can I rebuild a from usg?
+        ## ? can I store periodically and rebuild?
+
+        
+        a <- ms_indices$a
+        ## what does a look like - some long runs, but not always
+        ## store difference somehow?
+        a <- table(d, useNA = "always")
+        a <- a[order(-a)]
+        a <- a[a > 0]
+        a <- cbind(as.integer(names(a)), a)
+        rownames(a) <- NULL
+        colnames(a) <- c("symbol", "count")
+
+        ## OK so d is accessed one column at a time, so want efficient coding of a column
+        ## hmm, d really isn't the same thing
+        encoded_d <- encode_usg(
+            usg = d,
+            symbol_count_at_grid = a,
+            egs = 100,
+            n_min_symbols = 100
+        )
+
+    }
+    
+    
     ## kind of surprised so slow? 
     object.size(usge_all)
     object.size(ms_indices$d)

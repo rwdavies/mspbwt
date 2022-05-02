@@ -34,8 +34,16 @@ Next is to turn into C++
 Works pretty well it looks like!
 
 
-About where I am
+TODO
 ================
+ - OK, so d is encoded, and into building and running function
+ - Now check out a as well? Looks a bit complicated!
+
+ - Ensure functions to access u, etc, can be easily accessed and swapped out
+ - Does it make sense to do a and d in the same way, or somehow take their difference? Should I have done that for u? (or problem - having to go too far?)
+So I need to encode u, a, d 
+Note that a, d contain a lot of identical-ness?
+
 In test-unit-mspbwt.R, in mspbwt.R, change it from returning usge_all to returning the super encoding (this can be done at the end? possibly with some C++ thrown in)
 Then try on the test stuff at least, with maybe some more C++, that it works
 Then see if a and d can also be made in the same way?

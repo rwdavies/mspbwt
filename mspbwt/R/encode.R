@@ -385,3 +385,38 @@ decode_value_from_super_encoding <- function(
         )
     }
 }
+
+
+
+## mostly 0's, some values not 0's
+## idea, for each SNP
+##    have a first binary vector of is-not-0 -> 1 and 0 -> 0
+##    can then compress this using rcpp_int_contract
+##    and decompress using rcpp_int_expand
+##    then also store the actual values as ints
+compress_d <- function(d) {
+    d_store <- as.list(1:ncol(d))
+    for(iGrid1 in 1:ncol(d)) {
+        d_store[[iGrid1]] <- compress_d_one_grid(d[, iGrid1])
+    }
+    d_store
+}
+
+compress_d_one_grid <- function(vec) {
+    vec1 <- rcpp_int_contract(as.integer(vec != 0))
+    vec2 <- as.integer(vec[vec != 0])
+    list(vec1 = vec1, vec2 = vec2)
+}
+
+
+decompress_d <- function(d_store, iGrid1, K) {
+    vec1 <- d_store[[iGrid1]]$vec1
+    vec2 <- d_store[[iGrid1]]$vec2
+    d_vec <- rcpp_int_expand(vec1, K + 1) ## note that "d" has nrow = K + 1
+    d_vec[d_vec != 0] <- vec2
+    d_vec
+}
+
+
+
+

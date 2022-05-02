@@ -418,3 +418,29 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
     }
 
 })
+
+
+test_that("can encode and decode d", {
+
+    nGrids <- 10
+    K <- 100
+    d <- matrix(0, K + 1, nGrids)
+    nFill <- 100 ## some extra values to add
+    r <- sample(K + 1, nFill, replace = TRUE)
+    c <- sample(nGrids, nFill, replace = TRUE)
+    d[cbind(r, c)] <- sample(1:nGrids, nFill, replace = TRUE)
+    d[1, ] <- 1:nGrids
+    d[K + 1, ] <- 1:nGrids
+    d[, 3] <- 0
+    d[, 5] <- 1:(K + 1)
+    
+    d_store <- compress_d(d) ## about 50 times more efficient
+    
+    for(iGrid1 in 1:nGrids) {
+        expect_equal(
+            d[, iGrid1],
+            decompress_d(d_store, iGrid1, K)
+        )
+    }
+
+})
