@@ -22,8 +22,8 @@ Rcpp_decode_minimal_value_of_u <- function(x, v) {
 }
 
 #' @export
-Rcpp_one_move_forward_buildindices <- function(X1C, a, usg, d_vec, prev_d, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
-    .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, usg, d_vec, prev_d, t, K, symbol_count, egs, St, n_min_symbols, do_checks)
+Rcpp_one_move_forward_buildindices <- function(X1C, a, usg, usg_check, d_vec, prev_d, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
+    .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, usg, usg_check, d_vec, prev_d, t, K, symbol_count, egs, St, n_min_symbols, do_checks)
 }
 
 #' @export

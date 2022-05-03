@@ -71,6 +71,20 @@ test_that("can run multi-symbol version with 2 symbols", {
         indices = indices
     )
 
+    ms_indices_with_Rcpp <- ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        check_vs_indices = TRUE,
+        indices = indices,
+        with_Rcpp = TRUE
+    )
+
+    expect_equal(ms_indices, ms_indices_with_Rcpp)
+
+    ## AM HERE
+    ## now check out ms_indices vs ms_indices_with_Rcpp
+    
+    
     ## this should still work, 
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = X1,
@@ -81,6 +95,8 @@ test_that("can run multi-symbol version with 2 symbols", {
         check_vs_indices = TRUE,
         indices = indices
     )
+
+
     
     expect_equal(top_matches, ms_top_matches)
     

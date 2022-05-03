@@ -13,8 +13,17 @@ ms_BuildIndices_Algorithm5 <- function(
     indices = NULL,
     egs = 100,
     n_min_symbols = 100,
-    return_d = FALSE
+    return_d = FALSE,
+    with_Rcpp = FALSE
 ) {
+    if (1 == 0) {
+        egs = 100
+        n_min_symbols = 100
+        do_checks <- FALSE
+        check_vs_indices <- TRUE
+        with_Rcpp <- FALSE
+        return_d <- TRUE        
+    }
     if (do_checks | check_vs_indices) {
         return_d <- TRUE
     }
@@ -55,8 +64,8 @@ ms_BuildIndices_Algorithm5 <- function(
         }
     }
     if (return_d) {
-        d_vec[1] <- 2
-        d_vec[K + 1] <- 2
+        d_vec[1] <- 2L
+        d_vec[K + 1] <- 2L
         d[, 2] <- d_vec
     }
     ## 
@@ -85,22 +94,40 @@ ms_BuildIndices_Algorithm5 <- function(
     if (return_d) {
         d[, 1] <- d_vec
     }
-    for(t in 1:T) {
+    if (class(d_vec) != "integer") {
+        stop("class of d_vec not initialized properly")
+    }
+    for(t in 1L:as.integer(T)) {
         ##
         ## re-set
         ##
-        prev_d <- d_vec
+        prev_d <- integer(length(d_vec))
+        prev_d[] <- d_vec[]
         d_vec[] <- 0L
-        d_vec[1] <- t + 1
-        d_vec[K + 1] <- t + 1
+        d_vec[1] <- as.integer(t + 1)
+        d_vec[K + 1] <- as.integer(t + 1)
         ##
-        St <- n_symbols_per_grid[t] ## number of symbols in this grid
-        symbol_count <- all_symbols[[t]][, "count"]
-        ##
-        out <- one_move_forward_buildindices(
+        St <- as.integer(n_symbols_per_grid[t]) ## number of symbols in this grid
+        symbol_count <- as.integer(all_symbols[[t]][, "count"])
+        ## 
+        if (do_checks) {
+            usg_check <- array(0L, c(K + 1, St))
+        } else {
+            usg_check <- array(0L, c(1, 1))
+        }
+        if (with_Rcpp) {
+            f <- Rcpp_one_move_forward_buildindices
+        } else {
+            f <- one_move_forward_buildindices
+        }
+        if (class(d_vec) != "integer") {
+            stop("class of d_vec has changed")
+        }
+        out <- f(
             X1C = X1C,
             a = a,
             usg = usg,
+            usg_check = usg_check,
             d_vec = d_vec,
             prev_d = prev_d,
             t = t,
@@ -111,11 +138,13 @@ ms_BuildIndices_Algorithm5 <- function(
             n_min_symbols = n_min_symbols,
             do_checks = do_checks
         )
-        a <- out$a
-        usg <- out$usg
-        usge <- out$usge
-        usg_check <- out$usg_check
-        d_vec <- out$d_vec
+        if (!with_Rcpp) {
+            a <- out$a
+            usg <- out$usg
+            usg_check <- out$usg_check
+            d_vec <- out$d_vec
+        }
+        usge <- out[["usge"]]
         ## 
         usge_all[[t]] <- usge
         if (do_checks) {
@@ -131,7 +160,7 @@ ms_BuildIndices_Algorithm5 <- function(
         }
         if (t == 1) {
             ## Not sure
-            d_vec[0 + 1] <- t + 1 ## don't override
+            d_vec[0 + 1] <- as.integer(t + 1) ## don't override
         }
         d_store[[t + 1]] <- compress_d_one_grid(d_vec)
         ##
@@ -198,6 +227,7 @@ one_move_forward_buildindices <- function(
     X1C,
     a,
     usg,
+    usg_check,
     d_vec,
     prev_d,                                          
     t,
@@ -223,12 +253,7 @@ one_move_forward_buildindices <- function(
     start_count <- c(0, cumsum(symbol_count))
     ##    
     nso <- rep(0L, St) ## n_symbols_observed
-    pqs <- rep(t, St) ## pqs - vector analogue to pq
-    if (do_checks) {
-        usg_check <- array(0L, c(K + 1, St))
-    } else {
-        usg_check <- NULL
-    }
+    pqs <- rep(as.integer(t), St) ## pqs - vector analogue to pq
     val <- c()
     usg[] <- 0L
     ##    
@@ -244,7 +269,7 @@ one_move_forward_buildindices <- function(
         val <- c(val, start_count[s] + nso[s] + 1)
         a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
         ##d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
-        d_vec[start_count[s] + nso[s] + 1] <- pqs[s]
+        d_vec[start_count[s] + nso[s] + 1] <- as.integer(pqs[s])
         usg[k + 1 + 1,] <- usg[k + 1, ]
         if (s < first_usg_minimal_symbol) {
             usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
