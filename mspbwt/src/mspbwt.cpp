@@ -81,7 +81,7 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
     a(start_count[s0] + nso[s0], t0 + 1) = a(k0, t0);
     d_vec(start_count[s0] + nso[s0]) = pqs(s0);
     usg.row(k0 + 1) = usg.row(k0);
-    if (s0 < first_usg_minimal_symbol) {
+    if (s0 < first_usg_minimal_symbol - 1) {
       usg(k0 + 1, s0) = usg(k0 + 1, s0) + 1;
     } else {
       Rcpp::IntegerVector temp = usge[s0];
@@ -96,7 +96,7 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
     }
   }
   if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
-    for(s0 = 0; s0 < first_usg_minimal_symbol - 1 - 1; s0++) {
+    for(s0 = 0; s0 < first_usg_minimal_symbol - 1; s0++) {
       usge[s0] = Rcpp_encode_maximal_column_of_u(usg(_, s0), egs);
     }
   }
