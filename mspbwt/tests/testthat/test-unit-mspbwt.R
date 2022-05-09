@@ -188,7 +188,7 @@ test_that("can build and test efficient multi-symbol version", {
     skip("not for routine use")
     
     load("~/Downloads/rhb_t_small.RData")
-    rhb_t <- a[, 1:20]
+    rhb_t <- a ## [, 1:20]
     K <- nrow(rhb_t)
     ## can I just use hapMatcher, and special lookup?
 
@@ -198,12 +198,16 @@ test_that("can build and test efficient multi-symbol version", {
     all_symbols <- out[["all_symbols"]]
 
     ##
+    system.time({
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = hapMatcherA,
         all_symbols = all_symbols,
         egs = 100,
-        n_min_symbols = 100
+        n_min_symbols = 100,
+        with_Rcpp = TRUE
     )
+    })
+    ## hmm, 7 seconds for 100 grids? OK, so would be ~25 times longer. slow but not terrible
 
     usge_all <- ms_indices$usge_all
 
@@ -217,9 +221,21 @@ test_that("can build and test efficient multi-symbol version", {
         ## 
         t <- sapply(ms_indices, object.size) / 1e6
         data.frame(cbind(names(t), t))
+        ## at least usge_all is efficient!
+        ## not clear AT ALL that I can store d much more efficiently?
+        ## not worth it to continuously rebuild?
         ## ? can I rebuild a from usg?
         ## ? can I store periodically and rebuild?
 
+        ## FUCK - do d isn't stored efficiently AT ALL
+        sapply(ms_indices$d_store, function(x) length(x$vec2)) ## keeps growing!
+        d_store <- ms_indices$d_store
+        d <- array(0, c(K + 1, ncol(ms_indices$a)))
+        d[] <- 0
+        for(iGrid1 in 1:100) {
+            d[, iGrid1] <- decompress_d(d_store, iGrid1, K)
+        }
+        
         
         a <- ms_indices$a
         ## what does a look like - some long runs, but not always
@@ -248,7 +264,7 @@ test_that("can build and test efficient multi-symbol version", {
     object.size(ms_indices$d)
     
     ## check it can work!
-    Z <- c(hapMatcherA[100, 1:20])
+    Z <- c(hapMatcherA[100, ])
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = hapMatcherA,
         ms_indices = ms_indices,

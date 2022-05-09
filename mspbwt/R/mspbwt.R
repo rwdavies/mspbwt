@@ -13,7 +13,6 @@ ms_BuildIndices_Algorithm5 <- function(
     indices = NULL,
     egs = 100,
     n_min_symbols = 100,
-    return_d = FALSE,
     with_Rcpp = FALSE
 ) {
     if (1 == 0) {
@@ -39,36 +38,18 @@ ms_BuildIndices_Algorithm5 <- function(
     b <- array(NA, K)
     a[, 1] <- as.integer(0:(K - 1)) ## by definition for some reason
     a[, 2] <- as.integer(order(X1C[, 1]) - 1) ## 0-based
-    ## 
     ## related to d
-    if (return_d) {
-        d <- array(NA, c(K + 1, T + 1)) ## distances
-        d[1, ] <- 1:(T + 1)
-        d[K + 1, ] <- 1:(T + 1)
-    } else {
-        d <- NULL
-    }
-    d_store <- list(1:T)
-    d_vec <- integer(K + 1)
-    d_vec[1] <- 1L
-    d_vec[K + 1] <- 1L
-    d_store[[1]] <- compress_d_one_grid(d_vec)
-    dtemp <- array(NA, K) ## temp for filler
-    if (return_d) {
-        ## d is a 0, except first entry, and on (ordered) switch
-        d[, 2] <- 0
-    }
+    d <- array(as.integer(NA), c(K + 1, T + 1)) ## distances
+    d[, 1:2] <- 0L
     for(k in 1:(K - 1)) {
         if (X1C[a[k, 2] + 1, 1] != X1C[a[k + 1, 2] + 1, 1]) {
-            d_vec[k + 1] <- 1L
+            d[k + 1, 2] <- 1L
         }
     }
-    if (return_d) {
-        d_vec[1] <- 2L
-        d_vec[K + 1] <- 2L
-        d[, 2] <- d_vec
-    }
-    ## 
+    ##
+    d[1, ] <- as.integer(1:(T + 1))
+    d[K + 1, ] <- as.integer(1:(T + 1))
+    ##
     ##
     ns_obs <- rep(0L, Smax)
     ##
@@ -87,25 +68,10 @@ ms_BuildIndices_Algorithm5 <- function(
         expect_equal(a[, t + 1], indices$a[, t + 1])
         expect_equal(d[, t + 1], indices$d[, t + 1])
     }
-    ## re-set - argh
-    d_vec[] <- 0L
-    d_vec[1] <- 1L
-    d_vec[K + 1] <- 1L
-    if (return_d) {
-        d[, 1] <- d_vec
-    }
-    if (class(d_vec) != "integer") {
-        stop("class of d_vec not initialized properly")
-    }
+    ## 
     for(t in 1L:as.integer(T)) {
         ##
         ## re-set
-        ##
-        prev_d <- integer(length(d_vec))
-        prev_d[] <- d_vec[]
-        d_vec[] <- 0L
-        d_vec[1] <- as.integer(t + 1)
-        d_vec[K + 1] <- as.integer(t + 1)
         ##
         St <- as.integer(n_symbols_per_grid[t]) ## number of symbols in this grid
         symbol_count <- as.integer(all_symbols[[t]][, "count"])
@@ -120,16 +86,26 @@ ms_BuildIndices_Algorithm5 <- function(
         } else {
             f <- one_move_forward_buildindices
         }
-        if (class(d_vec) != "integer") {
-            stop("class of d_vec has changed")
+        things_to_check <- c(
+            "X1C", "a", "usg",
+            "usg_check", "d"
+        )
+        for(thing in things_to_check) {
+            result <- eval(parse(text = paste0("class(", thing, "[1])")))
+            if (result != "integer") {
+                eval(parse(text = paste0("class(", thing, ")")))
+                eval(parse(text = paste0("class(", thing, "[1])")))                
+                stop(paste0("class of ", thing, " has changed"))
+            }
         }
+        
+        ##op <- options(digits.secs = 6); print("--in --"); print(Sys.time())
         out <- f(
             X1C = X1C,
             a = a,
+            d = d,
             usg = usg,
             usg_check = usg_check,
-            d_vec = d_vec,
-            prev_d = prev_d,
             t = t,
             K = K,
             symbol_count = symbol_count,
@@ -138,11 +114,12 @@ ms_BuildIndices_Algorithm5 <- function(
             n_min_symbols = n_min_symbols,
             do_checks = do_checks
         )
+        ## op <- options(digits.secs = 6); print("--out--"); print(Sys.time())
         if (!with_Rcpp) {
             a <- out$a
+            d <- out$d
             usg <- out$usg
             usg_check <- out$usg_check
-            d_vec <- out$d_vec
         }
         usge <- out[["usge"]]
         ## 
@@ -158,18 +135,13 @@ ms_BuildIndices_Algorithm5 <- function(
                 )
             )
         }
-        if (t == 1) {
-            ## Not sure
-            d_vec[0 + 1] <- as.integer(t + 1) ## don't override
-        }
-        d_store[[t + 1]] <- compress_d_one_grid(d_vec)
         ##
-        if (return_d) {
-            d[, t + 1] <- d_vec
+        if (t == 1) {
+            d[0 + 1, t + 1] <- as.integer(t + 1) ## don't override
         }
         if (check_vs_indices) {
             expect_equal(a[, t + 1], indices$a[, t + 1])
-            expect_equal(d_vec, indices$d[, t + 1]) ## 160
+            expect_equal(d[, t + 1], indices$d[, t + 1]) ## 160
         }
         ## 
         ## do checks
@@ -198,25 +170,14 @@ ms_BuildIndices_Algorithm5 <- function(
             }
         }
     }
-    if (do_checks) {
-        for(iGrid1 in 1:ncol(d)) {
-            expect_equal(
-                d[, iGrid1],
-                decompress_d(d_store, iGrid1, K)
-            )
-        }
-    }
     to_return <- list(
         a = a,
+        d = d,
         usge_all = usge_all,
-        d_store = d_store,
         egs = egs,
         n_min_symbols = n_min_symbols,
         all_symbols = all_symbols
     )
-    if (return_d) {
-        to_return <- append(to_return, list(d = d))
-    }
     to_return
 }
 
@@ -226,10 +187,9 @@ ms_BuildIndices_Algorithm5 <- function(
 one_move_forward_buildindices <- function(
     X1C,
     a,
+    d,
     usg,
     usg_check,
-    d_vec,
-    prev_d,                                          
     t,
     K,
     symbol_count,
@@ -259,7 +219,8 @@ one_move_forward_buildindices <- function(
     ##    
     for(k in 0:(K - 1)) { ## haps (1-based)
         s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
-        match_start <- prev_d[k + 1]
+        ## match_start <- prev_d[k + 1]
+        match_start <- d[k + 1, t]
         for(i in 0:(St - 1)) {
             if (match_start > pqs[i + 1]) {
                 pqs[i + 1] <- match_start
@@ -268,8 +229,8 @@ one_move_forward_buildindices <- function(
         ## now - where it goes - 0 based
         val <- c(val, start_count[s] + nso[s] + 1)
         a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
-        ##d[start_count[s] + nso[s] + 1, t + 1] <- pqs[s]
-        d_vec[start_count[s] + nso[s] + 1] <- as.integer(pqs[s])
+        d[start_count[s] + nso[s] + 1, t + 1] <- as.integer(pqs[s])
+        ## d_vec[start_count[s] + nso[s] + 1] <- as.integer(pqs[s])
         usg[k + 1 + 1,] <- usg[k + 1, ]
         if (s < first_usg_minimal_symbol) {
             usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
@@ -290,10 +251,10 @@ one_move_forward_buildindices <- function(
     }
     list(
         a = a,
+        d = d,
         usg = usg,
         usge = usge,
-        usg_check = usg_check,
-        d_vec = d_vec
+        usg_check = usg_check
     )
 }
 
@@ -312,8 +273,8 @@ ms_MatchZ_Algorithm5 <- function(
     T <- ncol(X)
     ## indices
     a <- ms_indices[["a"]]
-    ## d <- ms_indices[["d"]]
-    d_store <- ms_indices[["d_store"]]
+     d <- ms_indices[["d"]]
+    ##d_store <- ms_indices[["d_store"]]
     usge_all <- ms_indices[["usge_all"]]
     ## things needed as well
     egs <- ms_indices[["egs"]]
@@ -380,16 +341,15 @@ ms_MatchZ_Algorithm5 <- function(
                     matrix(c(k, a[k + 1, t], ec + 1, t - 1), nrow = 1)
                 )
             }
-            d_vec <- decompress_d(d_store, t + 1, K)
-            ## e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
-            e1 <- d_vec[f1 + 1] - 1 ## this is 0-based, probably!
+            ##d_vec <- decompress_d(d_store, t + 1, K)
+            e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
             if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1] ## a
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                 }
-                while (d_vec[f1 + 1] <= e1) { ## d
+                while (d[f1 + 1, t + 1] <= e1) {
                     f1 <- f1 - 1
                 }
             } else if (f1 < K) {
@@ -398,7 +358,7 @@ ms_MatchZ_Algorithm5 <- function(
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                 }
-                while ((g1 < K) && (d_vec[g1 + 1] <= e1)) { ## d
+                while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
                     g1 <- g1 + 1
                 }
             }

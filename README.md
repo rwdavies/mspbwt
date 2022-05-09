@@ -1,6 +1,13 @@
 # mspbwt
 
-todo:
+TODO
+=============
+ - Push the whole building part into C++, see if I can make more efficient
+ - Make encoding of d optional
+
+ 
+
+Old todo:
 I have the first part working, in that the multi-symbol version is the same as the two symbol version, when run on two symbols
 It also works on a larger SNP set, when there are a few symbols, which is great
 
@@ -36,8 +43,12 @@ Works pretty well it looks like!
 
 TODO
 ================
- - OK, so d is encoded, and into building and running function
- - Now check out a as well? Looks a bit complicated!
+ - make encoding of d an option
+ - build the full thing then take a look
+ - To do, get even larger, full sized version
+ - a I am generally screwed, I think, unless I can truly figure out building on the fly etc
+ - but it's not so bad?
+
 
  - Ensure functions to access u, etc, can be easily accessed and swapped out
  - Does it make sense to do a and d in the same way, or somehow take their difference? Should I have done that for u? (or problem - having to go too far?)
