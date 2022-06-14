@@ -31,8 +31,8 @@ order_ <- function(x) {
 }
 
 #' @export
-Rcpp_ms_BuildIndices_Algorithm5 <- function(X1C, all_symbols, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, egs = 100L, n_min_symboils = 100L, with_Rcpp = TRUE) {
-    .Call('_mspbwt_Rcpp_ms_BuildIndices_Algorithm5', PACKAGE = 'mspbwt', X1C, all_symbols, verbose, do_checks, check_vs_indices, egs, n_min_symboils, with_Rcpp)
+Rcpp_ms_BuildIndices_Algorithm5 <- function(X1C, all_symbols, indices, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, egs = 100L, n_min_symbols = 100L, with_Rcpp = TRUE) {
+    .Call('_mspbwt_Rcpp_ms_BuildIndices_Algorithm5', PACKAGE = 'mspbwt', X1C, all_symbols, indices, verbose, do_checks, check_vs_indices, egs, n_min_symbols, with_Rcpp)
 }
 
 #' @export

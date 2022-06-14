@@ -124,20 +124,26 @@ IntegerVector order_(IntegerVector x) {
 Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     Rcpp::IntegerMatrix X1C,
     Rcpp::List all_symbols,
+    Rcpp::List indices,
     bool verbose = false,
     bool do_checks = false,
     bool check_vs_indices = false,
     int egs = 100,
-    int n_min_symboils = 100,
+    int n_min_symbols = 100,
     bool with_Rcpp = true
 ) {    
     //
     const int K = X1C.nrow();
     const int T = X1C.ncol();
     //
+    // don't use this, but need to pass through
+    //
+    Rcpp::IntegerMatrix usg_check(1, 1);
+    //
+    //
     Rcpp::IntegerVector n_symbols_per_grid(all_symbols.length());
     int Smax = 0;
-    int i, k;
+    int i, k, t;
     for(i = 0; i < all_symbols.length(); i++) {
       Rcpp::NumericMatrix temp = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[i]);
       n_symbols_per_grid[i] = temp.nrow();
@@ -150,38 +156,72 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     Rcpp::IntegerMatrix c(T + 1);
     Rcpp::IntegerVector b(K);
     for(k = 0; k < K; k++) {
-      a[k, 0] = k;
+      a(k, 0) = k;
     }
     a(_, 1) = order_(X1C(_, 0)) - 1;
     //
     // d
     //
     Rcpp::IntegerMatrix d(K + 1, T + 1);
-    for(int i = 0; i < T; i++) {
+    d.fill(0); // unnecessary?
+    for(k = 0; k <= (K - 1 - 1); k++) {
+      if (X1C(a(k, 1), 0) != X1C(a(k + 1, 1), 0)) {
+	d(k + 1, 1) = 1;
+      }
+    }
+    for(i = 0; i <= T; i++) {
       d(0, i) = i + 1;
       d(K, i) = i + 1;
     }
-    // argh, will try and get rid of
-    Rcpp::IntegerVector d_vec(K + 1);
-    d_vec(0) = 1;
-    d_vec(K) = 1;
-    for(k = 0; k < K + 1; k++) {
-      d(k, 1) = 0;
+    //
+    //
+    //
+    Rcpp::IntegerVector ns_obs(Smax);
+    //
+    Rcpp::List usge_all(T);
+    int Smax_for_usl = 0;
+    for(t = 0; t < T; t++) {
+        Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t]);
+	int x = 0;
+	for(i = 0; i < temp2.nrow(); i++) {
+	    if (temp2(i, 1) > n_min_symbols) {
+	        x += 1;
+	    }
+	}
+	if (x > Smax_for_usl) {
+	    Smax_for_usl = x;
+	}
     }
-    for(k = 0; k <= (K - 1 - 1); k++) {
-      if (X1C(a(k, 1), 0) != X1C(a(k + 1, 1), 0)) {
-	d_vec(k + 1) = 1;
+    Rcpp::IntegerMatrix usg(K + 1, Smax_for_usl);
+    //
+    //
+    //
+    for(t = 1; t <= T; t++) {
+      //
+      // re-set
+      //
+      int St = n_symbols_per_grid(t - 1);
+      Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);
+      // argh
+      Rcpp::IntegerVector symbol_count(temp2.nrow());
+      for(i = 0; i < temp2.nrow(); i++) {
+	symbol_count(i) = temp2(i, 1);
+      }
+      Rcpp::List usge = Rcpp_one_move_forward_buildindices(
+          X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks
+      );
+      usge_all(t - 1) = usge("usge");
+      if (t == 1) {
+	d(0, t) = t + 1;
       }
     }
-    d_vec(0) = 2;
-    d_vec(K) = 2;
-    d(_, 1) = d_vec;
-    //
-    // ARGH THIS IS TORTURE - remove dependency on d_vec then continue from here
-    //
     Rcpp::List to_return = Rcpp::List::create(
-					      Rcpp::Named("a") = a,
-					      Rcpp::Named("n_symbols_per_grid") = n_symbols_per_grid
+        Rcpp::Named("a") = a,
+        Rcpp::Named("d") = d,
+        Rcpp::Named("usge_all") = usge_all,
+	Rcpp::Named("egs") = egs,
+	Rcpp::Named("n_min_symbols") = n_min_symbols,
+	Rcpp::Named("all_symbols") = all_symbols
     );
     return(to_return);
 }

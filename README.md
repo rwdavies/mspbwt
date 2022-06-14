@@ -1,9 +1,12 @@
 # mspbwt
 
-TODO
+Current
 =============
- - Push the whole building part into C++, see if I can make more efficient
- - Make encoding of d optional
+ - Now have the whole building in C++
+ - So could test on an e.g. 2 Mbp region, see if it can work
+
+
+
 
  
 

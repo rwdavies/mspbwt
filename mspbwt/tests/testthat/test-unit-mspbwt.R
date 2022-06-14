@@ -12,7 +12,6 @@ if (1 == 0) {
         a <- a[-b]
     }
     o <- sapply(a, source)
-    
     dir <- "~/proj/mspbwt/"
     setwd(paste0(dir, "/mspbwt/R"))
     a <- dir(pattern = "*.R")
@@ -80,6 +79,14 @@ test_that("can run multi-symbol version with 2 symbols", {
     )
     expect_equal(ms_indices, ms_indices_with_Rcpp)
 
+    ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        indices = list()
+    )
+    expect_equal(ms_indices, ms_indices_only_Rcpp)
+    
+    
     ## this should still work, 
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = X1,
@@ -159,6 +166,15 @@ test_that("can run multi-symbol version with multiple symbols", {
     )
     expect_equal(ms_indices, ms_indices_with_Rcpp)
 
+    ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = hapMatcherA,
+        all_symbols = all_symbols,
+        indices = list(),
+        egs = 5,
+        n_min_symbols = 5
+    )
+    expect_equal(ms_indices, ms_indices_only_Rcpp)
+    
     
     ## OK here as directly taking symbols
     Z <- c(
@@ -209,6 +225,18 @@ test_that("can build and test efficient multi-symbol version", {
     })
     ## hmm, 7 seconds for 100 grids? OK, so would be ~25 times longer. slow but not terrible
 
+    system.time({    
+    ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = hapMatcherA,
+        all_symbols = all_symbols,
+        indices = list(),
+        egs = 100,
+        n_min_symbols = 100
+    )
+    })
+    expect_equal(ms_indices, ms_indices_only_Rcpp)
+    
+
     usge_all <- ms_indices$usge_all
 
     ## so for whatever reason "u" is now a matrix per-site
@@ -221,9 +249,12 @@ test_that("can build and test efficient multi-symbol version", {
         ## 
         t <- sapply(ms_indices, object.size) / 1e6
         data.frame(cbind(names(t), t))
+        
         ## at least usge_all is efficient!
         ## not clear AT ALL that I can store d much more efficiently?
         ## not worth it to continuously rebuild?
+
+        
         ## ? can I rebuild a from usg?
         ## ? can I store periodically and rebuild?
 
