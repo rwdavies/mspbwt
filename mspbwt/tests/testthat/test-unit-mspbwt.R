@@ -97,10 +97,32 @@ test_that("can run multi-symbol version with 2 symbols", {
         check_vs_indices = TRUE,
         indices = indices
     )
-
-
-    
     expect_equal(top_matches, ms_top_matches)
+    
+
+    ## check can stretch without issue
+    X <- X * 10 - 5
+    out <- make_hapMatcherA(X)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    
+    ms_indices2 <- ms_BuildIndices_Algorithm5(
+        X1C = hapMatcherA,
+        all_symbols = all_symbols,
+        check_vs_indices = TRUE,
+        indices = indices
+    )
+    
+    ms_top_matches2 <- ms_MatchZ_Algorithm5(
+        X = X1,
+        ms_indices = ms_indices2,
+        Z = Z1,
+        verbose = FALSE,
+        do_checks = FALSE,
+        check_vs_indices = TRUE,
+        indices = indices
+    )
+    expect_equal(top_matches, ms_top_matches2)
     
     
 })
@@ -204,39 +226,98 @@ test_that("can build and test efficient multi-symbol version", {
     skip("not for routine use")
     
     load("~/Downloads/rhb_t_small.RData")
-    rhb_t <- a ## [, 1:20]
-    K <- nrow(rhb_t)
-    ## can I just use hapMatcher, and special lookup?
+    
+    load("~/Downloads/test_nicola/quilt_output/RData/QUILT_prepared_reference.chr20.10000001.12000000.RData")
 
-    ## simple hapMatcher
+    K <- nrow(rhb_t)
+    to_keep <- c(100, 200, 29963 + 1)
+    out <- make_hapMatcherA(rhb_t[to_keep, 1:100])
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    system.time({    
+        ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+            X1C = hapMatcherA,
+            all_symbols = all_symbols,
+            indices = list(),
+            egs = 100,
+            n_min_symbols = 100
+        )
+    })["elapsed"]
+
+    ## can I make the problem smaller
+    N <- 15
+    ## i1 <- 100
+    ## i2 <- 200
+    i1 <-1
+    i2 <- 2
+    Z <- c(hapMatcherA[i1, 1:N], hapMatcherA[i2, (N + 1):ncol(hapMatcherA)])
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+        X = hapMatcherA,
+        ms_indices = ms_indices_only_Rcpp,
+        Z = Z,
+        verbose = FALSE,
+        do_checks = FALSE,
+        check_vs_indices = FALSE
+    )
+    ms_top_matches[ms_top_matches[, "indexB0"] %in% c(i1 - 1, i2 - 1), ]
+    ## 
+
+    ## check each one?
+    for(i in 1:nrow(ms_top_matches)) {
+        s <- ms_top_matches[i, "start1"]
+        e <- ms_top_matches[i, "end1"]
+        
+        ## off on first one?
+        Z[s:e]
+        hapMatcherA[ms_top_matches[i, "indexB0"] + 1, s:e]
+        
+        stopifnot(sum(Z[s:e] != hapMatcherA[ms_top_matches[i, "indexB0"] + 1, s:e]) == 0)
+    }
+    
+    ## OK, legit better
+    ms_top_matches
+    (Z == hapMatcherA[29963 + 1, ])[(N + 1):ncol(hapMatcherA)]
+    
+    
+    cbind(Z, NA, t(hapMatcherA[c(i1, i2), ]))
+
+    
+
+    ##
+    ## check speed
+    ##
+    f <- function(T) {
+        K <- nrow(rhb_t)
+        out <- make_hapMatcherA(rhb_t[, 1:T])
+        hapMatcherA <- out[["hapMatcherA"]]
+        all_symbols <- out[["all_symbols"]]
+        system.time({    
+            ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+                X1C = hapMatcherA,
+                all_symbols = all_symbols,
+                indices = list(),
+                egs = 100,
+                n_min_symbols = 100
+            )
+        })["elapsed"]
+    }
+    ## mostly linear
+    o <- sapply(seq(10, 100, 10), f)
+
+    K <- nrow(rhb_t)
     out <- make_hapMatcherA(rhb_t)
     hapMatcherA <- out[["hapMatcherA"]]
     all_symbols <- out[["all_symbols"]]
-
-    ##
-    system.time({
-    ms_indices <- ms_BuildIndices_Algorithm5(
-        X1C = hapMatcherA,
-        all_symbols = all_symbols,
-        egs = 100,
-        n_min_symbols = 100,
-        with_Rcpp = TRUE
-    )
-    })
-    ## hmm, 7 seconds for 100 grids? OK, so would be ~25 times longer. slow but not terrible
-
     system.time({    
-    ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
-        X1C = hapMatcherA,
-        all_symbols = all_symbols,
-        indices = list(),
-        egs = 100,
-        n_min_symbols = 100
-    )
-    })
-    expect_equal(ms_indices, ms_indices_only_Rcpp)
+        ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
+            X1C = hapMatcherA,
+            all_symbols = all_symbols,
+            indices = list(),
+            egs = 100,
+            n_min_symbols = 100
+        )
+    })["elapsed"]
     
-
     usge_all <- ms_indices$usge_all
 
     ## so for whatever reason "u" is now a matrix per-site
@@ -247,28 +328,17 @@ test_that("can build and test efficient multi-symbol version", {
     if (1 == 0) {
 
         ## 
-        t <- sapply(ms_indices, object.size) / 1e6
+        t <- sapply(ms_indices_only_Rcpp, object.size) / 1e6
         data.frame(cbind(names(t), t))
-        
-        ## at least usge_all is efficient!
-        ## not clear AT ALL that I can store d much more efficiently?
-        ## not worth it to continuously rebuild?
 
+        object.size(ms_indices_only_Rcpp$a) / 1024 / 1024
+        object.size(ms_indices_only_Rcpp$d) / 1024 / 1024        
         
-        ## ? can I rebuild a from usg?
-        ## ? can I store periodically and rebuild?
+        a <- ms_indices_only_Rcpp$a
+        d <- ms_indices_only_Rcpp$d
 
-        ## FUCK - do d isn't stored efficiently AT ALL
-        sapply(ms_indices$d_store, function(x) length(x$vec2)) ## keeps growing!
-        d_store <- ms_indices$d_store
-        d <- array(0, c(K + 1, ncol(ms_indices$a)))
-        d[] <- 0
-        for(iGrid1 in 1:100) {
-            d[, iGrid1] <- decompress_d(d_store, iGrid1, K)
-        }
-        
-        
-        a <- ms_indices$a
+        ## difference between d's? can I rebuild easily?
+
         ## what does a look like - some long runs, but not always
         ## store difference somehow?
         a <- table(d, useNA = "always")
@@ -288,7 +358,10 @@ test_that("can build and test efficient multi-symbol version", {
         )
 
     }
+
+
     
+    ## did this truly work? it didn't find 999?
     
     ## kind of surprised so slow? 
     object.size(usge_all)
@@ -349,6 +422,7 @@ test_that("can build and test efficient multi-symbol version", {
 
     b <- hapMatcherA[ms_indices$a[, 4] + 1, ]
     ## nrow(unique(b)) wow only 222 here already
+
     
 })
 
