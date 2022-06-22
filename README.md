@@ -4,6 +4,8 @@ Current
 =============
  - Now have the whole building in C++
  - So could test on an e.g. 2 Mbp region, see if it can work
+ - Then maybe some mild profiling
+ - Then broadly ready for use!
 
 
 

@@ -26,6 +26,16 @@ ms_BuildIndices_Algorithm5 <- function(
     if (do_checks | check_vs_indices) {
         return_d <- TRUE
     }
+    if (do_checks) {
+        ## here check validity of X1X
+        stopifnot(class(X1C[1, 1]) == "integer")
+        for(iCol in 1:ncol(X1C)) {
+            m1 <- min(X1C[, iCol])            
+            m2 <- max(X1C[, iCol])
+            stopifnot(m1 == 1)
+            stopifnot(sort(unique(X1C[, iCol])) == (m1:m2))
+        }
+    }
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
     n_symbols_per_grid <- as.integer(sapply(all_symbols, nrow))
@@ -267,7 +277,8 @@ ms_MatchZ_Algorithm5 <- function(
     verbose = FALSE,
     do_checks = FALSE,
     check_vs_indices = FALSE,
-    indices = FALSE
+    indices = FALSE,
+    print_or_message = print
 ) {
     K <- nrow(X)
     T <- ncol(X)
@@ -329,7 +340,9 @@ ms_MatchZ_Algorithm5 <- function(
         f1 <- wf(fc, t, Z[t], usge_all, all_symbols)
         g1 <- wf(gc, t, Z[t], usge_all, all_symbols)
         if (verbose) {
-            message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
+            if (t <= 10) {
+                print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
+            }
         } 
         if (g1 > f1) {
             ## nothing to do
@@ -343,6 +356,10 @@ ms_MatchZ_Algorithm5 <- function(
             }
             ##d_vec <- decompress_d(d_store, t + 1, K)
             e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+
+            ## almost certainly a problem here!
+            ## need to figure out what this should be 
+            
             if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1] ## a
@@ -372,9 +389,14 @@ ms_MatchZ_Algorithm5 <- function(
     }
     t <- t + 1
     if (fc < gc) {
+        if (verbose) {
+            print_or_message(paste0("final fc = ", fc))
+            print_or_message(paste0("final gc = ", gc))
+        }
         for(k in fc:(gc - 1)) {
             if (verbose) {
-                message("save final match")
+                print_or_message("save final match")
+                print_or_message(paste0("k = ", k, ", i0 = ", a[k + 1, t], ", s1 = ", ec + 1, ", e1 = ", t - 1))
             }
             top_matches <- rbind(
                 top_matches,
@@ -440,3 +462,20 @@ make_hapMatcherA <- function(
 
 
 
+
+
+## here if we have some X (original matrix with symbols), and some Z with the same encoding
+## and we've mapped X to this new encoding, into hapMatcherA, and all_symbols
+## we want to do the same with Z
+map_Z_to_all_symbols <- function(Z, all_symbols) {
+    Z1 <- Z
+    Z1[] <- 0L
+    for(i in 1:length(Z)) {
+        Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
+        if (is.na(Z1[i])) {
+            stop("have not figured this out yet!")
+        }
+    }
+    Z1 <- as.integer(Z1)
+    Z1
+}
