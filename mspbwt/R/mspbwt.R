@@ -356,11 +356,7 @@ ms_MatchZ_Algorithm5 <- function(
             }
             ##d_vec <- decompress_d(d_store, t + 1, K)
             e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
-
-            ## almost certainly a problem here!
-            ## need to figure out what this should be 
-            
-            if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
+            if ((Z[e1 + 1] == 1 && f1 > 0) || f1 == K) {
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1] ## a
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
@@ -465,6 +461,7 @@ make_hapMatcherA <- function(
 
 
 ## here if we have some X (original matrix with symbols), and some Z with the same encoding
+## defined at the SAME GRIDs (i.e. both are for grids and neither for SNPs)
 ## and we've mapped X to this new encoding, into hapMatcherA, and all_symbols
 ## we want to do the same with Z
 map_Z_to_all_symbols <- function(Z, all_symbols) {

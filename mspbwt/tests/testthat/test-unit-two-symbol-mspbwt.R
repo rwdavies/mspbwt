@@ -72,7 +72,8 @@ test_that("multi-version with 2 symbols can work, when symbols are relabelled", 
 
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
-
+    check_top_matches(top_matches, X, Z)     
+    
     out <- make_hapMatcherA(X)
     hapMatcherA <- out[["hapMatcherA"]]
     all_symbols <- out[["all_symbols"]]
@@ -80,7 +81,7 @@ test_that("multi-version with 2 symbols can work, when symbols are relabelled", 
 
     ## checking vs indices only works 
     ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, check_vs_indices = FALSE)
-    
+
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = hapMatcherA,
         ms_indices = ms_indices,
@@ -92,20 +93,24 @@ test_that("multi-version with 2 symbols can work, when symbols are relabelled", 
     )
     expect_equal(top_matches[, -1], ms_top_matches[, -1])
 
+    check_top_matches(ms_top_matches, X, Z)         
+    
 })
 
 
 test_that("multi-symbol with 2 symbols can work anywhere", {
 
-
-    skip("WIP")
     set.seed(14541)
-    is_first_run <- TRUE
+    irow <- 1
+    icol <- 1
+    K <- 65
+    T <- 35
+    w <- 15 ## width
     
     for(irow in 1:5) {
         for(icol in 1:5) {
 
-            out <- test_driver_simple(irow = irow, icol = icol, K = 65, T = 35)
+            out <- test_driver_simple(irow = irow, icol = icol, K = K, T = T, w = w)
             X <- out$X
             Z <- out$Z
 
@@ -113,15 +118,18 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
             top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
             ## check the result is there
-            check_expected_top_match(top_matches, irow, icol, K, T) 
+            check_expected_top_match(top_matches, irow, icol, K, T, w) 
             
             out <- make_hapMatcherA(X)
             hapMatcherA <- out[["hapMatcherA"]]
             all_symbols <- out[["all_symbols"]]
             Z1 <- map_Z_to_all_symbols(Z, all_symbols)
             
-            ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, do_checks = is_first_run, check_vs_indices = is_first_run)
-            is_first_run <- FALSE
+            ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+                X1C = hapMatcherA,
+                all_symbols = all_symbols,
+                indices = list()
+            )
             
             ms_top_matches <- ms_MatchZ_Algorithm5(
                 X = hapMatcherA,
@@ -129,10 +137,15 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
                 Z = Z1,
                 verbose = FALSE,
                 do_checks = FALSE,
-                check_vs_indices = TRUE,
-                indices = indices
+                check_vs_indices = FALSE,
+                indices = FALSE
             )
-            expect_equal(top_matches, ms_top_matches)
+
+            ## argh, can be swapped
+            expect_equal(
+                top_matches[order(top_matches[, "indexB0"]), -1],
+                ms_top_matches[order(ms_top_matches[, "indexB0"]), -1]
+            )
             
         }
     }
