@@ -339,12 +339,13 @@ ms_MatchZ_Algorithm5 <- function(
     for(t in 2:T) {
         f1 <- wf(fc, t, Z[t], usge_all, all_symbols)
         g1 <- wf(gc, t, Z[t], usge_all, all_symbols)
-        if (verbose) {
+        if (verbose && t <= 120) {
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         } 
         if (g1 > f1) {
             ## nothing to do
         } else {
+            if (verbose) print("save start")
             ## we have reached a maximum - need to report and update e, f, g
             for(k in fc:(gc - 1)) {
                 top_matches <- rbind(
@@ -354,7 +355,9 @@ ms_MatchZ_Algorithm5 <- function(
             }
             ##d_vec <- decompress_d(d_store, t + 1, K)
             e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+            if (verbose) print(paste0("e1 = ", e1))
             if ((Z[e1 + 1] == 1 && f1 > 0) || f1 == K) {
+                if (verbose) print("A")                
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1] ## a
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
@@ -364,8 +367,13 @@ ms_MatchZ_Algorithm5 <- function(
                     f1 <- f1 - 1
                 }
             } else if (f1 < K) {
+                if (verbose) print("B")                
                 g1 <- f1 + 1
                 index <- a[f1 + 1, t + 1] ## a
+                print(paste0(
+                    "e1 = ", e1, ", ", 
+                    "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
+                ))
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                 }
@@ -373,6 +381,8 @@ ms_MatchZ_Algorithm5 <- function(
                     g1 <- g1 + 1
                 }
             }
+            if (verbose) print(paste0("e1 = ", e1))
+            if (verbose) print("save stop")
             ec <- e1
         }
         fc <- f1

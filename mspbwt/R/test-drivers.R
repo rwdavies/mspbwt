@@ -41,12 +41,19 @@ test_driver_simple <- function(
 }
 
 
-check_expected_top_match <- function(top_matches, irow, icol, K, T, w = 10) {
-    a <- get_row_col(irow, icol, T, K, w) 
+check_expected_top_match <- function(top_matches, irow, icol, K, T, w = 10, is_grid_check_snps = FALSE) {
+    a <- get_row_col(irow, icol, T, K, w)
     i <- match(a["row"], top_matches[, "indexB0"] + 1)
     expect_equal(length(i), 1)
-    expect_equivalent(top_matches[i, "start1"], a["c1"])
-    expect_equivalent(top_matches[i, "end1"], a["c2"])    
+    if (!is_grid_check_snps) {
+        expect_equivalent(top_matches[i, "start1"], a["c1"])
+        expect_equivalent(top_matches[i, "end1"], a["c2"])    
+    } else {
+        a["c1"] <- 32 * (a["c1"] - 1) + 1
+        a["c2"] <- 32 * a["c2"]
+        expect_true(top_matches[i, "start1"] <= a["c1"])
+        expect_true(a["c2"] <= top_matches[i, "end1"]) 
+    }
 }
 
 ## at a minimum, these should all match
@@ -101,3 +108,59 @@ build_and_check_indices <- function(
     expect_equal(ms_indices, ms_indices_only_Rcpp)
     ms_indices
 }
+
+
+
+
+##  
+##  
+test_driver_multiple <- function(
+    K = 95,
+    nGrids = 12,
+    irow = 1,
+    icol = 1,
+    w = 6
+) {
+    T <- nGrids * 32
+    ## build SNP X
+    X <- array(1L, c(K, T))
+    Z <- rep(1L, T)
+    a <- get_row_col(irow, icol, nGrids, K, w) ## in grid notation
+    for(j in 1:nGrids) {    
+        ## choose 2-5 symbols to be present
+        starts <- sort(sample(5:14, 1 + sample(4, 1), replace = FALSE))
+        ends <- sort(sample(16:25, length(starts), replace = FALSE))
+        for(i in 1:nrow(X)) {
+            k <- sample(length(starts), 1)
+            X[i, 32 * (j - 1) + starts[k]:ends[k]] <- 0L
+        }
+        ## do Z as well, always choose "first" one
+        k <- 1
+        Z[32 * (j - 1) + starts[k]:ends[k]] <- 0L
+        ## make sure focal X otherwise is distinct
+        k <- 2
+        X[a["row"], 32 * (j - 1) + starts[k]:ends[k]] <- 0L
+    }
+    ## now make the match
+    which_snps <- (32 * (a["c1"] - 1) + 1):(32 * a["c2"])
+    X[a["row"], which_snps] <- Z[which_snps]
+    ## re-name with "S" for SNP to make clear
+    Xs <- X
+    Zs <- Z 
+    ## rest
+    rhb_t <- make_rhb_t_from_rhi_t(X)    
+    out <- make_hapMatcherA(rhb_t)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
+    Z <- map_Z_to_all_symbols(Zg, all_symbols) 
+    ##    
+    list(
+        Xs = Xs,
+        Zs = Zs,
+        hapMatcherA = hapMatcherA,
+        all_symbols = all_symbols,
+        Z = Z
+    )
+}
+

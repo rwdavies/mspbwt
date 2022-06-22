@@ -102,7 +102,7 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
 
     set.seed(14541)
     irow <- 1
-    icol <- 1
+    icol <- 2
     K <- 65
     T <- 35
     w <- 15 ## width
@@ -135,7 +135,7 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
                 X = hapMatcherA,
                 ms_indices = ms_indices,
                 Z = Z1,
-                verbose = FALSE,
+                verbose = TRUE,
                 do_checks = FALSE,
                 check_vs_indices = FALSE,
                 indices = FALSE
@@ -179,7 +179,7 @@ test_that("multi-version with 2 symbols can capture clean breaks", {
         X = hapMatcherA,
         ms_indices = ms_indices,
         Z = Z1,
-        verbose = FALSE,
+        verbose = TRUE,
         do_checks = FALSE,
         check_vs_indices = TRUE,
         indices = indices

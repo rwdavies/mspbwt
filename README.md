@@ -2,6 +2,11 @@
 
 Current
 =============
+ - OK so now have a bug, probably a big one
+ - I think the updating is wrong for ms-pbwt
+ - Better understand current (normal) PBWT, and think about what should happen given arbitrary (not just 0-1) break / swap
+
+ - Then
  - Now have the whole building in C++
  - So could test on an e.g. 2 Mbp region, see if it can work
  - Then maybe some mild profiling
