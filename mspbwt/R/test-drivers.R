@@ -50,7 +50,7 @@ check_expected_top_match <- function(top_matches, irow, icol, K, T, w = 10) {
 }
 
 ## at a minimum, these should all match
-check_top_matches <- function(top_matches, X, Z) {
+check_top_matches <- function(top_matches, X, Z, continue = FALSE) {
     for(irow in 1:nrow(top_matches)) {
         i <- top_matches[irow, "indexB0"] + 1
         c1 <- top_matches[irow, "start1"]
@@ -59,9 +59,11 @@ check_top_matches <- function(top_matches, X, Z) {
         if (s > 0) {
             print("top match inaccurate")
             print(top_matches[irow, ])
-            print(paste0(X[i, c1:c2], collapse = ""))
-            print(paste0(Z[c1:c2], collapse = ""))
-            stop("top match innacurate")
+            print(paste0(X[i, c1:c2], collapse = ","))
+            print(paste0(Z[c1:c2], collapse = ","))
+            if (!continue) {
+                stop("top match innacurate")
+            }
         }
     }
 }

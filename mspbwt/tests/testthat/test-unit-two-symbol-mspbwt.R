@@ -153,3 +153,37 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
 })
 
 
+
+
+
+test_that("multi-version with 2 symbols can capture clean breaks", {
+
+    X <- array(0L, c(100, 30))
+    X[3, 1:10] <- 1L
+    X[2, 11:20] <- 1L
+    X[1, 21:30] <- 1L
+    Z <- rep(1L, 30)
+    
+    indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
+    top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
+
+    out <- make_hapMatcherA(X)
+    hapMatcherA <- out[["hapMatcherA"]]
+    all_symbols <- out[["all_symbols"]]
+    Z1 <- map_Z_to_all_symbols(Z, all_symbols)            
+
+    ## checking vs indices only works 
+    ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, indices = indices, check_vs_indices = FALSE)
+    
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+        X = hapMatcherA,
+        ms_indices = ms_indices,
+        Z = Z1,
+        verbose = FALSE,
+        do_checks = FALSE,
+        check_vs_indices = TRUE,
+        indices = indices
+    )
+    expect_equal(top_matches, ms_top_matches)
+
+})
