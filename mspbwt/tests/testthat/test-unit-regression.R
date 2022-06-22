@@ -29,6 +29,11 @@ if (1 == 0) {
 ## bugs found and (should be!) fixed
 
 test_that("bug found", {
+
+    ##
+    ## this bug is a simplified version of a larger bug that was found and was reproducible
+    ## the issue was that the mspbwt code was using minimal value of X of 0 not 1
+    ##
     
     a1 <- c(0, 0, 0, 0, 0, 256, 0, 0, 65, 134742016, 671252736, 671090727, 268439584, 541148292, 33, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 4194848, 16777216, 0, 0, 0, 0, 5373952, -2147483644, 69892, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA, 8392864, -1605565856, 67143176, 9541896, 645922864, 114688, 4723202, 1342177280, -2146303946, -2147467110, 4456449, 35651588, 276865088, 559153184, 151553, 1207959584, 160180225, 67112960, 33562626, 136052736, 4344864, 2098176, -1207959550)
     a2 <- c(0, 0, 14942208, 1024, 268960256, 1048576, 8388609, 0, 280641, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 4194848, 16777216, 0, 0, 0, 0, 5373952, -2147483644, 69892, 638586882, 0, 1024, 0, 1073741824, 10240, 33558560, 67109120, 0, 268992521, 1310736, 67117056, 32, 0, 0, 1073741888, 1209008128, 4260096, -2147483623, 2097, 268437536, 16908288, 0, 2097280, 146819328, 147464, 0, 541065216, 256, 0, 536870912, 134217728, 589824, 0, 0, 33554458, 0, 268435456, 33056, 536871456, 524288, 0, 0, 2, 256, 0, 1024, 0, 256)
@@ -64,9 +69,6 @@ test_that("bug found", {
         )
         expect_equal(ms_indices, ms_indices_only_Rcpp)
 
-        ## do I have the unsimplified ones as wel?
-        
-        
         ## can I make the problem smaller
         N <- 15
         ## i1 <- 100
@@ -75,12 +77,11 @@ test_that("bug found", {
         i2 <- 2
         Z <- c(hapMatcherA[i1, 1:N], hapMatcherA[i2, (N + 1):ncol(hapMatcherA)])
         
-        print("")
         ms_top_matches <- ms_MatchZ_Algorithm5(
             X = hapMatcherA,
             ms_indices = ms_indices_only_Rcpp,
             Z = Z,
-            verbose = TRUE,
+            verbose = FALSE,
             do_checks = TRUE,
             check_vs_indices = FALSE
         )
@@ -94,8 +95,8 @@ test_that("bug found", {
         expect_equivalent(ms_top_matches[2, "end1"], 100)
     }
 
-    ##f(c(1, 2, 3, 4))
-    ##f(c(1, 2, 4, 3))
+    f(c(1, 2, 3, 4))
+    f(c(1, 2, 4, 3))
     f(c(1, 2, 4), recast = FALSE)
     f(c(1, 2, 4), recast = TRUE)
 

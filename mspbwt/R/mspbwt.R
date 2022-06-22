@@ -340,9 +340,7 @@ ms_MatchZ_Algorithm5 <- function(
         f1 <- wf(fc, t, Z[t], usge_all, all_symbols)
         g1 <- wf(gc, t, Z[t], usge_all, all_symbols)
         if (verbose) {
-            if (t <= 10) {
-                print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
-            }
+            print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         } 
         if (g1 > f1) {
             ## nothing to do
