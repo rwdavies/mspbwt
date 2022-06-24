@@ -529,7 +529,10 @@ MatchZ_Algorithm5 <- function(
     indices,
     Z,
     verbose = FALSE,
-    do_checks = FALSE
+    do_checks = FALSE,
+    print_or_message = print,
+    pdfname = "~/Downloads/temp.pdf",
+    make_plot = FALSE
 ) {
     K <- nrow(X)
     T <- ncol(X)
@@ -544,6 +547,7 @@ MatchZ_Algorithm5 <- function(
     if (length(Z) != (ncol(a) - 1)) {
         stop("Z not the right size")
     }
+    if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
     ##
     ## OK these all look fine
     ## 
@@ -612,10 +616,11 @@ MatchZ_Algorithm5 <- function(
         f1 <- wf(fc, t, Z[t])
         g1 <- wf(gc, t, Z[t])
         if (verbose) {
-            message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
-        } 
+            print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
+        }
         if (g1 > f1) {
             ## nothing to do
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
         } else {
             ## we have reached a maximum - need to report and update e, f, g
             for(k in fc:(gc - 1)) {
@@ -632,7 +637,7 @@ MatchZ_Algorithm5 <- function(
                 ## 3rd ec is 0-based, so ec + 1 is 1-based where we start
                 ## 4th this is now 1-based t, so we stopped on previous SNP, hence t - 1
                 if (verbose) {
-                    message("save top match(es)")
+                    print_or_message("save top match(es)")
                 }
                 top_matches <- rbind(
                     top_matches,
@@ -640,37 +645,57 @@ MatchZ_Algorithm5 <- function(
                 )
             }
             ## so what are f1 and g1 here? where this thing wants to go to?
+            pom(verbose, paste0("=== Before reset, e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))            
             e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
-            if ((Z[e1 + 1] == 0 && f1 > 0) || f1 == K) {
+            pom(verbose, paste0("Z[e1 + 1] = ", Z[e1 + 1], ", f1 = ", f1, ", K = ", K))
+            fc <- f1; gc <- g1 ## for visualization efficiency
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
+            ## so this bit - want to check the up value
+            ## if f1 is K, you HAVE to go up
+            condition1_ori <- (Z[e1 + 1] == 0        && f1 > 0) || (f1 == K)
+            ##condition1_alt <- (Z[e1 + 1] == proposed && f1 > 0) || (f1 == K)
+            ## condition1_alt MAY FAIL as some might be out of bounds
+            ##stopifnot(condition1_ori == condition1_alt)
+            if (condition1_ori) {
+                pom(verbose, "In first option") 
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1]
-                ## figure out where they stop matching
-                if (verbose) {
-                    print(paste0("f1 = ", f1))
-                    print(paste0("index = ", index))
-                    print(paste0("Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1]))
-                }
+                pom(verbose, paste0("f1 = ", f1, ", index = ", index))
+                pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches) 
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
+                    pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
-                ## keep all of those that agree over the length
-                while (d[f1 + 1, t + 1] <= e1) {
+                pom(verbose, paste0("f1 = ", f1, ", e1 = ", e1, ", d[f1 + 1, t + 1] = ", d[f1 + 1, t + 1]))
+                 while (d[f1 + 1, t + 1] <= e1) {
                     f1 <- f1 - 1
+                    pom(verbose, paste0("f1 = ", f1, ", e1 = ", e1, ", d[f1 + 1, t + 1] = ", d[f1 + 1, t + 1]))
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
                 }
             } else if (f1 < K) {
-                ## am here, work to understand this
-                ## in basic form, if Z of the new startpoint (?) is a 0
-                ## figure out new e1
-                ## then go up for new g1?
+                pom(verbose, "In second option")
                 g1 <- f1 + 1
                 index <- a[f1 + 1, t + 1]
+                pom(verbose, paste0("g1 = ", g1, ", index = ", index))
+                pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                 
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
+                    pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                                     
                 }
+                pom(verbose, paste0("g1 = ", g1, ", e1 = ", e1, ", d[g1 + 1, t + 1] = ", d[g1 + 1, t + 1]))                
                 while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) {
                     g1 <- g1 + 1
+                    pom(verbose, paste0("g1 = ", g1, ", e1 = ", e1, ", d[g1 + 1, t + 1] = ", d[g1 + 1, t + 1]))
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
+            } else {
+                stop("misunderstood condition")
             }
+            pom(verbose, paste0("=== After reset, with e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))            
             ec <- e1
         }
         ## perform switch over
@@ -684,7 +709,7 @@ MatchZ_Algorithm5 <- function(
     if (fc < gc) {
         for(k in fc:(gc - 1)) {
             if (verbose) {
-                message("save final match")
+                print_or_message("save final match")
             }
             top_matches <- rbind(
                 top_matches,
@@ -693,6 +718,8 @@ MatchZ_Algorithm5 <- function(
         }
     }
     colnames(top_matches) <- c("k0", "indexB0", "start1", "end1")
+    ##
+    if (make_plot) dev.off()
     ##
     ## perform checks if wanted
     ##
@@ -722,3 +749,100 @@ check_Algorithm5 <- function(X, Z, top_matches, display = FALSE) {
     }
 }
 
+
+pom <- function(verbose, msg) {
+    if (verbose) 
+        print(msg)
+}
+
+
+
+
+boxer <- function(x, y, col) {
+    rect(xleft = x - 0.5, xright = x + 0.5, ybottom = y - 0.5, ytop = y + 0.5, border = col, col = NA)
+}
+
+flipy <- function(ny, y) {
+    ny - y
+}
+
+visualize <- function(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = TRUE){
+    tORI <- t
+    xlim <- c(0, ncol(X) + 1)
+    x <- 1:ncol(X)
+    ny <- nrow(X) + 2
+    ylim <- c(0, ny)
+    ## par(mfrow = c(2, 1))
+    par(oma = c(0, 0, 0, 0))
+    for(i_plot in 1:1) {
+        t <- c(tORI, tORI - 1)[i_plot]
+        main <- paste0(
+            "t = ", t, ", e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1
+        )
+        ## first plot = this one
+        ## second one = previous one
+        plot(
+            x = 0, y = 0, xlim = xlim, ylim = ylim, axes  = FALSE, col = "white", xlab = "", ylab = "",
+            main = main
+        )
+        ## plot z
+        text(x = x, y = flipy(ny, nrow(X) + 1), labels = Z)
+        abline(h = flipy(ny, nrow(X) + 1 - 0.5), col = "grey")
+        ## plot 0-based SNP labels
+        abline(h = flipy(ny, 0 + 0.5), col = "grey")
+        text(x = x, y = flipy(ny, 0), labels = 0:(ncol(X) - 1))
+        ## plot indices on top
+        abline(v = 0.5, col = "grey")
+        text(x = 0, y = flipy(ny, 1:nrow(X)), a[, t + 1])
+        ## plot 0-based labels on the right
+        abline(v = ncol(X) + 0.5, col = "grey")
+        text(x = ncol(X) + 1, y = flipy(ny, 1:nrow(X)), 0:(nrow(X) - 1))
+        ##
+        for(i in 1:nrow(X)) {
+            text(x = x, y = flipy(ny, i), labels = X[a[i, t + 1] + 1, ])
+        }
+        abline(v = t - 0.5, col = "grey")
+        abline(v = t + 0.5, col = "grey")
+        ## all best matches
+        ## w <- which(top_matches[, 4] == (t - 1))
+        if (!is.null(top_matches)) {
+            for(i in 1:nrow(top_matches)) {
+                s <- top_matches[i, 3]
+                e <- top_matches[i, 4]
+                ## index in top set
+                y <- which((a[, t + 1] + 1) == (top_matches[i, 2] + 1))
+                rect(xleft = s - 0.5, xright = e + 0.5, ybottom = flipy(ny, y - 0.5), ytop = flipy(ny, y + 0.5), border = "red", col = NA)
+            }
+        }
+        ## f1 and g1 in current
+        if ((i_plot == 1)) {
+            if (is.na(ec)) {
+                ec <- 0
+            }
+            if (use_fc) {
+                ybottom <- flipy(ny, fc + 0.5)
+                ytop <- flipy(ny, gc + 0.5)                
+            } else {
+                ybottom <- flipy(ny, f1 + 0.5)                
+                ytop <- flipy(ny, g1 + 0.5)                
+            }
+            rect(
+                xleft = ec + 0.5, xright = t + 0.5,
+                ybottom = ybottom, ytop = ytop, border = "purple",
+                col = NA
+            )
+        }
+        ## e1
+        if (use_fc) {
+            if (f1 <= (g1 - 1)) {
+                for(i in f1:(g1 - 1)) {
+                    ##which((a[, t + 1] + 1) == (
+                    ## which(a[f1 + 1, t + 1] == a[, t + 1])
+                    i <- which(a[i + 1, tORI + 1] == a[, t + 1])
+                    y <- flipy(ny, i)
+                    rect(xleft = e1 + 0.5, xright = t + 0.5, ybottom = y - 0.5, ytop = y + 0.5, border = "green", col = NA)
+                }
+            }
+        }
+    }
+}

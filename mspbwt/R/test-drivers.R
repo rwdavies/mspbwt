@@ -164,3 +164,41 @@ test_driver_multiple <- function(
     )
 }
 
+
+
+exhausive_top_matches_checker <- function(X, top_matches, Z) {
+    M <- array(0, dim(X))
+    for(i in 1:nrow(X)) {
+        a <- rle(X[i, ] == Z)
+        s <- 0
+        for(j in 1:length(a$l)) {
+            s <- s + 1
+            e <- s + a$l[j] - 1
+            M[i, s:e] <- as.integer(a$l[j]) * as.integer(a$v[j])
+            s <- e
+        }
+    }
+    Y <- sapply(1:ncol(X), function(i) {
+        cbind(i, max(M[, i]), which(M[, i] == max(M[, i])))
+    })
+    Y <- cbind(
+        grid = unlist(sapply(Y, function(x) x[, 1])),
+        length = unlist(sapply(Y, function(x) x[, 2])),
+        who = unlist(sapply(Y, function(x) x[, 3]))        
+    )
+    Y <- Y[order(Y[, 3], Y[, 1], Y[, 2]), ]
+    built_top_matches <- NULL
+    c <- 1
+    while(c < nrow(Y)) {
+        k <- Y[c, "who"] - 1 ## make 0-based
+        s <- Y[c, "grid"]
+        e <- Y[c, "grid"] + Y[c, "length"] - 1
+        built_top_matches <- rbind(
+            built_top_matches,
+            c(k, s, e)
+        )
+        c <- c + Y[c, "length"]
+    }
+    colnames(built_top_matches) <- c("k0", "s1", "e1")
+    built_top_matches[order(built_top_matches[, "s1"]), ]
+}

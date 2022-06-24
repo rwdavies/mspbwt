@@ -27,6 +27,7 @@ if (1 == 0) {
 
 
 
+
 test_that("multi-symbol with 2 symbols can work anywhere", {
 
     set.seed(14541)
