@@ -413,10 +413,12 @@ ms_MatchZ_Algorithm5 <- function(
             if (matches_lower) {
                 g1 <- g1 + 1
                 index <- a[f1 + 1, t + 1] ## a
-                print(paste0(
-                    "e1 = ", e1, ", ", 
-                    "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
-                ))
+                if (verbose) {
+                    print(paste0(
+                        "e1 = ", e1, ", ", 
+                        "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
+                    ))
+                }
                 if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1

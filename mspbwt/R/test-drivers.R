@@ -45,6 +45,7 @@ check_expected_top_match <- function(top_matches, irow, icol, K, T, w = 10, is_g
     a <- get_row_col(irow, icol, T, K, w)
     i <- match(a["row"], top_matches[, "indexB0"] + 1)
     expect_equal(length(i), 1)
+    ## expect_true(sum(a["row"] %in% top_matches[, "indexB0"]) == 1)
     if (!is_grid_check_snps) {
         expect_equivalent(top_matches[i, "start1"], a["c1"])
         expect_equivalent(top_matches[i, "end1"], a["c2"])    
@@ -166,7 +167,8 @@ test_driver_multiple <- function(
 
 
 
-exhausive_top_matches_checker <- function(X, top_matches, Z) {
+## slow but probably works
+exhausive_top_matches_checker <- function(X, Z, top_matches, return_only = FALSE) {
     M <- array(0, dim(X))
     for(i in 1:nrow(X)) {
         a <- rle(X[i, ] == Z)
@@ -179,26 +181,51 @@ exhausive_top_matches_checker <- function(X, top_matches, Z) {
         }
     }
     Y <- sapply(1:ncol(X), function(i) {
-        cbind(i, max(M[, i]), which(M[, i] == max(M[, i])))
+        ## argh
+        w <- which(M[, i] == max(M[, i]))
+        starts <- sapply(w, function(ww) {
+            e <- i
+            while((e > 0) && (M[ww, i] == M[ww, e])) {
+                e <- e - 1
+            }
+            e + 1
+        })
+        cbind(i, max(M[, i]), w, starts)
     })
     Y <- cbind(
         grid = unlist(sapply(Y, function(x) x[, 1])),
         length = unlist(sapply(Y, function(x) x[, 2])),
-        who = unlist(sapply(Y, function(x) x[, 3]))        
+        who = unlist(sapply(Y, function(x) x[, 3])),
+        starts = unlist(sapply(Y, function(x) x[, 4]))
     )
     Y <- Y[order(Y[, 3], Y[, 1], Y[, 2]), ]
     built_top_matches <- NULL
-    c <- 1
-    while(c < nrow(Y)) {
-        k <- Y[c, "who"] - 1 ## make 0-based
-        s <- Y[c, "grid"]
-        e <- Y[c, "grid"] + Y[c, "length"] - 1
-        built_top_matches <- rbind(
-            built_top_matches,
-            c(k, s, e)
-        )
-        c <- c + Y[c, "length"]
+    sp <- -1
+    ep <- -1
+    kp <- -1
+    for(i in 1:nrow(Y)) {
+        k <- Y[i, "who"] - 1 ## make 0-based
+        s <- Y[i, "starts"]
+        e <- s + Y[i, "length"] - 1
+        ## if anything is different, do!
+        if (sp != s & ep != e & kp != k) {
+            built_top_matches <- rbind(
+                built_top_matches,
+                c(k, s, e)
+            )
+        }
+        sp <- s
+        ep <- e
+        kp <- k
     }
     colnames(built_top_matches) <- c("k0", "s1", "e1")
-    built_top_matches[order(built_top_matches[, "s1"]), ]
+    if (return_only) {
+        return(built_top_matches[order(built_top_matches[, "s1"], built_top_matches[, "k0"]), ])
+    }
+    ## 
+    top_matches <- top_matches[order(top_matches[, "start1"], top_matches[, "indexB0"]), ]
+    expect_equivalent(etm[, "k0"], top_matches[, "indexB0"])
+    expect_equivalent(etm[, "s1"], top_matches[, "start1"])
+    expect_equal(etm[, "e1"], top_matches[, "end1"] + 1)
+    etm
 }
