@@ -168,64 +168,114 @@ test_driver_multiple <- function(
 
 
 ## slow but probably works
-exhausive_top_matches_checker <- function(X, Z, top_matches, return_only = FALSE) {
-    M <- array(0, dim(X))
-    for(i in 1:nrow(X)) {
+exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALSE) {
+    ## 
+    ## get index, start and end of each match
+    ##
+    Y <- sapply(1:nrow(X), function(i) {
         a <- rle(X[i, ] == Z)
-        s <- 0
-        for(j in 1:length(a$l)) {
-            s <- s + 1
-            e <- s + a$l[j] - 1
-            M[i, s:e] <- as.integer(a$l[j]) * as.integer(a$v[j])
-            s <- e
-        }
-    }
-    Y <- sapply(1:ncol(X), function(i) {
-        ## argh
-        w <- which(M[, i] == max(M[, i]))
-        starts <- sapply(w, function(ww) {
-            e <- i
-            while((e > 0) && (M[ww, i] == M[ww, e])) {
-                e <- e - 1
-            }
-            e + 1
-        })
-        cbind(i, max(M[, i]), w, starts)
+        b <- a$lengths
+        c <- a$values
+        s <- c(1, 1 + cumsum(b[-length(b)]))
+        e <- cumsum(b)
+        cbind(index = i, length = b[c], start1 = s[c], end1 = e[c])
     })
     Y <- cbind(
-        grid = unlist(sapply(Y, function(x) x[, 1])),
+        index = unlist(sapply(Y, function(x) x[, 1])),
         length = unlist(sapply(Y, function(x) x[, 2])),
-        who = unlist(sapply(Y, function(x) x[, 3])),
-        starts = unlist(sapply(Y, function(x) x[, 4]))
+        start1 = unlist(sapply(Y, function(x) x[, 3])),
+        end1 = unlist(sapply(Y, function(x) x[, 4]))
     )
-    Y <- Y[order(Y[, 3], Y[, 1], Y[, 2]), ]
-    built_top_matches <- NULL
-    sp <- -1
-    ep <- -1
-    kp <- -1
-    for(i in 1:nrow(Y)) {
-        k <- Y[i, "who"] - 1 ## make 0-based
-        s <- Y[i, "starts"]
-        e <- s + Y[i, "length"] - 1
-        ## if anything is different, do!
-        if (sp != s & ep != e & kp != k) {
-            built_top_matches <- rbind(
-                built_top_matches,
-                c(k, s, e)
-            )
-        }
-        sp <- s
-        ep <- e
-        kp <- k
+    etm <- NULL ## expected top matches
+    while(nrow(Y) > 0) {
+        ## 
+        w <- which(Y[, 2] == max(Y[, 2]))
+        ## here keep only those with first stop and end
+        w <- w[which(
+            Y[w, "start1"] == Y[w[1], "start1"] &
+            Y[w, "end1"] == Y[w[1], "end1"]
+        )]
+        etm <- rbind(
+            etm,
+            Y[w, ]
+        )
+        w <- w[1]
+        ## remove anything contained in this
+        s <- Y[w, "start1"]
+        e <- Y[w, "end1"]
+        to_remove <- (Y[, "start1"] >= s) & (Y[, "end1"] <= e)
+        Y <- Y[!to_remove, ]
     }
-    colnames(built_top_matches) <- c("k0", "s1", "e1")
+    etm <- etm[order(etm[, "start1"], etm[, "index"]), ]
+    top_matches <- top_matches[order(top_matches[, "start1"], top_matches[, "indexB0"]), ]
     if (return_only) {
-        return(built_top_matches[order(built_top_matches[, "s1"], built_top_matches[, "k0"]), ])
+        return(etm)
     }
     ## 
-    top_matches <- top_matches[order(top_matches[, "start1"], top_matches[, "indexB0"]), ]
-    expect_equivalent(etm[, "k0"], top_matches[, "indexB0"])
-    expect_equivalent(etm[, "s1"], top_matches[, "start1"])
-    expect_equal(etm[, "e1"], top_matches[, "end1"] + 1)
+    expect_equivalent(etm[, "index"], top_matches[, "indexB0"] + 1)
+    expect_equivalent(etm[, "start1"], top_matches[, "start1"])
+    expect_equivalent(etm[, "end1"], top_matches[, "end1"])
     etm
 }
+
+
+
+
+
+    ## M <- array(0, dim(X))
+    ## for(i in 1:nrow(X)) {
+    ##     a <- rle(X[i, ] == Z)
+    ##     s <- 0
+    ##     for(j in 1:length(a$l)) {
+    ##         s <- s + 1
+    ##         e <- s + a$l[j] - 1
+    ##         M[i, s:e] <- as.integer(a$l[j]) * as.integer(a$v[j])
+    ##         s <- e
+    ##     }
+    ## }
+
+    
+    ## Y <- lapply(1:ncol(X), function(i) {
+    ##     ## OK so this gives me (set) of longest
+    ##     w <- which(M[, i] == max(M[, i]))
+    ##     starts <- sapply(w, function(ww) {
+    ##         e <- i
+    ##         while((e > 0) && (M[ww, i] == M[ww, e])) {
+    ##             e <- e - 1
+    ##         }
+    ##         e + 1
+    ##     })
+    ##     a <- cbind(i, max(M[, i]), w, starts)
+    ##     ## now need to know if anything also long not contained
+
+    ##     ## AM HERE
+    ##     ## FIX THIS
+        
+        
+    ## })
+    ## Y <- cbind(
+    ##     grid = unlist(sapply(Y, function(x) x[, 1])),
+    ##     length = unlist(sapply(Y, function(x) x[, 2])),
+    ##     who = unlist(sapply(Y, function(x) x[, 3])),
+    ##     starts = unlist(sapply(Y, function(x) x[, 4]))
+    ## )
+    ## Y <- Y[order(Y[, 3], Y[, 1], Y[, 2]), ]
+    ## built_top_matches <- NULL
+    ## sp <- -1
+    ## ep <- -1
+    ## kp <- -1
+    ## for(i in 1:nrow(Y)) {
+    ##     k <- Y[i, "who"] - 1 ## make 0-based
+    ##     s <- Y[i, "starts"]
+    ##     e <- s + Y[i, "length"] - 1
+    ##     ## if anything is different, do!
+    ##     if (sp != s & ep != e & kp != k) {
+    ##         built_top_matches <- rbind(
+    ##             built_top_matches,
+    ##             c(k, s, e)
+    ##         )
+    ##     }
+    ##     sp <- s
+    ##     ep <- e
+    ##     kp <- k
+    ## }

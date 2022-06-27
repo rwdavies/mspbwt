@@ -316,14 +316,16 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
     all_symbols <- list(1:5)
     egs <- 100
     n_min_symbols <- 100
+    
     for(iSNP in 1:5) {
         K <- 10000
         Smax <- sample(7:12, 1)
-        usg <- array(0L, c(K + 1, Smax)) ## us, for a grid
-        usg[] <- 0
         prob <- 2 ** (Smax:1)
         prob <- prob / Smax
         sx <- sample(1:Smax, K, prob = prob, replace = TRUE)
+        ## ensure no missing values and re-define Sx
+        sx <- match(sx, unique(sx))
+        Smax <- max(sx)
         if (iSNP == 3) {
             ## here force the max to be just 1 of them
             w <- which(sx == max(sx))
@@ -334,13 +336,16 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
         ## want to semi-sort s
         sx <- sx[order(sx + rnorm(K) / 5)]
         ## now build
-        a <- table(sx, useNA = "always")
-        ## a <- a[order(-a)]
-        a <- a[a > 0]
-        a <- cbind(as.integer(names(a)), as.integer(a))
+        a <- matrix(0, nrow = Smax, ncol = 2)
+        a[, 1] <- 1:Smax
+        for(i in 1:Smax) {
+            a[i, 2] <- sum(sx == i)
+        }
         rownames(a) <- NULL
         colnames(a) <- c("symbol", "count")
         symbol_count_at_grid <-  a
+        usg <- array(0L, c(K + 1, Smax)) ## us, for a grid
+        usg[] <- 0
         for(k in 0:K) { ## haps (1-based)
             ## now - where it goes - 0 based
             if (k > 0) {
@@ -417,30 +422,6 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
         }
     }
 
-})
-
-
-test_that("can encode and decode d", {
-
-    nGrids <- 10
-    K <- 100
-    d <- matrix(0, K + 1, nGrids)
-    nFill <- 100 ## some extra values to add
-    r <- sample(K + 1, nFill, replace = TRUE)
-    c <- sample(nGrids, nFill, replace = TRUE)
-    d[cbind(r, c)] <- sample(1:nGrids, nFill, replace = TRUE)
-    d[1, ] <- 1:nGrids
-    d[K + 1, ] <- 1:nGrids
-    d[, 3] <- 0
-    d[, 5] <- 1:(K + 1)
-    
-    d_store <- compress_d(d) ## about 50 times more efficient
-    
-    for(iGrid1 in 1:nGrids) {
-        expect_equal(
-            d[, iGrid1],
-            decompress_d(d_store, iGrid1, K)
-        )
-    }
 
 })
+

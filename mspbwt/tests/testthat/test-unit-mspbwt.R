@@ -66,7 +66,8 @@ test_that("multi-version with >2 symbols can work", {
             top_matches <- MatchZ_Algorithm5(Xs, indices, Zs, verbose = FALSE, do_checks = TRUE)
             ## check_expected_top_match(top_matches, irow, icol, K, nGrids, w = w, is_grid_check_snps = TRUE)
             
-            etm <- exhausive_top_matches_checker(Xs, Zs, top_matches)
+            ## etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches, return_only = TRUE)
+            etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)
             
             if (irow == 3 & icol == 3) {
                 ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, check_vs_indices = FALSE)
@@ -84,19 +85,15 @@ test_that("multi-version with >2 symbols can work", {
                 Z = Z,
                 ##verbose = TRUE,
                 do_checks = FALSE,
-                check_vs_indices = FALSE,
-                make_plot = TRUE,
-                pdfname = paste0("~/Downloads/tempY.", irow, ".", icol, ".ms.pdf")
+                check_vs_indices = FALSE
             )
             ##
-            ##    
-
-            ## check these EXHAUSTIVELY just in case!
-            exhausive_top_matches_checker(hapMatcherA, Z, ms_top_matches)
-            etm <- exhausive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
-            ##
+            ##make_plot = TRUE,
+            ##    pdfname = paste0("~/Downloads/tempY.", irow, ".", icol, ".ms.pdf")
             
-            ## check_expected_top_match(top_matches, irow, icol, K, nGrids, w = w, is_grid_check_snps = FALSE )
+
+            ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
+            etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches)
             
         }
     }
