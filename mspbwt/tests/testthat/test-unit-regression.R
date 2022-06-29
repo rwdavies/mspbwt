@@ -47,12 +47,17 @@ test_that("bug found", {
         if (recast) {
             a <- apply(a, 2, function(x) match(x, unique(x)) - 1)
         }
-        out <- make_hapMatcherA(a)
-        hapMatcherA <- out[["hapMatcherA"]]
+        out <- QUILT::make_rhb_t_equality(
+            rhb_t = a,
+            nSNPs = ncol(a) * 32,
+            nMaxDH = 20,
+            ref_error = 0.001
+        )
+        hapMatcher <- out[["hapMatcher"]]
         all_symbols <- out[["all_symbols"]]
-        
+        ##
         ms_indices <- ms_BuildIndices_Algorithm5(
-            X1C = hapMatcherA,
+            X1C = hapMatcher,
             all_symbols = all_symbols,
             check_vs_indices = FALSE,
             indices = NULL,
@@ -61,7 +66,7 @@ test_that("bug found", {
             do_checks = TRUE
         )
         ms_indices_only_Rcpp <- Rcpp_ms_BuildIndices_Algorithm5(
-            X1C = hapMatcherA,
+            X1C = hapMatcher,
             all_symbols = all_symbols,
             indices = list(),
             egs = 100,
@@ -75,10 +80,10 @@ test_that("bug found", {
         ## i2 <- 200
         i1 <-1
         i2 <- 2
-        Z <- c(hapMatcherA[i1, 1:N], hapMatcherA[i2, (N + 1):ncol(hapMatcherA)])
+        Z <- c(hapMatcher[i1, 1:N], hapMatcher[i2, (N + 1):ncol(hapMatcher)])
         
         ms_top_matches <- ms_MatchZ_Algorithm5(
-            X = hapMatcherA,
+            X = hapMatcher,
             ms_indices = ms_indices_only_Rcpp,
             Z = Z,
             verbose = FALSE,

@@ -9,14 +9,6 @@ if (1 == 0) {
     library("crayon")
     library("testthat")
     library("mspbwt")
-    dir <- "~/proj/STITCH/"
-    setwd(paste0(dir, "/STITCH/R"))
-    a <- dir(pattern = "*.R")
-    b <- grep("~", a)
-    if (length(b) > 0) {
-        a <- a[-b]
-    }
-    o <- sapply(a, source)
     dir <- "~/proj/mspbwt/"
     setwd(paste0(dir, "/mspbwt/R"))
     a <- dir(pattern = "*.R")
@@ -39,16 +31,21 @@ test_that("multi-version with 2 symbols can work, when symbols aren't relabelled
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
-    out <- make_hapMatcherA(X)
-    hapMatcherA <- out[["hapMatcherA"]]
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = X,
+        nSNPs = ncol(X) * 32,
+        nMaxDH = 20,
+        ref_error = 0.001
+    )
+    hapMatcher <- out[["hapMatcher"]]
     all_symbols <- out[["all_symbols"]]
     Z1 <- map_Z_to_all_symbols(Z, all_symbols)            
 
     ## checking vs indices only works 
-    ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, indices = indices, check_vs_indices = TRUE)
+    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, indices = indices, check_vs_indices = TRUE)
     
     ms_top_matches <- ms_MatchZ_Algorithm5(
-        X = hapMatcherA,
+        X = hapMatcher,
         ms_indices = ms_indices,
         Z = Z1,
         verbose = FALSE,
@@ -73,17 +70,22 @@ test_that("multi-version with 2 symbols can work, when symbols are relabelled", 
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
     check_top_matches(top_matches, X, Z)     
-    
-    out <- make_hapMatcherA(X)
-    hapMatcherA <- out[["hapMatcherA"]]
+
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = X,
+        nSNPs = ncol(X) * 32,
+        nMaxDH = 20,
+        ref_error = 0.001
+    )
+    hapMatcher <- out[["hapMatcher"]]
     all_symbols <- out[["all_symbols"]]
     Z1 <- map_Z_to_all_symbols(Z, all_symbols)            
 
     ## checking vs indices only works 
-    ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, check_vs_indices = FALSE)
+    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
 
     ms_top_matches <- ms_MatchZ_Algorithm5(
-        X = hapMatcherA,
+        X = hapMatcher,
         ms_indices = ms_indices,
         Z = Z1,
         verbose = FALSE,
@@ -119,20 +121,25 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
 
             ## check the result is there
             check_expected_top_match(top_matches, irow, icol, K, T, w) 
-            
-            out <- make_hapMatcherA(X)
-            hapMatcherA <- out[["hapMatcherA"]]
+
+            out <- QUILT::make_rhb_t_equality(
+                rhb_t = X,
+                nSNPs = ncol(X) * 32,
+                nMaxDH = 20,
+                ref_error = 0.001
+             )
+            hapMatcher <- out[["hapMatcher"]]
             all_symbols <- out[["all_symbols"]]
             Z1 <- map_Z_to_all_symbols(Z, all_symbols)
             
             ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
-                X1C = hapMatcherA,
+                X1C = hapMatcher,
                 all_symbols = all_symbols,
                 indices = list()
             )
             
             ms_top_matches <- ms_MatchZ_Algorithm5(
-                X = hapMatcherA,
+                X = hapMatcher,
                 ms_indices = ms_indices,
                 Z = Z1,
                 verbose = FALSE,
@@ -167,16 +174,21 @@ test_that("multi-version with 2 symbols can capture clean breaks", {
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
-    out <- make_hapMatcherA(X)
-    hapMatcherA <- out[["hapMatcherA"]]
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = X,
+        nSNPs = ncol(X) * 32,
+        nMaxDH = 20,
+        ref_error = 0.001
+    )
+    hapMatcher <- out[["hapMatcher"]]
     all_symbols <- out[["all_symbols"]]
     Z1 <- map_Z_to_all_symbols(Z, all_symbols)            
 
     ## checking vs indices only works 
-    ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, indices = indices, check_vs_indices = FALSE)
+    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, indices = indices, check_vs_indices = FALSE)
     
     ms_top_matches <- ms_MatchZ_Algorithm5(
-        X = hapMatcherA,
+        X = hapMatcher,
         ms_indices = ms_indices,
         Z = Z1,
         verbose = FALSE,

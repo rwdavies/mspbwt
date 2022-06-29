@@ -4,14 +4,6 @@ if (1 == 0) {
     library("crayon")
     library("testthat")
     library("mspbwt")
-    dir <- "~/proj/STITCH/"
-    setwd(paste0(dir, "/STITCH/R"))
-    a <- dir(pattern = "*.R")
-    b <- grep("~", a)
-    if (length(b) > 0) {
-        a <- a[-b]
-    }
-    o <- sapply(a, source)
     dir <- "~/proj/mspbwt/"
     setwd(paste0(dir, "/mspbwt/R"))
     a <- dir(pattern = "*.R")
@@ -57,7 +49,7 @@ test_that("multi-version with >2 symbols can work", {
 
             Xs <- out$Xs
             Zs <- out$Zs
-            hapMatcherA <- out$hapMatcherA
+            hapMatcher <- out$hapMatcher
             all_symbols <- out$all_symbols
             Z <- out$Z
             
@@ -70,17 +62,17 @@ test_that("multi-version with >2 symbols can work", {
             etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)
             
             if (irow == 3 & icol == 3) {
-                ms_indices <- build_and_check_indices(hapMatcherA, all_symbols, check_vs_indices = FALSE)
+                ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
             } else {
                 ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
-                    X1C = hapMatcherA,
+                    X1C = hapMatcher,
                     all_symbols = all_symbols,
                     indices = list()
                 )
             }
     
             ms_top_matches <- ms_MatchZ_Algorithm5(
-                X = hapMatcherA,
+                X = hapMatcher,
                 ms_indices = ms_indices,
                 Z = Z,
                 ##verbose = TRUE,
@@ -93,7 +85,7 @@ test_that("multi-version with >2 symbols can work", {
             
 
             ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
-            etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches)
+            etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)
             
         }
     }

@@ -77,13 +77,13 @@ check_top_matches <- function(top_matches, X, Z, continue = FALSE) {
 }
 
 build_and_check_indices <- function(
-    hapMatcherA,
+    hapMatcher,
     all_symbols,
     indices = NULL,
     check_vs_indices = TRUE,
     do_checks = TRUE
 ) {
-    X1C <- hapMatcherA
+    X1C <- hapMatcher
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = X1C,
         all_symbols = all_symbols,
@@ -120,7 +120,8 @@ test_driver_multiple <- function(
     nGrids = 12,
     irow = 1,
     icol = 1,
-    w = 6
+    w = 6,
+    nMaxDH = 6
 ) {
     T <- nGrids * 32
     ## build SNP X
@@ -150,8 +151,13 @@ test_driver_multiple <- function(
     Zs <- Z 
     ## rest
     rhb_t <- make_rhb_t_from_rhi_t(X)    
-    out <- make_hapMatcherA(rhb_t)
-    hapMatcherA <- out[["hapMatcherA"]]
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = rhb_t,
+        nSNPs = T,
+        nMaxDH = nMaxDH,
+        ref_error = 0.001
+    )
+    hapMatcher <- out[["hapMatcher"]]
     all_symbols <- out[["all_symbols"]]
     Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
     Z <- map_Z_to_all_symbols(Zg, all_symbols) 
@@ -159,7 +165,7 @@ test_driver_multiple <- function(
     list(
         Xs = Xs,
         Zs = Zs,
-        hapMatcherA = hapMatcherA,
+        hapMatcher = hapMatcher,
         all_symbols = all_symbols,
         Z = Z
     )
@@ -279,3 +285,6 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
     ##     ep <- e
     ##     kp <- k
     ## }
+
+
+

@@ -1,17 +1,11 @@
 # mspbwt
 
-══ Failed ══════════════════════════════════════════════════════════════════════
-── 1. Failure (test-unit-encode.R:352:9): can encode and decode a complete encod
-usg[K + 1, ] not equivalent to a[, 2].
-Lengths differ: 12 is not 11
-
-
-
 Current
 =============
- - OK so now have a bug, probably a big one
- - I think the updating is wrong for ms-pbwt
- - Better understand current (normal) PBWT, and think about what should happen given arbitrary (not just 0-1) break / swap
+ - no more bugs!
+ - try checking some more on real data
+ - write into C++
+
 
  - Then
  - Now have the whole building in C++

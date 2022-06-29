@@ -482,37 +482,38 @@ ms_MatchZ_Algorithm5 <- function(
 ## here take a matrix with arbitrary integer symbols
 ## and build 1-based symbol version
 ##
-#' @export
-make_hapMatcherA <- function(
-    rhb_t
-) {
-    K <- nrow(rhb_t)
-    nGrids <- ncol(rhb_t)
-    ## --- hapMatcherA
-    ## matrix K x nGrids
-    ## i is 1-based index of symbol
-    ## this includes all possible symbols
-    hapMatcherA <- array(0L, c(K, nGrids))
-    all_symbols <- list(1:nGrids)
-    for(iGrid in 1:nGrids) {
-        ## can safely ignore the end, it will be zeros what is not captured
-        a <- table(rhb_t[, iGrid], useNA = "always")
-        a <- a[order(-a)]
-        a <- a[a > 0]
-        a <- cbind(as.integer(names(a)), a)
-        rownames(a) <- NULL
-        colnames(a) <- c("symbol", "count")
-        hapMatcherA[, iGrid] <- as.integer(match(rhb_t[, iGrid], a[, "symbol"]))
-        ## here store both the count and the label
-        all_symbols[[iGrid]] <- a
-    }
-    return(
-        list(
-            hapMatcherA = hapMatcherA,
-            all_symbols = all_symbols
-        )
-    )
-}
+##  #' @export
+## make_hapMatcherA <- function(
+##     rhb_t
+## ) {
+##     K <- nrow(rhb_t)
+##     nGrids <- ncol(rhb_t)
+##     ## --- hapMatcherA
+##     ## matrix K x nGrids
+##     ## i is 1-based index of symbol
+##     ## this includes all possible symbols
+##     hapMatcherA <- array(0L, c(K, nGrids))
+##     all_symbols <- list(1:nGrids)
+##     for(iGrid in 1:nGrids) {
+##         ## can safely ignore the end, it will be zeros what is not captured
+##         a <- table(rhb_t[, iGrid], useNA = "always")
+##         a <- a[order(-a)]
+##         a <- a[a > 0]
+##         a <- cbind(as.integer(names(a)), a)
+##         rownames(a) <- NULL
+##         colnames(a) <- c("symbol", "count")
+##         hapMatcherA[, iGrid] <- as.integer(match(rhb_t[, iGrid], a[, "symbol"]))
+##         ## here store both the count and the label
+##         all_symbols[[iGrid]] <- a
+##     }
+##     return(
+##         list(
+##             hapMatcherA = hapMatcherA,
+##             all_symbols = all_symbols
+##         )
+##     )
+## }
+
 
 
 
@@ -533,4 +534,23 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
     }
     Z1 <- as.integer(Z1)
     Z1
+}
+
+
+## where Zs is some SNP level vector of 0-1s (then rounded)
+## then we want it in symbol form, matching when appropriate
+map_snp_hap_to_hapMatcher_grid_symbols <- function(Zs) {
+
+    Z1 <- Z
+    Z1[] <- 0L
+    for(i in 1:length(Z)) {
+        Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
+        if (is.na(Z1[i])) {
+            stop("have not figured this out yet!")
+        }
+    }
+    Z1 <- as.integer(Z1)
+    Z1
+
+
 }
