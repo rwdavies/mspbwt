@@ -529,7 +529,7 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
     for(i in 1:length(Z)) {
         Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
         if (is.na(Z1[i])) {
-            stop("have not figured this out yet!")
+            warnings("am working on this!")
         }
     }
     Z1 <- as.integer(Z1)
@@ -538,19 +538,37 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
 
 
 ## where Zs is some SNP level vector of 0-1s (then rounded)
-## then we want it in symbol form, matching when appropriate
-map_snp_hap_to_hapMatcher_grid_symbols <- function(Zs) {
+## ## then we want it in symbol form, matching when appropriate
+## map_snp_hap_to_hapMatcher_grid_symbols <- function(Zs) {
 
-    Z1 <- Z
-    Z1[] <- 0L
-    for(i in 1:length(Z)) {
-        Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
-        if (is.na(Z1[i])) {
-            stop("have not figured this out yet!")
-        }
-    }
-    Z1 <- as.integer(Z1)
-    Z1
+##     Z1 <- Z
+##     Z1[] <- 0L
+##     for(i in 1:length(Z)) {
+##         Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
+##         if (is.na(Z1[i])) {
+##             stop("have not figured this out yet!")
+##         }
+##     }
+##     Z1 <- as.integer(Z1)
+##     Z1
 
 
+## }
+
+
+## hapc is the "haplotype" (value) in binary form
+## a is available symbols in that grid in matrix form
+## so we need to return 1:(nrow(a)) because those are the available entries 
+map_one_binary_value_to_hapMatcher <- function(
+    hapc,
+    distinctHapsB,
+    iGrid1,
+    nSNPs
+) {
+    dist <- calc_dist_between_rhb_t_and_hap(
+        distinctHapsB[, iGrid1, drop = FALSE],
+        STITCH::rcpp_int_expand(hapc, nSNPs),
+        nSNPs
+    )
+    which(dist == min(dist))[1]
 }

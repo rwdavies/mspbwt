@@ -93,3 +93,90 @@ test_that("multi-version with >2 symbols can work", {
 })
 
 
+
+test_that("can remap rhb_t special value to symbols", {
+
+    nSNPs <- 32
+
+    for(nSNPs in c(32, 10)) {
+            
+        symbols <- c(3L, 0L, 15L) ## all 0, two 1's, 4 1's
+        nSNPs <- c(32, 10)[j]
+
+        ## 0 =  0000
+        ## 3 =  1100
+        ## 15 = 1111
+        ## now because of order, 3 > 0 > 15 in terms of preference
+        ## e.g. 1 will go to 3
+        
+        test_match     <- c(1L, 7L, 4L, 14L)
+        expected_match <- c(3L, 3L, 0L, 15L)
+
+        distinctHapsB <- matrix(symbols, nrow = length(symbols), ncol = 1)
+        iGrid1 <- 1
+
+        expect_equal(
+            sapply(test_match, map_one_binary_value_to_hapMatcher, distinctHapsB, iGrid1, nSNPs),
+            match(expected_match, symbols)
+        )
+
+    }
+
+})
+
+
+test_that("mspbwt can work with rare symbol not in hapMatcher", {
+
+    ## so same as normal
+    ## but can build and use from hapMatcher with 0 entries
+    nGrids <- 12
+    K <- 25
+    X <- array(sample(1L:5L, K * nGrids, replace = TRUE), c(K, nGrids))
+
+    ## for the key point, the 6th grid, force it to store this 
+    nMaxDH <- 4 
+    X[, 6] <- rep(1L:4L, K)[1:K]
+    
+    ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
+    X[12, 4:8] <- X[3, 4:8]
+    X[3, 6] <- 100L
+    X[12, 6] <- 1000L
+    Z <- X[3, ]
+    Z[-c(4:8)] <- X[1, -c(4:8)]
+    ## 
+
+    rhb_t <- make_rhb_t_from_rhi_t(X)    
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = X,
+        nSNPs = 32 * nGrids,
+        nMaxDH = nMaxDH,
+        ref_error = 0.001
+    )
+    hapMatcher <- out$hapMatcher
+    all_symbols <- out$all_symbols
+
+    stop("AM HERE")
+    ## this now requires re-writing quite a lot about how indices are built
+    ## including C++ etc
+    ## might need to go back to more fundementals for this!
+    
+    ## Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
+    ## Z <- map_Z_to_all_symbols(Zg, all_symbols)
+
+    ## ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+    ##     X1C = hapMatcher,
+    ##     all_symbols = all_symbols,
+    ##     indices = list()
+    ## )
+    
+    ## ms_top_matches <- ms_MatchZ_Algorithm5(
+    ##     X = hapMatcher,
+    ##     ms_indices = ms_indices,
+    ##     Z = Z,
+    ##     ##verbose = TRUE,
+    ##     do_checks = FALSE,
+    ##     check_vs_indices = FALSE
+    ## )
+    ## ##
+
+})

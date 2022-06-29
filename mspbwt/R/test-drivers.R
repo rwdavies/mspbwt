@@ -157,19 +157,19 @@ test_driver_multiple <- function(
         nMaxDH = nMaxDH,
         ref_error = 0.001
     )
-    hapMatcher <- out[["hapMatcher"]]
-    all_symbols <- out[["all_symbols"]]
     Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
-    Z <- map_Z_to_all_symbols(Zg, all_symbols) 
-    ##    
-    list(
-        Xs = Xs,
-        Zs = Zs,
-        hapMatcher = hapMatcher,
-        all_symbols = all_symbols,
-        Z = Z
+    Z <- map_Z_to_all_symbols(Zg, all_symbols)
+    out <- append(
+        out, 
+        list(
+            Xs = Xs,
+            Zs = Zs,
+            Z = Z
+        )
     )
+    out
 }
+    
 
 
 
