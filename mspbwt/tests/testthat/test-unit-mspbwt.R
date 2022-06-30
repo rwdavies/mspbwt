@@ -150,8 +150,8 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     Z <- X[3, ]
     Z[-c(4:8)] <- X[1, -c(4:8)]
     X[12, c(3, 9)] <- 5 - Z[c(3, 9)]
-    X[3, c(3, 9)] <- 5 - Z[c(3, 9)]    
-    
+    X[3, c(3, 9)] <- 5 - Z[c(3, 9)]
+
     ## 
 
     rhb_t <- make_rhb_t_from_rhi_t(X)
@@ -168,17 +168,20 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     ## this now requires re-writing quite a lot about how indices are built
     ## including C++ etc
     ## might need to go back to more fundementals for this!
-    
-    ## Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
-    ## Z <- map_Z_to_all_symbols(Zg, all_symbols)
-
-    ## if 0, push to +1?
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = hapMatcher,
         all_symbols = all_symbols,
         indices = list()
     )
 
+    Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = hapMatcher,
+        all_symbols = all_symbols,
+        indices = list(),
+        verbose = TRUE
+    )
+    expect_equal(ms_indices, Rcpp_ms_indices)
+    
     Z1 <- map_Z_to_all_symbols(Z, all_symbols)
     ms_top_matches <- ms_MatchZ_Algorithm5(
          X = hapMatcher,

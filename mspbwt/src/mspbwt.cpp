@@ -65,6 +65,9 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
   //
   for(int k0 = 0; k0 < K; k0++) { // haps (1-based) (??)
     s0 = X1C(a(k0, t0), t0) - 1; // ## this symbol to consider, 0-based
+    if (s0 == (-1)) {
+      s0 = St - 1;
+    }
     int match_start = d(k0, t0);
     for(i = 0; i < St; i++) {
       if (match_start > pqs(i)) {
@@ -151,6 +154,15 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
 	Smax = n_symbols_per_grid[i];
       }
     }
+    //
+    // extract this to change 0 to max val
+    //
+    Rcpp::IntegerVector X1C_col = X1C(_, 0);
+    for(k = 0; k < K; k++) {
+      if (X1C_col(k) == 0) {
+	X1C_col(k)=n_symbols_per_grid(0);
+      }
+    }
     // build arrays including a, d and now u, v, c
     Rcpp::IntegerMatrix a(K, T + 1);
     Rcpp::IntegerMatrix c(T + 1);
@@ -158,14 +170,14 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     for(k = 0; k < K; k++) {
       a(k, 0) = k;
     }
-    a(_, 1) = order_(X1C(_, 0)) - 1;
+    a(_, 1) = order_(X1C_col) - 1;
     //
     // d
     //
     Rcpp::IntegerMatrix d(K + 1, T + 1);
     d.fill(0); // unnecessary?
     for(k = 0; k <= (K - 1 - 1); k++) {
-      if (X1C(a(k, 1), 0) != X1C(a(k + 1, 1), 0)) {
+      if (X1C_col(a(k, 1)) != X1C_col(a(k + 1, 1))) {
 	d(k + 1, 1) = 1;
       }
     }
