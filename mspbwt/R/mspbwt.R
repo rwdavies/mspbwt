@@ -215,12 +215,14 @@ one_move_forward_buildindices <- function(
     ## get count of number of each
     usge <- list(1:St) ## us for this (g)rid (e)ncoded
     first_usg_minimal_symbol <- 1 ## 1-based
+    prev_value <- symbol_count[1]
     for(s in 1:St) {
-        if (symbol_count[s] > n_min_symbols) {
+        if (symbol_count[s] > n_min_symbols & symbol_count[s] <= prev_value) {
             first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
         } else {
             usge[[s]] <- rep(-1, symbol_count[s])
         }
+        prev_value <- symbol_count[s]
     }
     start_count <- c(0, cumsum(symbol_count))
     ##    

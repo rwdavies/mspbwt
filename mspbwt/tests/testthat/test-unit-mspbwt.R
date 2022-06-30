@@ -135,12 +135,13 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
 
     set.seed(100110)
     nGrids <- 12
-    K <- 25
+    K <- 40
     X <- array(sample(1L:5L, K * nGrids, replace = TRUE), c(K, nGrids))
 
     ## for the key point, the 6th grid, force it to store this 
     nMaxDH <- 4 
     X[, 6] <- rep(1L:4L, K)[1:K]
+    X[20:40, 6] <- 2000L + 100L:120L
     
     ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
     ## by the current strategy, these will both be captured
@@ -171,15 +172,21 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     ms_indices <- ms_BuildIndices_Algorithm5(
         X1C = hapMatcher,
         all_symbols = all_symbols,
-        indices = list()
+        indices = list(),
+        egs = 10,
+        n_min_symbols = 3
     )
 
+    ## OK - have captured the problem!
     Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
         X1C = hapMatcher,
         all_symbols = all_symbols,
         indices = list(),
-        verbose = TRUE
+        verbose = FALSE,
+        egs = 10,
+        n_min_symbols = 3
     )
+    
     expect_equal(ms_indices, Rcpp_ms_indices)
 
     Z1 <- map_Z_to_all_symbols(Z, all_symbols)    

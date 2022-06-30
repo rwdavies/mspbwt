@@ -35,14 +35,16 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
   Rcpp::List usge(St);
   int first_usg_minimal_symbol = 1; // 1-based
   int s0;
+  int prev_value = symbol_count(0);
   for(s0 = 0; s0 < St; s0++) {
-    if (symbol_count(s0) > n_min_symbols) {
+    if ((symbol_count(s0) > n_min_symbols) & (symbol_count(s0) <= prev_value)) {
       first_usg_minimal_symbol++;
     } else {
       Rcpp::IntegerVector temp_vec(symbol_count(s0));
       temp_vec.fill(-1);
       usge[s0] = temp_vec;
     }
+    prev_value = symbol_count(s0);
   }
   //
   //
@@ -81,6 +83,8 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
     if (s0 < first_usg_minimal_symbol - 1) {
       usg(k0 + 1, s0) = usg(k0 + 1, s0) + 1;
     } else {
+      // this the problem with s0
+      // what triggers this
       Rcpp::IntegerVector temp = usge[s0];
       temp[nso[s0]] = k0 + 1;
       usge[s0] = temp;
@@ -136,6 +140,9 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     bool with_Rcpp = true
 ) {    
     //
+    if (verbose) {
+        std::cout << "initialize" << std::endl;
+    }
     const int K = X1C.nrow();
     const int T = X1C.ncol();
     //
@@ -210,7 +217,6 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     //
     for(t = 1; t <= T; t++) {
       //
-      // re-set
       //
       int St = n_symbols_per_grid(t - 1);
       Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);
