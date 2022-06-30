@@ -543,8 +543,9 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
         }
         ## now - we are OK with this if this is allowed in hapMatcher
         ## i.e. if hapMatcher has 0's, this is allowed
+        ## however, if in all_symbols, the first and last symbol are DIFFERENT, there ARE no hapMatcher 0 values
         ## HOWEVER, if hapMatcher does NOT, we want to map to available values
-        if (Z1[i] == 0 & !is.na(a[nrow(a), 1])) {
+        if (Z1[i] == 0 & (a[1, 1] != a[nrow(a), 1])) {
             dist <- calc_dist_between_rhb_t_and_hap(
                 matrix(a[, 1], ncol = 1),
                 STITCH::rcpp_int_expand(Z[i], 32),

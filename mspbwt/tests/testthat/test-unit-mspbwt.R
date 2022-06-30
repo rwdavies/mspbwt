@@ -181,8 +181,13 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
         verbose = TRUE
     )
     expect_equal(ms_indices, Rcpp_ms_indices)
+
+    Z1 <- map_Z_to_all_symbols(Z, all_symbols)    
+    rbind(X[c(1, 3, 12), ], NA, Z)    
+    rbind(hapMatcher[c(1, 3, 12), ], NA, Z1)
     
-    Z1 <- map_Z_to_all_symbols(Z, all_symbols)
+    
+
     ms_top_matches <- ms_MatchZ_Algorithm5(
          X = hapMatcher,
          ms_indices = ms_indices,
