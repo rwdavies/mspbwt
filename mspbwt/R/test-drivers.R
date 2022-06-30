@@ -158,7 +158,7 @@ test_driver_multiple <- function(
         ref_error = 0.001
     )
     Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
-    Z <- map_Z_to_all_symbols(Zg, all_symbols)
+    Z <- map_Z_to_all_symbols(Zg, out[["all_symbols"]])
     out <- append(
         out, 
         list(

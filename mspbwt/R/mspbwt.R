@@ -46,13 +46,15 @@ ms_BuildIndices_Algorithm5 <- function(
     a <- array(as.integer(NA), c(K, T + 1)) ## orders
     c <- array(NA, T + 1) ## not sure why
     b <- array(NA, K)
+    X1C_col1 <- X1C[, 1]
+    X1C_col1[X1C_col1 == 0] <- nrow(all_symbols[[1]])
     a[, 1] <- as.integer(0:(K - 1)) ## by definition for some reason
-    a[, 2] <- as.integer(order(X1C[, 1]) - 1) ## 0-based
+    a[, 2] <- as.integer(order(X1C_col1) - 1) ## 0-based
     ## related to d
     d <- array(as.integer(NA), c(K + 1, T + 1)) ## distances
     d[, 1:2] <- 0L
     for(k in 1:(K - 1)) {
-        if (X1C[a[k, 2] + 1, 1] != X1C[a[k + 1, 2] + 1, 1]) {
+        if (X1C_col1[a[k, 2] + 1] != X1C_col1[a[k + 1, 2] + 1]) {
             d[k + 1, 2] <- 1L
         }
     }
@@ -229,6 +231,9 @@ one_move_forward_buildindices <- function(
     ##    
     for(k in 0:(K - 1)) { ## haps (1-based)
         s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
+        if (s == 0) {
+            s <- St
+        }
         ## match_start <- prev_d[k + 1]
         match_start <- d[k + 1, t]
         for(i in 0:(St - 1)) {
@@ -289,7 +294,7 @@ ms_MatchZ_Algorithm5 <- function(
     T <- ncol(X)
     ## indices
     a <- ms_indices[["a"]]
-     d <- ms_indices[["d"]]
+    d <- ms_indices[["d"]]
     ##d_store <- ms_indices[["d_store"]]
     usge_all <- ms_indices[["usge_all"]]
     ## things needed as well
@@ -305,12 +310,19 @@ ms_MatchZ_Algorithm5 <- function(
     g <- array(NA, T) ## keep these 0-based
     e[1] <- 0
     x <- c(0, cumsum(all_symbols[[1]][, 2]))
-    f[1] <- x[Z[1]]
-    g[1] <- x[Z[1] + 1]
+    Z_1 <- Z[1]
+    if (Z_1 == 0) {
+        Z_1 <- nrow(all_symbols[[1]])
+    }
+    f[1] <- x[Z_1]
+    g[1] <- x[Z_1 + 1]
     ##
     ## just do easy bit for now
     ##
     wf <- function(k, t, s, usge_all, all_symbols) {
+        if (s == 0) {
+            s <- nrow(all_symbols[[t]])
+        }
         c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
         ## u <- usge[k + 1, s] + c
         u <- decode_value_of_usge(
@@ -392,7 +404,6 @@ ms_MatchZ_Algorithm5 <- function(
                 }
                 if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
             }
-
             ## 
             ## this CAN happen, if there is a symbol mis-match, and have to go forward
             ##
@@ -429,8 +440,6 @@ ms_MatchZ_Algorithm5 <- function(
                     if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
                 }
             }
-
-            
             if (verbose) print(paste0("e1 = ", e1))
             if (verbose) print("save stop")
             ec <- e1
@@ -527,9 +536,21 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
     Z1 <- Z
     Z1[] <- 0L
     for(i in 1:length(Z)) {
-        Z1[i] <- match(Z[i], all_symbols[[i]][, "symbol"])
+        a <- all_symbols[[i]]
+        Z1[i] <- match(Z[i], a[, "symbol"])
         if (is.na(Z1[i])) {
-            warnings("am working on this!")
+            Z1[i] <- 0
+        }
+        ## now - we are OK with this if this is allowed in hapMatcher
+        ## i.e. if hapMatcher has 0's, this is allowed
+        ## HOWEVER, if hapMatcher does NOT, we want to map to available values
+        if (Z1[i] == 0 & !is.na(a[nrow(a), 1])) {
+            dist <- calc_dist_between_rhb_t_and_hap(
+                matrix(a[, 1], ncol = 1),
+                STITCH::rcpp_int_expand(Z[i], 32),
+                32
+            )
+            Z1[i] <- which(dist == min(dist))[1]
         }
     }
     Z1 <- as.integer(Z1)

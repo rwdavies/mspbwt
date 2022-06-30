@@ -94,41 +94,46 @@ test_that("multi-version with >2 symbols can work", {
 
 
 
-test_that("can remap rhb_t special value to symbols", {
+## not currently needed
+## test_that("can remap rhb_t special value to symbols", {
 
-    nSNPs <- 32
+##     nSNPs <- 32
 
-    for(nSNPs in c(32, 10)) {
+##     for(nSNPs in c(32, 10)) {
             
-        symbols <- c(3L, 0L, 15L) ## all 0, two 1's, 4 1's
-        nSNPs <- c(32, 10)[j]
+##         symbols <- c(3L, 0L, 15L) ## all 0, two 1's, 4 1's
 
-        ## 0 =  0000
-        ## 3 =  1100
-        ## 15 = 1111
-        ## now because of order, 3 > 0 > 15 in terms of preference
-        ## e.g. 1 will go to 3
+##         ## 0 =  0000
+##         ## 3 =  1100
+##         ## 15 = 1111
+##         ## now because of order, 3 > 0 > 15 in terms of preference
+##         ## e.g. 1 will go to 3
         
-        test_match     <- c(1L, 7L, 4L, 14L)
-        expected_match <- c(3L, 3L, 0L, 15L)
+##         test_match     <- c(1L, 7L, 4L, 14L)
+##         expected_match <- c(3L, 3L, 0L, 15L)
 
-        distinctHapsB <- matrix(symbols, nrow = length(symbols), ncol = 1)
-        iGrid1 <- 1
+##         distinctHapsB <- matrix(symbols, nrow = length(symbols), ncol = 1)
+##         iGrid1 <- 1
 
-        expect_equal(
-            sapply(test_match, map_one_binary_value_to_hapMatcher, distinctHapsB, iGrid1, nSNPs),
-            match(expected_match, symbols)
-        )
+##         expect_equal(
+##             sapply(test_match, map_one_binary_value_to_hapMatcher, distinctHapsB, iGrid1, nSNPs),
+##             match(expected_match, symbols)
+##         )
 
-    }
+##     }
 
-})
+## })
 
 
+
+##
+## here we want to add in a rare symbol
+## not covered in hapMatcher
+## but contained in Z as well
+##
 test_that("mspbwt can work with rare symbol not in hapMatcher", {
 
-    ## so same as normal
-    ## but can build and use from hapMatcher with 0 entries
+    set.seed(100110)
     nGrids <- 12
     K <- 25
     X <- array(sample(1L:5L, K * nGrids, replace = TRUE), c(K, nGrids))
@@ -138,15 +143,20 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     X[, 6] <- rep(1L:4L, K)[1:K]
     
     ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
+    ## by the current strategy, these will both be captured
     X[12, 4:8] <- X[3, 4:8]
     X[3, 6] <- 100L
     X[12, 6] <- 1000L
     Z <- X[3, ]
     Z[-c(4:8)] <- X[1, -c(4:8)]
+    X[12, c(3, 9)] <- 5 - Z[c(3, 9)]
+    X[3, c(3, 9)] <- 5 - Z[c(3, 9)]    
+    
     ## 
 
-    rhb_t <- make_rhb_t_from_rhi_t(X)    
-    out <- QUILT::make_rhb_t_equality(
+    rhb_t <- make_rhb_t_from_rhi_t(X)
+    ##QUILT::
+    out <- make_rhb_t_equality(
         rhb_t = X,
         nSNPs = 32 * nGrids,
         nMaxDH = nMaxDH,
@@ -155,7 +165,6 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     hapMatcher <- out$hapMatcher
     all_symbols <- out$all_symbols
 
-    stop("AM HERE")
     ## this now requires re-writing quite a lot about how indices are built
     ## including C++ etc
     ## might need to go back to more fundementals for this!
@@ -163,20 +172,24 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     ## Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
     ## Z <- map_Z_to_all_symbols(Zg, all_symbols)
 
-    ## ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
-    ##     X1C = hapMatcher,
-    ##     all_symbols = all_symbols,
-    ##     indices = list()
-    ## )
-    
-    ## ms_top_matches <- ms_MatchZ_Algorithm5(
-    ##     X = hapMatcher,
-    ##     ms_indices = ms_indices,
-    ##     Z = Z,
-    ##     ##verbose = TRUE,
-    ##     do_checks = FALSE,
-    ##     check_vs_indices = FALSE
-    ## )
-    ## ##
+    ## if 0, push to +1?
+    ms_indices <- ms_BuildIndices_Algorithm5(
+        X1C = hapMatcher,
+        all_symbols = all_symbols,
+        indices = list()
+    )
 
+    Z1 <- map_Z_to_all_symbols(Z, all_symbols)
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+         X = hapMatcher,
+         ms_indices = ms_indices,
+        Z = Z1
+     )
+
+    ## check that both expected matches are there
+    ## we expect 0-based 2 and 11 to match from 1-based SNPs 4 through 8
+    a <- ms_top_matches
+    expect_equal(sum((a[, 2] == 2) & a[, 3] == 4 & a[, 4] == 8), 1)
+    expect_equal(sum((a[, 2] == 11) & a[, 3] == 4 & a[, 4] == 8), 1)    
+    
 })

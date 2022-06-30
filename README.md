@@ -2,21 +2,33 @@
 
 Current
 =============
- - no more bugs!
- - try checking some more on real data
- - write into C++
-
-
- - Then
- - Now have the whole building in C++
- - So could test on an e.g. 2 Mbp region, see if it can work
- - Then maybe some mild profiling
+ - Can handle 0 in hapMatcher or Z
+ - Need to write this into the C++ bit of building the index
+ - At some point, need to write matching into C++ too
+ - but first test a bit!
+ - Then maybe some mild profiling etc
  - Then broadly ready for use!
 
 
 
+## Notes on some variables / operations
+
+Suppose we have large set of haplotypes with K rows and nSNPs columns, stored as binary values (called rhi_t)
+We can convert that to a binary representation with K rows and nGrids columns, with nGrids being ceiling(nSNPs / 32) (called rhb_t)
+And we can re-map that so that each column has values that start at 1, and increment by 1, such that the number of remapped i's is >= i + 1 (e.g. there are more 1's than 2's, and more 2's than 3's, etc) (called hapMatcher)
+Now for reasons not covered here, values not remapped are set to a 0
+Now we use this hapMatcher as input to build the mspbwt indices, along with a helper list called all_symbols with a description of what symbols are found in each grid, and how many of them
+In building the indices, all 0's are re-mapped to the highest value observed in a given grid (e.g. if in the first grid we see (normal) values of 1,2,3,4, and there are some 0's, those are stored in hapMatcher as 0's, but used in building the indices as 5's)
+For matching, for some new Z in binary representation, this can be mapped to the new hapMatcher symbol base, in a straightforward way, except for two cases
+In the case that Z can't be mapped to the non-zero values, but there are 0 values, it is set to 0
+In the case that Z can't be mapped to the non-zero values, and there are no 0 values, a closest match is found
+As such, the re-mapped Z can't have symbols not found in hapMatcher at any grid point, and the algorithm should work without issue
+
+## Old scratch
 
  
+
+
 
 Old todo:
 I have the first part working, in that the multi-symbol version is the same as the two symbol version, when run on two symbols
