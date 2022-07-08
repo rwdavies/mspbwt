@@ -534,6 +534,7 @@ ms_MatchZ_Algorithm5 <- function(
 ## defined at the SAME GRIDs (i.e. both are for grids and neither for SNPs)
 ## and we've mapped X to this new encoding, into hapMatcherA, and all_symbols
 ## we want to do the same with Z
+#' @export
 map_Z_to_all_symbols <- function(Z, all_symbols) {
     Z1 <- Z
     Z1[] <- 0L
