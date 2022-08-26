@@ -138,73 +138,77 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     K <- 40
     X <- array(sample(1L:5L, K * nGrids, replace = TRUE), c(K, nGrids))
 
-    ## for the key point, the 6th grid, force it to store this 
-    nMaxDH <- 4 
-    X[, 6] <- rep(1L:4L, K)[1:K]
-    X[20:40, 6] <- 2000L + 100L:120L
+    ## for the key point, force it to store this
+
+    for(iKeyGrid in c(6, 1, nGrids)) {
+        
+        nMaxDH <- 4 
+        X[, iKeyGrid] <- rep(1L:4L, K)[1:K]
+        X[20:40, iKeyGrid] <- 2000L + 100L:120L
     
-    ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
-    ## by the current strategy, these will both be captured
-    X[12, 4:8] <- X[3, 4:8]
-    X[3, 6] <- 100L
-    X[12, 6] <- 1000L
-    Z <- X[3, ]
-    Z[-c(4:8)] <- X[1, -c(4:8)]
-    X[12, c(3, 9)] <- 5 - Z[c(3, 9)]
-    X[3, c(3, 9)] <- 5 - Z[c(3, 9)]
+        ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
+        ## by the current strategy, these will both be captured
+        w1 <- max(2, iKeyGrid - 3)
+        w2 <- min(nGrids - 1, iKeyGrid + 3)
+        w <- w1:w2
+        X[12, w] <- X[3, w]
+        X[3, iKeyGrid] <- 100L
+        X[12, iKeyGrid] <- 1000L
+        Z <- X[3, ]
+        Z[-w] <- X[1, -w]
+        X[12, c(w1 - 1, w2 + 1)] <- 5 - Z[c(w1 - 1, w2 + 1)]
+        X[3, c(w1 - 1, w2 + 1)] <- 5 - Z[c(w1 - 1, w2 + 1)]
+        
+        ## 
+        rhb_t <- make_rhb_t_from_rhi_t(X)
+        ## QUILT::
+        out <- make_rhb_t_equality(
+            rhb_t = X,
+            nSNPs = 32 * nGrids,
+            nMaxDH = nMaxDH,
+            ref_error = 0.001
+        )
+        hapMatcher <- out$hapMatcher
+        all_symbols <- out$all_symbols
+        ## this now requires re-writing quite a lot about how indices are built
+        ## including C++ etc
+        ## might need to go back to more fundementals for this!
+        ms_indices <- ms_BuildIndices_Algorithm5(
+            X1C = hapMatcher,
+            all_symbols = all_symbols,
+            indices = list(),
+            egs = 10,
+            n_min_symbols = 3
+        )
 
-    ## 
+        ## OK - have captured the problem!
+        Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+            X1C = hapMatcher,
+            all_symbols = all_symbols,
+            indices = list(),
+            verbose = FALSE,
+            egs = 10,
+            n_min_symbols = 3
+        )
+        
+        expect_equal(ms_indices, Rcpp_ms_indices)
 
-    rhb_t <- make_rhb_t_from_rhi_t(X)
-    ##QUILT::
-    out <- make_rhb_t_equality(
-        rhb_t = X,
-        nSNPs = 32 * nGrids,
-        nMaxDH = nMaxDH,
-        ref_error = 0.001
-    )
-    hapMatcher <- out$hapMatcher
-    all_symbols <- out$all_symbols
+        Z1 <- map_Z_to_all_symbols(Z, all_symbols)    
+        rbind(X[c(1, 3, 12), ], NA, Z)    
+        rbind(hapMatcher[c(1, 3, 12), ], NA, Z1)
+        
+        ms_top_matches <- ms_MatchZ_Algorithm5(
+            X = hapMatcher,
+            ms_indices = ms_indices,
+            Z = Z1
+        )
+        
+        ## check that both expected matches are there
+        ## we expect 0-based 2 and 11 to match from 1-based SNPs 4 through 8
+        a <- ms_top_matches
+        expect_equal(sum((a[, 2] == 2) & a[, 3] <= w1 & a[, 4] >=w2), 1)
+        expect_equal(sum((a[, 2] == 11) & a[, 3] <= w1 & a[, 4] >= w2), 1)
 
-    ## this now requires re-writing quite a lot about how indices are built
-    ## including C++ etc
-    ## might need to go back to more fundementals for this!
-    ms_indices <- ms_BuildIndices_Algorithm5(
-        X1C = hapMatcher,
-        all_symbols = all_symbols,
-        indices = list(),
-        egs = 10,
-        n_min_symbols = 3
-    )
-
-    ## OK - have captured the problem!
-    Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
-        X1C = hapMatcher,
-        all_symbols = all_symbols,
-        indices = list(),
-        verbose = FALSE,
-        egs = 10,
-        n_min_symbols = 3
-    )
-    
-    expect_equal(ms_indices, Rcpp_ms_indices)
-
-    Z1 <- map_Z_to_all_symbols(Z, all_symbols)    
-    rbind(X[c(1, 3, 12), ], NA, Z)    
-    rbind(hapMatcher[c(1, 3, 12), ], NA, Z1)
-    
-    
-
-    ms_top_matches <- ms_MatchZ_Algorithm5(
-         X = hapMatcher,
-         ms_indices = ms_indices,
-        Z = Z1
-     )
-
-    ## check that both expected matches are there
-    ## we expect 0-based 2 and 11 to match from 1-based SNPs 4 through 8
-    a <- ms_top_matches
-    expect_equal(sum((a[, 2] == 2) & a[, 3] == 4 & a[, 4] == 8), 1)
-    expect_equal(sum((a[, 2] == 11) & a[, 3] == 4 & a[, 4] == 8), 1)    
+    }
     
 })

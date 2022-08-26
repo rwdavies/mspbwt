@@ -3,6 +3,10 @@
 ## i.e. every column of X contains entries from 1 to j for some arbitrary j >= 1
 ## and every entry from 1 to j occurs at least once
 ##
+## NOTE - X1C can specially contain zeros, representing missing values
+## these ARE recorded in all_symbols, but placed in the final entry in the per-grid matrix
+## these are to be dynamically re-mapped to be the new largest symbol
+##
 #' @export
 ms_BuildIndices_Algorithm5 <- function(
     X1C,
@@ -87,6 +91,10 @@ ms_BuildIndices_Algorithm5 <- function(
         ##
         St <- as.integer(n_symbols_per_grid[t]) ## number of symbols in this grid
         symbol_count <- as.integer(all_symbols[[t]][, "count"])
+        ## if (sum(symbol_count) < K) {
+        ##     St <- St + 1
+        ##     symbol_count <- c(symbol_count, K - sum(symbol_count))
+        ## }
         ## 
         if (do_checks) {
             usg_check <- array(0L, c(K + 1, St))
@@ -110,7 +118,11 @@ ms_BuildIndices_Algorithm5 <- function(
                 stop(paste0("class of ", thing, " has changed"))
             }
         }
-        
+        if (verbose) {
+            print(paste0("t = ", t))
+            print(paste0("St = ", St))
+            print(symbol_count)
+        }
         ##op <- options(digits.secs = 6); print("--in --"); print(Sys.time())
         out <- f(
             X1C = X1C,
@@ -208,8 +220,24 @@ one_move_forward_buildindices <- function(
     egs,
     St,
     n_min_symbols,
-    do_checks
-) {
+    do_checks,
+    X1C_can_have_zeroes
+    ) {
+    save(    X1C,
+    a,
+    d,
+    usg,
+    usg_check,
+    t,
+    K,
+    symbol_count,
+    egs,
+    St,
+    n_min_symbols,
+    do_checks,
+    X1C_can_have_zeroes
+   ,
+    file = "~/temp.RData")
     ##
     ## 
     ## get count of number of each
@@ -244,6 +272,7 @@ one_move_forward_buildindices <- function(
             }
         }
         ## now - where it goes - 0 based
+        stopifnot(s <= length(nso))
         val <- c(val, start_count[s] + nso[s] + 1)
         a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
         d[start_count[s] + nso[s] + 1, t + 1] <- as.integer(pqs[s])
@@ -530,7 +559,9 @@ ms_MatchZ_Algorithm5 <- function(
 
 
 
-## here if we have some X (original matrix with symbols), and some Z with the same encoding
+## here if we have some X1C (original matrix, 1-based increasing possibly with 0s),
+## or a regular X (original matrix, no 0s)
+## and some Z with the same encoding
 ## defined at the SAME GRIDs (i.e. both are for grids and neither for SNPs)
 ## and we've mapped X to this new encoding, into hapMatcherA, and all_symbols
 ## we want to do the same with Z
@@ -541,20 +572,27 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
     for(i in 1:length(Z)) {
         a <- all_symbols[[i]]
         Z1[i] <- match(Z[i], a[, "symbol"])
+        ## if it is NA, something needs to be done
         if (is.na(Z1[i])) {
-            Z1[i] <- 0
-        }
-        ## now - we are OK with this if this is allowed in hapMatcher
-        ## i.e. if hapMatcher has 0's, this is allowed
-        ## however, if in all_symbols, the first and last symbol are DIFFERENT, there ARE no hapMatcher 0 values
-        ## HOWEVER, if hapMatcher does NOT, we want to map to available values
-        if (Z1[i] == 0 & (a[1, 1] != a[nrow(a), 1])) {
-            dist <- calc_dist_between_rhb_t_and_hap(
-                matrix(a[, 1], ncol = 1),
-                STITCH::rcpp_int_expand(Z[i], 32),
-                32
-            )
-            Z1[i] <- which(dist == min(dist))[1]
+            ## if the first and last entries agree, then there is a missing character, which we can use
+            ## this is represented by a 0 in X1C
+            if (is.na(a[1, 1] == a[nrow(a), 1])) {
+                print(Z[i])
+                print(Z1[i])
+                print(a)
+                stop("NAs")
+            }
+            if (a[1, 1] == a[nrow(a), 1]) {
+                Z1[i] <- 0
+            } else {
+                ## else, there is no missing, so we match to the closest
+                dist <- calc_dist_between_rhb_t_and_hap(
+                    matrix(a[, 1], ncol = 1),
+                    STITCH::rcpp_int_expand(Z[i], 32),
+                    32
+                )
+                Z1[i] <- which(dist == min(dist))[1]
+            }
         }
     }
     Z1 <- as.integer(Z1)

@@ -7,7 +7,7 @@ Author: Robert Davies
 Maintainer: Robert Davies <robertwilliamdavies@gmail.com>
 Description: This package is a library for an efficient multi symbol pbwt
 License: GPL3
-Depends: parallel, data.table, rrbgen (>= 0.0.4), STITCH (>= 1.6.6), QUILT (>= 1.0.3)
+Depends: parallel, data.table, rrbgen (>= 0.0.4), STITCH (>= 1.6.6), QUILT
 Imports: Rcpp (>= 1.0.2)
 LinkingTo: Rcpp
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
