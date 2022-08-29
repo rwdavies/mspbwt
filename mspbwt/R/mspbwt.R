@@ -576,13 +576,16 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
         if (is.na(Z1[i])) {
             ## if the first and last entries agree, then there is a missing character, which we can use
             ## this is represented by a 0 in X1C
-            if (is.na(a[1, 1] == a[nrow(a), 1])) {
-                print(Z[i])
-                print(Z1[i])
-                print(a)
-                stop("NAs")
+            ## though note, can both be NA, so need to be careful
+            the_same <- a[1, 1] == a[nrow(a), 1]
+            if (is.na(the_same)) {
+                if (is.na(a[1, 1]) & is.na(a[nrow(a), 1])) {
+                    the_same <- TRUE
+                } else {
+                    the_same <- FALSE
+                }
             }
-            if (a[1, 1] == a[nrow(a), 1]) {
+            if (the_same) {
                 Z1[i] <- 0
             } else {
                 ## else, there is no missing, so we match to the closest
