@@ -222,22 +222,7 @@ one_move_forward_buildindices <- function(
     n_min_symbols,
     do_checks,
     X1C_can_have_zeroes
-    ) {
-    save(    X1C,
-    a,
-    d,
-    usg,
-    usg_check,
-    t,
-    K,
-    symbol_count,
-    egs,
-    St,
-    n_min_symbols,
-    do_checks,
-    X1C_can_have_zeroes
-   ,
-    file = "~/temp.RData")
+) {
     ##
     ## 
     ## get count of number of each
