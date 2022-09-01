@@ -24,13 +24,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_decode_maximal_value_of_u
-int Rcpp_decode_maximal_value_of_u(Rcpp::NumericMatrix out_mat, Rcpp::NumericVector out_vec, int v, int egs, bool do_checks);
+int Rcpp_decode_maximal_value_of_u(Rcpp::NumericMatrix& out_mat, Rcpp::NumericVector& out_vec, int v, int egs, bool do_checks);
 RcppExport SEXP _mspbwt_Rcpp_decode_maximal_value_of_u(SEXP out_matSEXP, SEXP out_vecSEXP, SEXP vSEXP, SEXP egsSEXP, SEXP do_checksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type out_mat(out_matSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type out_vec(out_vecSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type out_mat(out_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector& >::type out_vec(out_vecSEXP);
     Rcpp::traits::input_parameter< int >::type v(vSEXP);
     Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
     Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
@@ -39,23 +39,23 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_encode_minimal_column_of_u
-Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(Rcpp::IntegerVector u);
+Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(Rcpp::IntegerVector& u);
 RcppExport SEXP _mspbwt_Rcpp_encode_minimal_column_of_u(SEXP uSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type u(uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type u(uSEXP);
     rcpp_result_gen = Rcpp::wrap(Rcpp_encode_minimal_column_of_u(u));
     return rcpp_result_gen;
 END_RCPP
 }
 // Rcpp_decode_minimal_value_of_u
-int Rcpp_decode_minimal_value_of_u(Rcpp::IntegerVector x, int v);
+int Rcpp_decode_minimal_value_of_u(Rcpp::IntegerVector& x, int v);
 RcppExport SEXP _mspbwt_Rcpp_decode_minimal_value_of_u(SEXP xSEXP, SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type v(vSEXP);
     rcpp_result_gen = Rcpp::wrap(Rcpp_decode_minimal_value_of_u(x, v));
     return rcpp_result_gen;

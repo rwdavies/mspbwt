@@ -176,7 +176,6 @@ ms_BuildIndices_Algorithm5 <- function(
                 c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
                 w <- decode_value_of_usge(
                     usge = usge_all[[t]],
-                    symbol_count_at_grid = all_symbols[[t]],
                     s = s,
                     v = k + 1,
                     egs = egs,
@@ -300,7 +299,6 @@ wf <- function(k, t, s, usge_all, all_symbols, egs, indices, check_vs_indices = 
     ## u <- usge[k + 1, s] + c
     u <- decode_value_of_usge(
         usge = usge_all[[t]],
-        symbol_count_at_grid = all_symbols[[t]],
         s = s,
         v = k,
         egs = egs,

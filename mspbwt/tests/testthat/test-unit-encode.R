@@ -276,7 +276,6 @@ test_that("can encode and decode a usL", {
         decoded <- sapply(1:nrow(symbol_count_at_grid), function(s) {
             decode_value_of_usge(
                 usge = usge,
-                symbol_count_at_grid = symbol_count_at_grid,
                 s = s,
                 v = v,
                 egs = egs,
@@ -289,6 +288,8 @@ test_that("can encode and decode a usL", {
             decoded
         )
 
+        print("am here, do in C++ too!")
+        
     }
 
 })
@@ -394,7 +395,6 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
             decoded1 <- sapply(1:ns, function(s) {
                 decode_value_of_usge(
                     usge = usge,
-                    symbol_count_at_grid = symbol_count_at_grid,
                     s = s,
                     v = v,
                     egs = egs,

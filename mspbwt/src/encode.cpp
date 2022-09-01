@@ -110,8 +110,8 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
 //' @export
 // [[Rcpp::export]]
 int Rcpp_decode_maximal_value_of_u(
-    Rcpp::NumericMatrix out_mat,
-    Rcpp::NumericVector out_vec,
+    Rcpp::NumericMatrix & out_mat,
+    Rcpp::NumericVector & out_vec,
     int v,
     int egs,
     bool do_checks = false
@@ -175,7 +175,7 @@ int Rcpp_decode_maximal_value_of_u(
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(
-    Rcpp::IntegerVector u
+    Rcpp::IntegerVector & u
 ) {
   int u_len = u.length();
   Rcpp::IntegerVector out(u(u_len - 1) - u(0));
@@ -193,7 +193,7 @@ Rcpp::IntegerVector Rcpp_encode_minimal_column_of_u(
 //' @export
 // [[Rcpp::export]]
 int Rcpp_decode_minimal_value_of_u(
-    Rcpp::IntegerVector x,
+    Rcpp::IntegerVector & x,
     int v
 ) {
     // x is
@@ -210,5 +210,7 @@ int Rcpp_decode_minimal_value_of_u(
     }
     return(i);
 }
+
+
 
 

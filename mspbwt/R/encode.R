@@ -226,7 +226,6 @@ decode_minimal_value_of_u <- function(
 ## usg[v + 1, s] for 0-based v and 1-based s
 decode_value_of_usge <- function(
     usge,
-    symbol_count_at_grid,
     s,
     v,
     egs,
