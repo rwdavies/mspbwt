@@ -45,6 +45,11 @@ Rcpp_ms_BuildIndices_Algorithm5 <- function(X1C, all_symbols, indices, verbose =
 }
 
 #' @export
+Rcpp_ms_MatchZ_Algorithm5 <- function(X, ms_indices, Z, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE) {
+    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, ms_indices, Z, verbose, do_checks, check_vs_indices, indices)
+}
+
+#' @export
 BuildIndices_Algorithm5_Rcpp <- function(X) {
     .Call('_mspbwt_BuildIndices_Algorithm5_Rcpp', PACKAGE = 'mspbwt', X)
 }

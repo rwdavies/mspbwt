@@ -139,6 +139,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_ms_MatchZ_Algorithm5
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::NumericMatrix X, Rcpp::List ms_indices, Rcpp::IntegerVector Z, bool verbose, bool do_checks, bool check_vs_indices, bool indices);
+RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type ms_indices(ms_indicesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_vs_indices(check_vs_indicesSEXP);
+    Rcpp::traits::input_parameter< bool >::type indices(indicesSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, ms_indices, Z, verbose, do_checks, check_vs_indices, indices));
+    return rcpp_result_gen;
+END_RCPP
+}
 // BuildIndices_Algorithm5_Rcpp
 Rcpp::List BuildIndices_Algorithm5_Rcpp(Rcpp::IntegerMatrix& X);
 RcppExport SEXP _mspbwt_BuildIndices_Algorithm5_Rcpp(SEXP XSEXP) {
@@ -181,6 +198,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},
+    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 7},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}

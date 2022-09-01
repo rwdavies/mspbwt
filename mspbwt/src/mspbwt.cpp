@@ -244,3 +244,90 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     return(to_return);
 }
 
+
+
+
+
+
+
+// rcpp_wf(k, t, s, usge_all, all_symbols, egs) {
+//     if (s == 0) {
+//         Rcpp::NumericMatrix temp_mat = all_symbols[t];
+//         s = temp_mat.nrow();
+//     }
+//     int u = Rcpp_decode_value_of_usge(usge_all[t - 1], s, k, egs, n_min_symbols);
+    
+	  
+//     c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
+
+//     ) + c
+//     u
+// }
+
+
+  
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
+    Rcpp::NumericMatrix X,
+    Rcpp::List ms_indices,
+    Rcpp::IntegerVector Z,
+    bool verbose = false,
+    bool do_checks  = false,
+    bool check_vs_indices = false,
+    bool indices = false
+) {
+    int K = X.nrow();
+    int T = X.ncol();
+    int k;
+    //
+    // get things out of lists so we can use them
+    //
+    Rcpp::NumericMatrix a = ms_indices["a"];
+    Rcpp::NumericMatrix d = ms_indices["d"];
+    Rcpp::List usge_all = ms_indices["usge_all"];
+    int egs = ms_indices["egs"];
+    int n_min_symbols = ms_indices["n_min_symbols"];
+    Rcpp::List all_symbols = ms_indices["all_symbols"];
+    //
+    // initialize
+    //
+    Rcpp::IntegerVector e(T);
+    Rcpp::IntegerVector f(T);
+    Rcpp::IntegerVector g(T);    
+    e(0) = 0;
+
+    Rcpp::NumericMatrix temp_mat = all_symbols[0];
+    Rcpp::NumericVector x(temp_mat.nrow() + 1);
+    x(0) = 0;
+    for(int i = 1; i < x.length(); i++) {
+      x(i) = x(i) + temp_mat(i - 1, 1);
+    }
+    int Z_1 = Z(0);
+    if (Z_1 == 0) {
+      Z_1 = temp_mat.nrow();
+    }
+    f(0) = x(Z_1 - 1);
+    g(0) = x(Z_1);
+    //
+    // just do easy bit for now
+    //
+    int fc = f(0);
+    int gc = g(0);
+    int ec = e(0);
+    int e1 = -1;
+    Rcpp::List top_matches_list; // probably fine unless this becomes massive!
+    int i_top_matches = 0;
+    //
+    // loop city
+    //
+    // t stays 1-BASED
+    for(int t = 2; t < T; t++) {
+      int f1, g1;
+      //f1 = wf(fc, t, Z[t - 1], usge_all, all_symbols, egs);
+      //g1 = wf(gc, t, Z[t - 1], usge_all, all_symbols, egs);
+    }
+    Rcpp::NumericMatrix top_matches(5, 4);
+    return(top_matches);
+}

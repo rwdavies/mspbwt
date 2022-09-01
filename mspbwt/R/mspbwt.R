@@ -295,7 +295,6 @@ wf <- function(k, t, s, usge_all, all_symbols, egs, indices, check_vs_indices = 
     if (s == 0) {
         s <- nrow(all_symbols[[t]])
     }
-    c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
     ## u <- usge[k + 1, s] + c
     u <- decode_value_of_usge(
         usge = usge_all[[t]],
@@ -303,7 +302,14 @@ wf <- function(k, t, s, usge_all, all_symbols, egs, indices, check_vs_indices = 
         v = k,
         egs = egs,
         n_min_symbols = n_min_symbols
-    ) + c
+    )
+    c <- 0
+    if (s > 1) {
+        for(s2 in 2:s) {
+            c <- c + all_symbols[[t]][s2 - 1, 2]
+        }
+    }
+    u <- u + c
     if (check_vs_indices) {
         if (s == 1) {
             return_val <- indices$u[k + 1, t]
