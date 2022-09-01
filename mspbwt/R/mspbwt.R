@@ -290,6 +290,39 @@ one_move_forward_buildindices <- function(
 }
 
 
+
+
+wf <- function(k, t, s, usge_all, all_symbols, egs, indices, check_vs_indices = FALSE) {
+    if (s == 0) {
+        s <- nrow(all_symbols[[t]])
+    }
+    c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
+    ## u <- usge[k + 1, s] + c
+    u <- decode_value_of_usge(
+        usge = usge_all[[t]],
+        symbol_count_at_grid = all_symbols[[t]],
+        s = s,
+        v = k,
+        egs = egs,
+        n_min_symbols = n_min_symbols
+    ) + c
+    if (check_vs_indices) {
+        if (s == 1) {
+            return_val <- indices$u[k + 1, t]
+        } else {
+            return_val <- indices$v[k + 1, t] + indices$c[t]
+        }
+        if (u != return_val) {
+            stop(paste0(
+                "s = ", s,
+                ", u = ", u,
+                ", u(original) = ", return_val))
+        }
+    }
+    u
+}
+
+
 #' @export
 ms_MatchZ_Algorithm5 <- function(
     X,
@@ -335,43 +368,14 @@ ms_MatchZ_Algorithm5 <- function(
     ##
     ## just do easy bit for now
     ##
-    wf <- function(k, t, s, usge_all, all_symbols) {
-        if (s == 0) {
-            s <- nrow(all_symbols[[t]])
-        }
-        c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
-        ## u <- usge[k + 1, s] + c
-        u <- decode_value_of_usge(
-            usge = usge_all[[t]],
-            symbol_count_at_grid = all_symbols[[t]],
-            s = s,
-            v = k,
-            egs = egs,
-            n_min_symbols = n_min_symbols
-        ) + c
-        if (check_vs_indices) {
-            if (s == 1) {
-                return_val <- indices$u[k + 1, t]
-            } else {
-                return_val <- indices$v[k + 1, t] + indices$c[t]
-            }
-            if (u != return_val) {
-                stop(paste0(
-                    "s = ", s,
-                    ", u = ", u,
-                    ", u(original) = ", return_val))
-            }
-        }
-        u
-    }
     fc <- f[1]
     gc <- g[1]
     ec <- e[1]
     e1 <- NA
     top_matches <- NULL
     for(t in 2:T) {
-        f1 <- wf(fc, t, Z[t], usge_all, all_symbols)
-        g1 <- wf(gc, t, Z[t], usge_all, all_symbols)
+        f1 <- wf(k = fc, t = t, s = Z[t], usge_all = usge_all, all_symbols = all_symbols, egs = egs, indices = indices, check_vs_indices = check_vs_indices)
+        g1 <- wf(k = gc, t = t, s = Z[t], usge_all = usge_all, all_symbols = all_symbols, egs = egs, indices = indices, check_vs_indices = check_vs_indices)
         if (verbose && t <= 120) {
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         }
