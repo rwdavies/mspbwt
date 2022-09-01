@@ -214,3 +214,30 @@ int Rcpp_decode_minimal_value_of_u(
 
 
 
+
+// [[Rcpp::export]]
+int is_list(SEXP x) {
+  return Rf_isList(x) ? 0 : -1;
+}
+
+
+
+//' @export
+// [[Rcpp::export]]
+int Rcpp_decode_value_of_usge(
+    Rcpp::List usge,
+    int s,
+    int v,
+    int egs,
+    int n_min_symbols
+) {
+  if (Rf_isNewList(usge(s - 1))) {
+      Rcpp::List l = usge[s - 1];
+      Rcpp::NumericMatrix out_mat = l[0];
+      Rcpp::NumericVector out_vec = l[1];
+      return( Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs));
+    } else {
+      Rcpp::IntegerVector x = usge[s - 1];
+      return(Rcpp_decode_minimal_value_of_u(x, v));
+    }
+}

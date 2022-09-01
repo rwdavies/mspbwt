@@ -21,6 +21,15 @@ Rcpp_decode_minimal_value_of_u <- function(x, v) {
     .Call('_mspbwt_Rcpp_decode_minimal_value_of_u', PACKAGE = 'mspbwt', x, v)
 }
 
+is_list <- function(x) {
+    .Call('_mspbwt_is_list', PACKAGE = 'mspbwt', x)
+}
+
+#' @export
+Rcpp_decode_value_of_usge <- function(usge, s, v, egs, n_min_symbols) {
+    .Call('_mspbwt_Rcpp_decode_value_of_usge', PACKAGE = 'mspbwt', usge, s, v, egs, n_min_symbols)
+}
+
 #' @export
 Rcpp_one_move_forward_buildindices <- function(X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
     .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks)

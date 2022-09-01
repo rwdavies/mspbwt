@@ -61,6 +61,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// is_list
+int is_list(SEXP x);
+RcppExport SEXP _mspbwt_is_list(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_list(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Rcpp_decode_value_of_usge
+int Rcpp_decode_value_of_usge(Rcpp::List usge, int s, int v, int egs, int n_min_symbols);
+RcppExport SEXP _mspbwt_Rcpp_decode_value_of_usge(SEXP usgeSEXP, SEXP sSEXP, SEXP vSEXP, SEXP egsSEXP, SEXP n_min_symbolsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type usge(usgeSEXP);
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_min_symbols(n_min_symbolsSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_decode_value_of_usge(usge, s, v, egs, n_min_symbols));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Rcpp_one_move_forward_buildindices
 Rcpp::List Rcpp_one_move_forward_buildindices(Rcpp::IntegerMatrix X1C, Rcpp::IntegerMatrix a, Rcpp::IntegerMatrix d, Rcpp::IntegerMatrix usg, Rcpp::IntegerMatrix usg_check, int t, int K, Rcpp::IntegerVector symbol_count, int egs, int St, int n_min_symbols, bool do_checks);
 RcppExport SEXP _mspbwt_Rcpp_one_move_forward_buildindices(SEXP X1CSEXP, SEXP aSEXP, SEXP dSEXP, SEXP usgSEXP, SEXP usg_checkSEXP, SEXP tSEXP, SEXP KSEXP, SEXP symbol_countSEXP, SEXP egsSEXP, SEXP StSEXP, SEXP n_min_symbolsSEXP, SEXP do_checksSEXP) {
@@ -150,6 +176,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_decode_maximal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_maximal_value_of_u, 5},
     {"_mspbwt_Rcpp_encode_minimal_column_of_u", (DL_FUNC) &_mspbwt_Rcpp_encode_minimal_column_of_u, 1},
     {"_mspbwt_Rcpp_decode_minimal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_minimal_value_of_u, 2},
+    {"_mspbwt_is_list", (DL_FUNC) &_mspbwt_is_list, 1},
+    {"_mspbwt_Rcpp_decode_value_of_usge", (DL_FUNC) &_mspbwt_Rcpp_decode_value_of_usge, 5},
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},

@@ -272,23 +272,28 @@ test_that("can encode and decode a usL", {
     v <- 0
     
     for(v in c(0, 1, 2, K + -2:0)) {
+
+        f <- decode_value_of_usge
         
-        decoded <- sapply(1:nrow(symbol_count_at_grid), function(s) {
-            decode_value_of_usge(
-                usge = usge,
-                s = s,
-                v = v,
-                egs = egs,
-                n_min_symbols = n_min_symbols
+        for(f in c(decode_value_of_usge, Rcpp_decode_value_of_usge)) {
+            decoded <- sapply(1:nrow(symbol_count_at_grid), function(s) {
+
+                f(
+                    usge = usge,
+                    s = s,
+                    v = v,
+                    egs = egs,
+                    n_min_symbols = n_min_symbols
+                )
+                
+            })
+            
+            expect_equivalent(
+                usg[v + 1, ],
+                decoded
             )
-        })
 
-        expect_equivalent(
-            usg[v + 1, ],
-            decoded
-        )
-
-        print("am here, do in C++ too!")
+        }
         
     }
 
