@@ -89,14 +89,14 @@ test_that("multi-version with >2 symbols can work", {
             ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
             etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)
 
-            ## Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
-            ##     X = hapMatcher,
-            ##     ms_indices = ms_indices,
-            ##     Z = Z,
-            ##     do_checks = FALSE,
-            ##     check_vs_indices = FALSE
-            ## )
-            ## expect_equal(ms_top_matches, Rcpp_ms_top_matches)
+            Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
+                X = hapMatcher,
+                ms_indices = ms_indices,
+                Z = Z,
+                do_checks = FALSE,
+                check_vs_indices = FALSE
+            )
+            expect_equal(ms_top_matches, Rcpp_ms_top_matches)
             
             
         }

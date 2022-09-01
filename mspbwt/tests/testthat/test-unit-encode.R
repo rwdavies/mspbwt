@@ -229,6 +229,8 @@ test_that("can decode columns of U stored with offsets", {
 
 test_that("can encode and decode a usL", {
 
+    set.seed(100)
+    
     ##
     ## build a usL
     ##
@@ -282,8 +284,7 @@ test_that("can encode and decode a usL", {
                     usge = usge,
                     s = s,
                     v = v,
-                    egs = egs,
-                    n_min_symbols = n_min_symbols
+                    egs = egs
                 )
                 
             })
@@ -402,8 +403,7 @@ test_that("can encode and decode a complete encoding, either list format (usge_a
                     usge = usge,
                     s = s,
                     v = v,
-                    egs = egs,
-                    n_min_symbols = n_min_symbols
+                    egs = egs
                 )
             })
             

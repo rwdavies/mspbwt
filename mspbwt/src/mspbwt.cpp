@@ -9,6 +9,13 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
     bool efficient = true
 );
 
+int Rcpp_decode_value_of_usge(
+    Rcpp::List usge,
+    int s,
+    int v,
+    int egs
+);
+
 
 // likely to change this function substantially!
 
@@ -249,23 +256,37 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
 
 
 
+//' @export
+// [[Rcpp::export]]
+int rcpp_wf(
+    int k,
+    int t,
+    int s,
+    Rcpp::List & usge_all,
+    Rcpp::List & all_symbols,
+    int egs
+) {
+    Rcpp::NumericMatrix temp_mat = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);      
+    // recall t is 1-based here
+    if (s == 0) {
+      s = temp_mat.nrow();
+    }
+    int u = Rcpp_decode_value_of_usge(usge_all[t - 1], s, k, egs);
+    int c = 0;
+    // if s is 1, we are good. everything else we add
+    if (s > 1) {
+      for(int s2 = 1; s2 < s; s2++) {
+	c += temp_mat(s2 - 1, 1);
+      }
+    }
+    u += c;
+    return(u);
+}
 
-// rcpp_wf(k, t, s, usge_all, all_symbols, egs) {
-//     if (s == 0) {
-//         Rcpp::NumericMatrix temp_mat = all_symbols[t];
-//         s = temp_mat.nrow();
-//     }
-//     int u = Rcpp_decode_value_of_usge(usge_all[t - 1], s, k, egs, n_min_symbols);
-    
-	  
-//     c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
-
-//     ) + c
-//     u
-// }
 
 
-  
+
+
 
 //' @export
 // [[Rcpp::export]]
@@ -280,7 +301,8 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 ) {
     int K = X.nrow();
     int T = X.ncol();
-    int k;
+    int k, index, t;
+    bool matches_lower, matches_upper;
     //
     // get things out of lists so we can use them
     //
@@ -288,7 +310,6 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     Rcpp::NumericMatrix d = ms_indices["d"];
     Rcpp::List usge_all = ms_indices["usge_all"];
     int egs = ms_indices["egs"];
-    int n_min_symbols = ms_indices["n_min_symbols"];
     Rcpp::List all_symbols = ms_indices["all_symbols"];
     //
     // initialize
@@ -302,7 +323,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     Rcpp::NumericVector x(temp_mat.nrow() + 1);
     x(0) = 0;
     for(int i = 1; i < x.length(); i++) {
-      x(i) = x(i) + temp_mat(i - 1, 1);
+      x(i) = x(i - 1) + temp_mat(i - 1, 1);
     }
     int Z_1 = Z(0);
     if (Z_1 == 0) {
@@ -318,16 +339,113 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     int ec = e(0);
     int e1 = -1;
     Rcpp::List top_matches_list; // probably fine unless this becomes massive!
-    int i_top_matches = 0;
     //
     // loop city
     //
     // t stays 1-BASED
-    for(int t = 2; t < T; t++) {
+    for(t = 2; t <= T; t++) {
       int f1, g1;
-      //f1 = wf(fc, t, Z[t - 1], usge_all, all_symbols, egs);
-      //g1 = wf(gc, t, Z[t - 1], usge_all, all_symbols, egs);
+      f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
+      g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
+      if (verbose) {
+	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
+      }
+      if (!(g1 > f1)) {
+	//
+	// save and re-start! first, save
+	//
+	for(k = fc; k <= (gc - 1); k++) {
+	  Rcpp::IntegerVector temp_vector(4);
+	  temp_vector(0) = k;
+	  temp_vector(1) = a(k, t - 1);
+	  temp_vector(2) = ec + 1;
+	  temp_vector(3) = t - 1;
+	  top_matches_list.push_back(temp_vector);
+	}
+	//
+	// now, re-start
+	//
+	e1 = d(f1, t) - 1;
+	fc = f1;
+	gc = g1;
+	matches_lower = false;
+	matches_upper = false;
+	if ((e1 == t) && (f1 == K)) {
+	  e1 = t - 1;
+	}
+	//
+	// see R code for explanation / comments
+	//
+	while((!matches_lower) && (!matches_upper)) {
+	  if (f1 > 0) {
+	    matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
+	  } else {
+	    matches_upper = false;
+	  }
+	  if (f1 < K) {
+	    matches_lower = Z(e1) == X(a(f1, t), e1);
+	  } else {
+	    matches_lower = false;
+	  }
+	  if (!matches_lower & !matches_upper) {
+	    e1++;
+	  }
+	}
+	//
+	//this CAN happen, if there is a symbol mis-match, and have to go forward
+	//
+	if (matches_upper) {
+	    f1--;
+	    index=a(f1, t);
+	    while (Z(e1 - 1) == X(index, e1 - 1)) {
+	      e1--;
+	    }
+	    while (d(f1, t) <= e1) {
+	      f1--;
+	    }
+	}
+	if (matches_lower) {
+	    g1++;
+	    index=a(f1, t);
+	    while (Z(e1 - 1) == X(index, e1 - 1)) {
+	      e1--;
+	    }
+	    while ((g1 < K) && (d(g1, t) <= e1)) {
+	      g1++;
+	    }
+	}
+	ec = e1;
+      }
+      fc = f1;
+      gc = g1;
+      e(t - 1) = ec;
+      f(t - 1) = fc;
+      g(t - 1) = gc;
     }
-    Rcpp::NumericMatrix top_matches(5, 4);
+    //
+    // done normal now wrap up
+    //
+    //t++; // no need to increment, for loop does that already
+    if (fc < gc) {
+	for(k = fc; k <= (gc - 1); k++) {
+	  Rcpp::IntegerVector temp_vector(4);
+	  temp_vector(0) = k;
+	  temp_vector(1) = a(k, t - 1);
+	  temp_vector(2) = ec + 1;
+	  temp_vector(3) = t - 1;
+	  top_matches_list.push_back(temp_vector);
+	}
+    }
+    //
+    // build final matrix
+    //
+    Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
+    for(k = 0; k < top_matches_list.length(); k++) {
+      Rcpp::IntegerVector temp_vector = top_matches_list(k);
+      for(int j = 0; j < 4; j++) {
+	top_matches(k, j) = temp_vector(j);
+      }
+    }
+    colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
     return(top_matches);
 }

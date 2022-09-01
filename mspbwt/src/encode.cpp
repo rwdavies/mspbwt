@@ -228,8 +228,7 @@ int Rcpp_decode_value_of_usge(
     Rcpp::List usge,
     int s,
     int v,
-    int egs,
-    int n_min_symbols
+    int egs
 ) {
   if (Rf_isNewList(usge(s - 1))) {
       Rcpp::List l = usge[s - 1];

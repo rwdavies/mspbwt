@@ -58,6 +58,7 @@ encode_maximal_column_of_u <- function(u, egs, efficient = TRUE, verbose = FALSE
                         vec_pos <- vec_pos + 1
                         cs <- 1
                         rt <- FALSE
+
                     }
                 } else {
                     if (d == 0 & !final) {
@@ -228,8 +229,7 @@ decode_value_of_usge <- function(
     usge,
     s,
     v,
-    egs,
-    n_min_symbols
+    egs
 ) {
     if (class(usge[[s]]) == "list") {
         decode_maximal_value_of_u(

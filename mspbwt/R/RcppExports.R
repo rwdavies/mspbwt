@@ -26,8 +26,8 @@ is_list <- function(x) {
 }
 
 #' @export
-Rcpp_decode_value_of_usge <- function(usge, s, v, egs, n_min_symbols) {
-    .Call('_mspbwt_Rcpp_decode_value_of_usge', PACKAGE = 'mspbwt', usge, s, v, egs, n_min_symbols)
+Rcpp_decode_value_of_usge <- function(usge, s, v, egs) {
+    .Call('_mspbwt_Rcpp_decode_value_of_usge', PACKAGE = 'mspbwt', usge, s, v, egs)
 }
 
 #' @export
@@ -42,6 +42,11 @@ order_ <- function(x) {
 #' @export
 Rcpp_ms_BuildIndices_Algorithm5 <- function(X1C, all_symbols, indices, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, egs = 100L, n_min_symbols = 100L, with_Rcpp = TRUE) {
     .Call('_mspbwt_Rcpp_ms_BuildIndices_Algorithm5', PACKAGE = 'mspbwt', X1C, all_symbols, indices, verbose, do_checks, check_vs_indices, egs, n_min_symbols, with_Rcpp)
+}
+
+#' @export
+rcpp_wf <- function(k, t, s, usge_all, all_symbols, egs) {
+    .Call('_mspbwt_rcpp_wf', PACKAGE = 'mspbwt', k, t, s, usge_all, all_symbols, egs)
 }
 
 #' @export

@@ -178,8 +178,7 @@ ms_BuildIndices_Algorithm5 <- function(
                     usge = usge_all[[t]],
                     s = s,
                     v = k + 1,
-                    egs = egs,
-                    n_min_symbols = n_min_symbols
+                    egs = egs
                 ) + c
                 if (verbose) {
                     message(paste0(
@@ -295,14 +294,13 @@ wf <- function(k, t, s, usge_all, all_symbols, egs, indices, check_vs_indices = 
     if (s == 0) {
         s <- nrow(all_symbols[[t]])
     }
-    ## u <- usge[k + 1, s] + c
     u <- decode_value_of_usge(
         usge = usge_all[[t]],
         s = s,
         v = k,
-        egs = egs,
-        n_min_symbols = n_min_symbols
+        egs = egs
     )
+    ## u <- usge[k + 1, s] + c
     c <- 0
     if (s > 1) {
         for(s2 in 2:s) {
@@ -369,6 +367,9 @@ ms_MatchZ_Algorithm5 <- function(
     }
     f[1] <- x[Z_1]
     g[1] <- x[Z_1 + 1]
+    if (verbose) {
+        print(paste0("init, f[1] = ", f[1], ", g[1] = ", g[1]))
+    }
     ##
     ## just do easy bit for now
     ##
@@ -380,7 +381,7 @@ ms_MatchZ_Algorithm5 <- function(
     for(t in 2:T) {
         f1 <- wf(k = fc, t = t, s = Z[t], usge_all = usge_all, all_symbols = all_symbols, egs = egs, indices = indices, check_vs_indices = check_vs_indices)
         g1 <- wf(k = gc, t = t, s = Z[t], usge_all = usge_all, all_symbols = all_symbols, egs = egs, indices = indices, check_vs_indices = check_vs_indices)
-        if (verbose && t <= 120) {
+        if (verbose) {
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         }
         if (g1 > f1) {
