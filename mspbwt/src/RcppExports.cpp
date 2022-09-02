@@ -155,12 +155,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_ms_MatchZ_Algorithm5
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::NumericMatrix X, Rcpp::List ms_indices, Rcpp::IntegerVector Z, bool verbose, bool do_checks, bool check_vs_indices, bool indices);
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix X, Rcpp::List ms_indices, Rcpp::IntegerVector Z, bool verbose, bool do_checks, bool check_vs_indices, bool indices);
 RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type ms_indices(ms_indicesSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);

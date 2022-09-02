@@ -220,7 +220,7 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
         a <- ms_top_matches
         expect_equal(sum((a[, 2] == 2) & a[, 3] <= w1 & a[, 4] >=w2), 1)
         expect_equal(sum((a[, 2] == 11) & a[, 3] <= w1 & a[, 4] >= w2), 1)
-
+        
         Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher,
             ms_indices = ms_indices,

@@ -291,7 +291,7 @@ int rcpp_wf(
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
-    Rcpp::NumericMatrix X,
+    Rcpp::IntegerMatrix X,
     Rcpp::List ms_indices,
     Rcpp::IntegerVector Z,
     bool verbose = false,
@@ -306,8 +306,8 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     //
     // get things out of lists so we can use them
     //
-    Rcpp::NumericMatrix a = ms_indices["a"];
-    Rcpp::NumericMatrix d = ms_indices["d"];
+    Rcpp::IntegerMatrix a = ms_indices["a"];
+    Rcpp::IntegerMatrix d = ms_indices["d"];
     Rcpp::List usge_all = ms_indices["usge_all"];
     int egs = ms_indices["egs"];
     Rcpp::List all_symbols = ms_indices["all_symbols"];
