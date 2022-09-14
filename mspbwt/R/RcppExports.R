@@ -55,13 +55,8 @@ rcpp_wf <- function(k, t, s, usge_all, all_symbols, egs) {
 }
 
 #' @export
-Rcpp_ms_MatchZ_Algorithm5 <- function(X, ms_indices, Z, cols_to_use0, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE, use_cols_to_use0 = FALSE) {
-    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, ms_indices, Z, cols_to_use0, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0)
-}
-
-#' @export
-rcpp_wf2 <- function(k, t, s, usge_all, all_symbols, egs) {
-    .Call('_mspbwt_rcpp_wf2', PACKAGE = 'mspbwt', k, t, s, usge_all, all_symbols, egs)
+Rcpp_ms_MatchZ_Algorithm5 <- function(X, ms_indices, Z, cols_to_use0, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE, use_cols_to_use0 = FALSE, min_length = -1L) {
+    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, ms_indices, Z, cols_to_use0, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length)
 }
 
 #' @export
