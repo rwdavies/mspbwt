@@ -93,6 +93,7 @@ test_that("multi-version with >2 symbols can work", {
                 X = hapMatcher,
                 ms_indices = ms_indices,
                 Z = Z,
+                cols_to_use0 = integer(1),
                 do_checks = FALSE,
                 check_vs_indices = FALSE
             )
@@ -224,7 +225,8 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
         Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher,
             ms_indices = ms_indices,
-            Z = Z1
+            Z = Z1,
+            cols_to_use0 = integer(1)            
         )
         expect_equal(ms_top_matches, Rcpp_ms_top_matches)
 
@@ -269,7 +271,8 @@ test_that("can work with different intervals", {
     ## check results are the same when run the two ways
     ## 1 = default way
     ## 2 = efficient way
-
+    i_window <- 1
+    
     for(i_window in 1:nWindows) {
 
         ## default way
@@ -277,11 +280,23 @@ test_that("can work with different intervals", {
         ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher[, which_grids],
             ms_indices = ms_indices_multiple[[i_window]],
-            Z = Z[which_grids]
+            Z = Z[which_grids],
+            cols_to_use0 = integer(1)
         )
 
         ## efficient way
-            
+        ms_top_matches2 <- Rcpp_ms_MatchZ_Algorithm5(
+            X = hapMatcher,
+            ms_indices = ms_indices_multiple[[i_window]],
+            Z = Z,
+            cols_to_use0 = as.integer(which_grids - 1L),
+            use_cols_to_use0 = TRUE
+        )
+
+        expect_equal(
+            ms_top_matches,
+            ms_top_matches2
+        )
 
     }
 

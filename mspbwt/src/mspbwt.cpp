@@ -301,13 +301,20 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     Rcpp::IntegerMatrix & X,
     Rcpp::List & ms_indices,
     Rcpp::IntegerVector & Z,
+    Rcpp::IntegerVector & cols_to_use0,    
     bool verbose = false,
     bool do_checks  = false,
     bool check_vs_indices = false,
-    bool indices = false
+    bool indices = false,
+    bool use_cols_to_use0 = false    
 ) {
     int K = X.nrow();
-    int T = X.ncol();
+    int T;
+    if (use_cols_to_use0) {
+      T = cols_to_use0.length();
+    } else {
+      T = X.ncol();
+    }
     int k, index, t;
     bool matches_lower, matches_upper;
     //
@@ -331,7 +338,12 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     for(int i = 1; i < x.length(); i++) {
       x(i) = x(i - 1) + temp_mat(i - 1, 1);
     }
-    int Z_1 = Z(0);
+    int Z_1;
+    if (use_cols_to_use0) {
+      Z_1 = Z(cols_to_use0(0));
+    } else {
+      Z_1 = Z(0);
+    }
     if (Z_1 == 0) {
       Z_1 = temp_mat.nrow();
     }
@@ -351,8 +363,13 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     // t stays 1-BASED
     for(t = 2; t <= T; t++) {
       int f1, g1;
-      f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
-      g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
+      if (!use_cols_to_use0) {
+	f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
+	g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
+      } else {	
+	f1 = rcpp_wf(fc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
+	g1 = rcpp_wf(gc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
+      }
       if (verbose) {
 	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
       }
@@ -384,12 +401,20 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	//
 	while((!matches_lower) && (!matches_upper)) {
 	  if (f1 > 0) {
-	    matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
+	    if (!use_cols_to_use0) {
+	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
+	    } else {
+	      matches_upper = Z(cols_to_use0(e1)) == X(a(f1 - 1, t), cols_to_use0(e1));
+	    }
 	  } else {
 	    matches_upper = false;
 	  }
 	  if (f1 < K) {
-	    matches_lower = Z(e1) == X(a(f1, t), e1);
+	    if (!use_cols_to_use0) {	    
+	      matches_lower = Z(e1) == X(a(f1, t), e1);
+	    } else {
+	      matches_lower = Z(cols_to_use0(e1)) == X(a(f1, t), cols_to_use0(e1));
+	    }
 	  } else {
 	    matches_lower = false;
 	  }
@@ -403,8 +428,14 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	if (matches_upper) {
 	    f1--;
 	    index=a(f1, t);
-	    while (Z(e1 - 1) == X(index, e1 - 1)) {
-	      e1--;
+	    if (!use_cols_to_use0) {
+	      while (Z(e1 - 1) == X(index, e1 - 1)) {
+		e1--;
+	      }
+	    } else {
+	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
+		e1--;
+	      }
 	    }
 	    while (d(f1, t) <= e1) {
 	      f1--;
@@ -413,8 +444,14 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	if (matches_lower) {
 	    g1++;
 	    index=a(f1, t);
-	    while (Z(e1 - 1) == X(index, e1 - 1)) {
-	      e1--;
+	    if (!use_cols_to_use0) {	    
+	      while (Z(e1 - 1) == X(index, e1 - 1)) {
+		e1--;
+	      }
+	    } else {
+	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
+		e1--;
+	      }
 	    }
 	    while ((g1 < K) && (d(g1, t) <= e1)) {
 	      g1++;
@@ -544,7 +581,6 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(
       x(i) = x(i - 1) + temp_mat(i - 1, 1);
     }
     int Z_1;
-    int this_col0;    
     if (use_cols_to_use0) {
       Z_1 = Z(cols_to_use0(0));
     } else {
@@ -569,7 +605,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(
     // t stays 1-BASED
     for(t = 2; t <= T; t++) {
       int f1, g1;
-      if (use_cols_to_use0) {
+      if (!use_cols_to_use0) {
 	f1 = rcpp_wf2(fc, t, Z(t - 1), usge_all, all_symbols, egs);
 	g1 = rcpp_wf2(gc, t, Z(t - 1), usge_all, all_symbols, egs);
       } else {	
