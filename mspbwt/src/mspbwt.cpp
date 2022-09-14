@@ -316,6 +316,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
       T = X.ncol();
     }
     int k, index, t;
+    int f1, g1, e1_local;
     bool matches_lower, matches_upper;
     //
     // get things out of lists so we can use them
@@ -338,12 +339,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     for(int i = 1; i < x.length(); i++) {
       x(i) = x(i - 1) + temp_mat(i - 1, 1);
     }
-    int Z_1;
-    if (use_cols_to_use0) {
-      Z_1 = Z(cols_to_use0(0));
-    } else {
-      Z_1 = Z(0);
-    }
+    int Z_1 = Z(0);
     if (Z_1 == 0) {
       Z_1 = temp_mat.nrow();
     }
@@ -362,18 +358,15 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     //
     // t stays 1-BASED
     for(t = 2; t <= T; t++) {
-      int f1, g1;
-      if (!use_cols_to_use0) {
-	f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
-	g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
-      } else {	
-	f1 = rcpp_wf(fc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
-	g1 = rcpp_wf(gc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
-      }
+      f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
+      g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
       if (verbose) {
 	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
       }
       if (!(g1 > f1)) {
+	if (verbose) {
+	  std::cout << "save and restart" << std::endl;
+	}
 	//
 	// save and re-start! first, save
 	//
@@ -402,19 +395,21 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	while((!matches_lower) && (!matches_upper)) {
 	  if (f1 > 0) {
 	    if (!use_cols_to_use0) {
-	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
+              e1_local = e1;
 	    } else {
-	      matches_upper = Z(cols_to_use0(e1)) == X(a(f1 - 1, t), cols_to_use0(e1));
+              e1_local=cols_to_use0(e1);
 	    }
+            matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
 	  } else {
 	    matches_upper = false;
 	  }
 	  if (f1 < K) {
-	    if (!use_cols_to_use0) {	    
-	      matches_lower = Z(e1) == X(a(f1, t), e1);
+	    if (!use_cols_to_use0) {
+              e1_local = e1;
 	    } else {
-	      matches_lower = Z(cols_to_use0(e1)) == X(a(f1, t), cols_to_use0(e1));
+              e1_local=cols_to_use0(e1);
 	    }
+            matches_lower = Z(e1) == X(a(f1, t), e1_local);	    
 	  } else {
 	    matches_lower = false;
 	  }
@@ -428,14 +423,14 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	if (matches_upper) {
 	    f1--;
 	    index=a(f1, t);
-	    if (!use_cols_to_use0) {
-	      while (Z(e1 - 1) == X(index, e1 - 1)) {
-		e1--;
-	      }
+            if (!use_cols_to_use0) {
+                while (Z(e1 - 1) == X(index, e1 - 1)) {
+		    e1--;
+	        }
 	    } else {
-	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
-		e1--;
-	      }
+	        while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+		    e1--;
+	        }
 	    }
 	    while (d(f1, t) <= e1) {
 	      f1--;
@@ -449,7 +444,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 		e1--;
 	      }
 	    } else {
-	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
+	      while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
 		e1--;
 	      }
 	    }
@@ -458,6 +453,9 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    }
 	}
 	ec = e1;
+	if (verbose) {
+	  std::cout << "end of save and restart" << std::endl;
+	}
       }
       fc = f1;
       gc = g1;
@@ -537,201 +535,204 @@ int rcpp_wf2(
 }
 
 
-//' @export
-// [[Rcpp::export]]
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(
-    Rcpp::IntegerMatrix & X,
-    Rcpp::List & ms_indices,
-    Rcpp::IntegerVector & Z,
-    Rcpp::IntegerVector & cols_to_use0,
-    bool verbose = false,
-    bool do_checks  = false,
-    bool check_vs_indices = false,
-    bool indices = false,
-    bool use_cols_to_use0 = false
-) {
-    int K = X.nrow();
-    int T;
-    if (use_cols_to_use0) {
-      T = cols_to_use0.length();
-    } else {
-      T = X.ncol();
-    }
-    int k, index, t;
-    bool matches_lower, matches_upper;
-    //
-    // get things out of lists so we can use them
-    //
-    Rcpp::IntegerMatrix a = ms_indices["a"];
-    Rcpp::IntegerMatrix d = ms_indices["d"];
-    Rcpp::List usge_all = ms_indices["usge_all"];
-    int egs = ms_indices["egs"];
-    Rcpp::List all_symbols = ms_indices["all_symbols"];
-    //
-    // initialize
-    //
-    Rcpp::IntegerVector e(T);
-    Rcpp::IntegerVector f(T);
-    Rcpp::IntegerVector g(T);    
-    e(0) = 0;
-    Rcpp::NumericMatrix temp_mat = all_symbols[0];
-    Rcpp::NumericVector x(temp_mat.nrow() + 1);
-    x(0) = 0;
-    for(int i = 1; i < x.length(); i++) {
-      x(i) = x(i - 1) + temp_mat(i - 1, 1);
-    }
-    int Z_1;
-    if (use_cols_to_use0) {
-      Z_1 = Z(cols_to_use0(0));
-    } else {
-      Z_1 = Z(0);
-    }
-    if (Z_1 == 0) {
-      Z_1 = temp_mat.nrow();
-    }
-    f(0) = x(Z_1 - 1);
-    g(0) = x(Z_1);
-    //
-    // just do easy bit for now
-    //
-    int fc = f(0);
-    int gc = g(0);
-    int ec = e(0);
-    int e1 = -1;
-    Rcpp::List top_matches_list; // probably fine unless this becomes massive!
-    //
-    // loop city
-    //
-    // t stays 1-BASED
-    for(t = 2; t <= T; t++) {
-      int f1, g1;
-      if (!use_cols_to_use0) {
-	f1 = rcpp_wf2(fc, t, Z(t - 1), usge_all, all_symbols, egs);
-	g1 = rcpp_wf2(gc, t, Z(t - 1), usge_all, all_symbols, egs);
-      } else {	
-	f1 = rcpp_wf2(fc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
-	g1 = rcpp_wf2(gc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
-      }
-      if (verbose) {
-	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
-      }
-      if (!(g1 > f1)) {
-	//
-	// save and re-start! first, save
-	//
-	for(k = fc; k <= (gc - 1); k++) {
-	  Rcpp::IntegerVector temp_vector(4);
-	  temp_vector(0) = k;
-	  temp_vector(1) = a(k, t - 1);	  
-	  temp_vector(2) = ec + 1;
-	  temp_vector(3) = t - 1;
-	  top_matches_list.push_back(temp_vector);
-	}
-	//
-	// now, re-start
-	//
-	e1 = d(f1, t) - 1;
-	fc = f1;
-	gc = g1;
-	matches_lower = false;
-	matches_upper = false;
-	if ((e1 == t) && (f1 == K)) {
-	  e1 = t - 1;
-	}
-	//
-	// see R code for explanation / comments
-	//
-	while((!matches_lower) && (!matches_upper)) {
-	  if (f1 > 0) {
-	    if (!use_cols_to_use0) {
-	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
-	    } else {
-	      matches_upper = Z(cols_to_use0(e1)) == X(a(f1 - 1, t), cols_to_use0(e1));
-	    }
-	  } else {
-	    matches_upper = false;
-	  }
-	  if (f1 < K) {
-	    if (!use_cols_to_use0) {	    
-	      matches_lower = Z(e1) == X(a(f1, t), e1);
-	    } else {
-	      matches_lower = Z(cols_to_use0(e1)) == X(a(f1, t), cols_to_use0(e1));
-	    }
-	  } else {
-	    matches_lower = false;
-	  }
-	  if (!matches_lower & !matches_upper) {
-	    e1++;
-	  }
-	}
-	//
-	//this CAN happen, if there is a symbol mis-match, and have to go forward
-	//
-	if (matches_upper) {
-	    f1--;
-	    index=a(f1, t);
-	    if (!use_cols_to_use0) {
-	      while (Z(e1 - 1) == X(index, e1 - 1)) {
-		e1--;
-	      }
-	    } else {
-	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
-		e1--;
-	      }
-	    }
-	    while (d(f1, t) <= e1) {
-	      f1--;
-	    }
-	}
-	if (matches_lower) {
-	    g1++;
-	    index=a(f1, t);
-	    if (!use_cols_to_use0) {	    
-	      while (Z(e1 - 1) == X(index, e1 - 1)) {
-		e1--;
-	      }
-	    } else {
-	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
-		e1--;
-	      }
-	    }
-	    while ((g1 < K) && (d(g1, t) <= e1)) {
-	      g1++;
-	    }
-	}
-	ec = e1;
-      }
-      fc = f1;
-      gc = g1;
-      e(t - 1) = ec;
-      f(t - 1) = fc;
-      g(t - 1) = gc;
-    }
-    //
-    // done normal now wrap up
-    //
-    //t++; // no need to increment, for loop does that already
-    if (fc < gc) {
-	for(k = fc; k <= (gc - 1); k++) {
-	  Rcpp::IntegerVector temp_vector(4);
-	  temp_vector(0) = k;
-	  temp_vector(1) = a(k, t - 1);
-	  temp_vector(2) = ec + 1;
-	  temp_vector(3) = t - 1;
-	  top_matches_list.push_back(temp_vector);
-	}
-    }
-    //
-    // build final matrix
-    //
-    Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
-    for(k = 0; k < top_matches_list.length(); k++) {
-      Rcpp::IntegerVector temp_vector = top_matches_list(k);
-      for(int j = 0; j < 4; j++) {
-	top_matches(k, j) = temp_vector(j);
-      }
-    }
-    colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
-    return(top_matches);
-}
+// //' @export
+// // [[Rcpp::export]]
+// Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(
+//     Rcpp::IntegerMatrix & X,
+//     Rcpp::List & ms_indices,
+//     Rcpp::IntegerVector & Z,
+//     Rcpp::IntegerVector & cols_to_use0,
+//     bool verbose = false,
+//     bool do_checks  = false,
+//     bool check_vs_indices = false,
+//     bool indices = false,
+//     bool use_cols_to_use0 = false
+// ) {
+//     int K = X.nrow();
+//     int T;
+//     if (use_cols_to_use0) {
+//       T = cols_to_use0.length();
+//     } else {
+//       T = X.ncol();
+//     }
+//     int k, index, t;
+//     bool matches_lower, matches_upper;
+//     //
+//     // get things out of lists so we can use them
+//     //
+//     Rcpp::IntegerMatrix a = ms_indices["a"];
+//     Rcpp::IntegerMatrix d = ms_indices["d"];
+//     Rcpp::List usge_all = ms_indices["usge_all"];
+//     int egs = ms_indices["egs"];
+//     Rcpp::List all_symbols = ms_indices["all_symbols"];
+//     //
+//     // initialize
+//     //
+//     Rcpp::IntegerVector e(T);
+//     Rcpp::IntegerVector f(T);
+//     Rcpp::IntegerVector g(T);    
+//     e(0) = 0;
+//     Rcpp::NumericMatrix temp_mat = all_symbols[0];
+//     Rcpp::NumericVector x(temp_mat.nrow() + 1);
+//     x(0) = 0;
+//     for(int i = 1; i < x.length(); i++) {
+//       x(i) = x(i - 1) + temp_mat(i - 1, 1);
+//     }
+//     int Z_1;
+//     if (use_cols_to_use0) {
+//       Z_1 = Z(cols_to_use0(0));
+//     } else {
+//       Z_1 = Z(0);
+//     }
+//     if (Z_1 == 0) {
+//       Z_1 = temp_mat.nrow();
+//     }
+//     f(0) = x(Z_1 - 1);
+//     g(0) = x(Z_1);
+//     //
+//     // just do easy bit for now
+//     //
+//     int fc = f(0);
+//     int gc = g(0);
+//     int ec = e(0);
+//     int e1 = -1;
+//     Rcpp::List top_matches_list; // probably fine unless this becomes massive!
+//     //
+//     // loop city
+//     //
+//     // t stays 1-BASED
+//     for(t = 2; t <= T; t++) {
+//       int f1, g1;
+//       if (!use_cols_to_use0) {
+// 	std::cout << "normal" << std::endl;	
+// 	f1 = rcpp_wf2(fc, t, Z(t - 1), usge_all, all_symbols, egs);
+// 	g1 = rcpp_wf2(gc, t, Z(t - 1), usge_all, all_symbols, egs);
+//       } else {
+// 	std::cout << "get f1 and g1" << std::endl;
+// 	f1 = rcpp_wf2(fc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
+// 	g1 = rcpp_wf2(gc, t, Z(cols_to_use0(t - 1)), usge_all, all_symbols, egs);
+// 	std::cout << "done GET F1 AND G1" << std::endl;	
+//       }
+//       if (verbose) {
+// 	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
+//       }
+//       if (!(g1 > f1)) {
+// 	//
+// 	// save and re-start! first, save
+// 	//
+// 	for(k = fc; k <= (gc - 1); k++) {
+// 	  Rcpp::IntegerVector temp_vector(4);
+// 	  temp_vector(0) = k;
+// 	  temp_vector(1) = a(k, t - 1);	  
+// 	  temp_vector(2) = ec + 1;
+// 	  temp_vector(3) = t - 1;
+// 	  top_matches_list.push_back(temp_vector);
+// 	}
+// 	//
+// 	// now, re-start
+// 	//
+// 	e1 = d(f1, t) - 1;
+// 	fc = f1;
+// 	gc = g1;
+// 	matches_lower = false;
+// 	matches_upper = false;
+// 	if ((e1 == t) && (f1 == K)) {
+// 	  e1 = t - 1;
+// 	}
+// 	//
+// 	// see R code for explanation / comments
+// 	//
+// 	while((!matches_lower) && (!matches_upper)) {
+// 	  if (f1 > 0) {
+// 	    if (!use_cols_to_use0) {
+// 	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1);
+// 	    } else {
+// 	      matches_upper = Z(cols_to_use0(e1)) == X(a(f1 - 1, t), cols_to_use0(e1));
+// 	    }
+// 	  } else {
+// 	    matches_upper = false;
+// 	  }
+// 	  if (f1 < K) {
+// 	    if (!use_cols_to_use0) {	    
+// 	      matches_lower = Z(e1) == X(a(f1, t), e1);
+// 	    } else {
+// 	      matches_lower = Z(cols_to_use0(e1)) == X(a(f1, t), cols_to_use0(e1));
+// 	    }
+// 	  } else {
+// 	    matches_lower = false;
+// 	  }
+// 	  if (!matches_lower & !matches_upper) {
+// 	    e1++;
+// 	  }
+// 	}
+// 	//
+// 	//this CAN happen, if there is a symbol mis-match, and have to go forward
+// 	//
+// 	if (matches_upper) {
+// 	    f1--;
+// 	    index=a(f1, t);
+// 	    if (!use_cols_to_use0) {
+// 	      while (Z(e1 - 1) == X(index, e1 - 1)) {
+// 		e1--;
+// 	      }
+// 	    } else {
+// 	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
+// 		e1--;
+// 	      }
+// 	    }
+// 	    while (d(f1, t) <= e1) {
+// 	      f1--;
+// 	    }
+// 	}
+// 	if (matches_lower) {
+// 	    g1++;
+// 	    index=a(f1, t);
+// 	    if (!use_cols_to_use0) {	    
+// 	      while (Z(e1 - 1) == X(index, e1 - 1)) {
+// 		e1--;
+// 	      }
+// 	    } else {
+// 	      while (Z(cols_to_use0(e1 - 1)) == X(index, cols_to_use0(e1 - 1))) {
+// 		e1--;
+// 	      }
+// 	    }
+// 	    while ((g1 < K) && (d(g1, t) <= e1)) {
+// 	      g1++;
+// 	    }
+// 	}
+// 	ec = e1;
+//       }
+//       fc = f1;
+//       gc = g1;
+//       e(t - 1) = ec;
+//       f(t - 1) = fc;
+//       g(t - 1) = gc;
+//     }
+//     //
+//     // done normal now wrap up
+//     //
+//     //t++; // no need to increment, for loop does that already
+//     if (fc < gc) {
+// 	for(k = fc; k <= (gc - 1); k++) {
+// 	  Rcpp::IntegerVector temp_vector(4);
+// 	  temp_vector(0) = k;
+// 	  temp_vector(1) = a(k, t - 1);
+// 	  temp_vector(2) = ec + 1;
+// 	  temp_vector(3) = t - 1;
+// 	  top_matches_list.push_back(temp_vector);
+// 	}
+//     }
+//     //
+//     // build final matrix
+//     //
+//     Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
+//     for(k = 0; k < top_matches_list.length(); k++) {
+//       Rcpp::IntegerVector temp_vector = top_matches_list(k);
+//       for(int j = 0; j < 4; j++) {
+// 	top_matches(k, j) = temp_vector(j);
+//       }
+//     }
+//     colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
+//     return(top_matches);
+// }
 

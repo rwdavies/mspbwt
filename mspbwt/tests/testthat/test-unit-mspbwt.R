@@ -241,6 +241,8 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
 
 test_that("can work with different intervals", {
 
+    set.seed(2028)
+    
     K <- 90
     nGrids <- 50
 
@@ -277,20 +279,24 @@ test_that("can work with different intervals", {
 
         ## default way
         which_grids <- seq(1, nGrids, nWindows)
+        Z_local <- map_Z_to_all_symbols(Z[which_grids], ms_indices_multiple[[i_window]][["all_symbols"]])
+
         ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher[, which_grids],
             ms_indices = ms_indices_multiple[[i_window]],
-            Z = Z[which_grids],
-            cols_to_use0 = integer(1)
+            Z = Z_local,
+            cols_to_use0 = integer(1),
+            verbose = FALSE           
         )
 
         ## efficient way
         ms_top_matches2 <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher,
             ms_indices = ms_indices_multiple[[i_window]],
-            Z = Z,
+            Z = Z_local,
             cols_to_use0 = as.integer(which_grids - 1L),
-            use_cols_to_use0 = TRUE
+            use_cols_to_use0 = TRUE,
+            verbose = FALSE
         )
 
         expect_equal(

@@ -203,25 +203,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Rcpp_ms_MatchZ_Algorithm5_v2
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(Rcpp::IntegerMatrix& X, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0);
-RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2(SEXP XSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List& >::type ms_indices(ms_indicesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type cols_to_use0(cols_to_use0SEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
-    Rcpp::traits::input_parameter< bool >::type check_vs_indices(check_vs_indicesSEXP);
-    Rcpp::traits::input_parameter< bool >::type indices(indicesSEXP);
-    Rcpp::traits::input_parameter< bool >::type use_cols_to_use0(use_cols_to_use0SEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5_v2(X, ms_indices, Z, cols_to_use0, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0));
-    return rcpp_result_gen;
-END_RCPP
-}
 // BuildIndices_Algorithm5_Rcpp
 Rcpp::List BuildIndices_Algorithm5_Rcpp(Rcpp::IntegerMatrix& X);
 RcppExport SEXP _mspbwt_BuildIndices_Algorithm5_Rcpp(SEXP XSEXP) {
@@ -268,7 +249,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_rcpp_wf", (DL_FUNC) &_mspbwt_rcpp_wf, 6},
     {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 9},
     {"_mspbwt_rcpp_wf2", (DL_FUNC) &_mspbwt_rcpp_wf2, 6},
-    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2, 9},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}
