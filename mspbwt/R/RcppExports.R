@@ -31,6 +31,11 @@ Rcpp_decode_value_of_usge <- function(usge, s, v, egs) {
 }
 
 #' @export
+Rcpp_decode_value_of_usge_v2 <- function(usge, s, v, egs) {
+    .Call('_mspbwt_Rcpp_decode_value_of_usge_v2', PACKAGE = 'mspbwt', usge, s, v, egs)
+}
+
+#' @export
 Rcpp_one_move_forward_buildindices <- function(X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
     .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks)
 }
@@ -52,6 +57,16 @@ rcpp_wf <- function(k, t, s, usge_all, all_symbols, egs) {
 #' @export
 Rcpp_ms_MatchZ_Algorithm5 <- function(X, ms_indices, Z, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE) {
     .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, ms_indices, Z, verbose, do_checks, check_vs_indices, indices)
+}
+
+#' @export
+rcpp_wf2 <- function(k, t, s, usge_all, all_symbols, egs) {
+    .Call('_mspbwt_rcpp_wf2', PACKAGE = 'mspbwt', k, t, s, usge_all, all_symbols, egs)
+}
+
+#' @export
+Rcpp_ms_MatchZ_Algorithm5_v2 <- function(X, ms_indices, Z, cols_to_use0, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE, use_cols_to_use0 = FALSE) {
+    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2', PACKAGE = 'mspbwt', X, ms_indices, Z, cols_to_use0, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0)
 }
 
 #' @export

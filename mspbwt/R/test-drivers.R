@@ -18,12 +18,13 @@ test_driver_simple <- function(
     X <- array(sample(c(0L, 1L), K * T, replace = TRUE), c(K, T))
     Z <- rep(1L, T)
     if (is.null(irow)) {
+        stopifnot(K >= 170)
         ## now add things to match to
         X[c(10, 18, 25, 15, 20, 40) , ] <- 0L
         X[c(15, 20), 1:20] <- 1L
         X[c(10, 18, 25), 11:30] <- 1L
         X[c(40), 26:50] <- 1L
-        X[170:250, ] <- 0L
+        X[170:nrow(X), ] <- 0L
     } else {
         ## choose where to put the match
         a <- get_row_col(irow, icol, T, K, w)

@@ -232,3 +232,58 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     }
     
 })
+
+
+
+
+
+test_that("can work with different intervals", {
+
+    K <- 90
+    nGrids <- 50
+
+    ## s = SNP
+    out <- test_driver_multiple(
+        K = K,
+        nGrids = nGrids
+    )
+    Xs <- out$Xs
+    Zs <- out$Zs
+    hapMatcher <- out$hapMatcher
+    all_symbols <- out$all_symbols
+    Z <- out$Z
+    nSNPs <- length(Zs)
+
+    nWindows <- 3    
+    ms_indices_multiple <- lapply(1:nWindows, function(iWindow) {
+        which_grids <- seq(1, nGrids, nWindows)
+        ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+            X1C = hapMatcher[, which_grids],
+            all_symbols = all_symbols[which_grids],
+            indices = list()
+        )
+        ms_indices
+    })
+
+    
+    ## check results are the same when run the two ways
+    ## 1 = default way
+    ## 2 = efficient way
+
+    for(i_window in 1:nWindows) {
+
+        ## default way
+        which_grids <- seq(1, nGrids, nWindows)
+        ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
+            X = hapMatcher[, which_grids],
+            ms_indices = ms_indices_multiple[[i_window]],
+            Z = Z[which_grids]
+        )
+
+        ## efficient way
+            
+
+    }
+
+
+})

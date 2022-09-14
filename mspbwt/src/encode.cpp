@@ -240,3 +240,24 @@ int Rcpp_decode_value_of_usge(
       return(Rcpp_decode_minimal_value_of_u(x, v));
     }
 }
+
+
+//' @export
+// [[Rcpp::export]]
+int Rcpp_decode_value_of_usge_v2(
+    Rcpp::List& usge,
+    int s,
+    int v,
+    int egs
+) {
+  if (Rf_isNewList(usge(s - 1))) {
+      Rcpp::List l = usge[s - 1];
+      Rcpp::NumericMatrix out_mat = l[0];
+      Rcpp::NumericVector out_vec = l[1];
+      return(Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs));
+    } else {
+      Rcpp::IntegerVector x = usge[s - 1];
+      return(Rcpp_decode_minimal_value_of_u(x, v));
+    }
+}
+

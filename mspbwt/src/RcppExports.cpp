@@ -86,6 +86,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_decode_value_of_usge_v2
+int Rcpp_decode_value_of_usge_v2(Rcpp::List& usge, int s, int v, int egs);
+RcppExport SEXP _mspbwt_Rcpp_decode_value_of_usge_v2(SEXP usgeSEXP, SEXP sSEXP, SEXP vSEXP, SEXP egsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge(usgeSEXP);
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_decode_value_of_usge_v2(usge, s, v, egs));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Rcpp_one_move_forward_buildindices
 Rcpp::List Rcpp_one_move_forward_buildindices(Rcpp::IntegerMatrix X1C, Rcpp::IntegerMatrix a, Rcpp::IntegerMatrix d, Rcpp::IntegerMatrix usg, Rcpp::IntegerMatrix usg_check, int t, int K, Rcpp::IntegerVector symbol_count, int egs, int St, int n_min_symbols, bool do_checks);
 RcppExport SEXP _mspbwt_Rcpp_one_move_forward_buildindices(SEXP X1CSEXP, SEXP aSEXP, SEXP dSEXP, SEXP usgSEXP, SEXP usg_checkSEXP, SEXP tSEXP, SEXP KSEXP, SEXP symbol_countSEXP, SEXP egsSEXP, SEXP StSEXP, SEXP n_min_symbolsSEXP, SEXP do_checksSEXP) {
@@ -155,19 +169,54 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_ms_MatchZ_Algorithm5
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix X, Rcpp::List ms_indices, Rcpp::IntegerVector Z, bool verbose, bool do_checks, bool check_vs_indices, bool indices);
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix& X, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, bool verbose, bool do_checks, bool check_vs_indices, bool indices);
 RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type ms_indices(ms_indicesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type ms_indices(ms_indicesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
     Rcpp::traits::input_parameter< bool >::type check_vs_indices(check_vs_indicesSEXP);
     Rcpp::traits::input_parameter< bool >::type indices(indicesSEXP);
     rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, ms_indices, Z, verbose, do_checks, check_vs_indices, indices));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_wf2
+int rcpp_wf2(int k, int t, int s, Rcpp::List& usge_all, Rcpp::List& all_symbols, int egs);
+RcppExport SEXP _mspbwt_rcpp_wf2(SEXP kSEXP, SEXP tSEXP, SEXP sSEXP, SEXP usge_allSEXP, SEXP all_symbolsSEXP, SEXP egsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge_all(usge_allSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type all_symbols(all_symbolsSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_wf2(k, t, s, usge_all, all_symbols, egs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Rcpp_ms_MatchZ_Algorithm5_v2
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5_v2(Rcpp::IntegerMatrix& X, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0);
+RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2(SEXP XSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type ms_indices(ms_indicesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type cols_to_use0(cols_to_use0SEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_vs_indices(check_vs_indicesSEXP);
+    Rcpp::traits::input_parameter< bool >::type indices(indicesSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_cols_to_use0(use_cols_to_use0SEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5_v2(X, ms_indices, Z, cols_to_use0, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -210,11 +259,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_decode_minimal_value_of_u", (DL_FUNC) &_mspbwt_Rcpp_decode_minimal_value_of_u, 2},
     {"_mspbwt_is_list", (DL_FUNC) &_mspbwt_is_list, 1},
     {"_mspbwt_Rcpp_decode_value_of_usge", (DL_FUNC) &_mspbwt_Rcpp_decode_value_of_usge, 4},
+    {"_mspbwt_Rcpp_decode_value_of_usge_v2", (DL_FUNC) &_mspbwt_Rcpp_decode_value_of_usge_v2, 4},
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},
     {"_mspbwt_rcpp_wf", (DL_FUNC) &_mspbwt_rcpp_wf, 6},
     {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 7},
+    {"_mspbwt_rcpp_wf2", (DL_FUNC) &_mspbwt_rcpp_wf2, 6},
+    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5_v2, 9},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}
