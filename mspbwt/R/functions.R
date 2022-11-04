@@ -413,100 +413,100 @@ BuildIndices_Algorithm5 <- function(
     ## d[, 1] <- 0
     ##d[unique(c(1, which.max(X[a[, 1], 1]))), 1] <- 1
     ## build first column of a, u, v, d
-    uu <- 0
-    vv <- 0
+    uu0 <- 0
+    vv0 <- 0
     d[, 1] <- 0
     d[, 2] <- 0    
     for(k in 0:(K - 1)) {
         if (X[k + 1, 1] == 0) {
-            a[uu + 1, 2] <- k
-            uu <- uu + 1
+            a[uu0 + 1, 2] <- k
+            uu0 <- uu0 + 1
         } else {
-            b[vv + 1] <- k
-            vv <- vv + 1
+            b[vv0 + 1] <- k
+            vv0 <- vv0 + 1
         }
-        u[k + 1 + 1, 1] <- uu
-        v[k + 1 + 1, 1] <- vv
+        u[k + 1 + 1, 1] <- uu0
+        v[k + 1 + 1, 1] <- vv0
     }
-    if (vv > 0) {
-        a[uu + 0:(vv - 1) + 1, 2] <- b[0:(vv - 1) + 1]
+    if (vv0 > 0) {
+        a[uu0 + 0:(vv0 - 1) + 1, 2] <- b[0:(vv0 - 1) + 1]
     }
     ## d is 1 in first entry and on first swap i.e. first v
-    d[uu + 1, 2] <- 1
-    c[1] <- uu
+    d[uu0 + 1, 2] <- 1
+    c[1] <- uu0
     c[T + 1] <- 0
     ## add sentinels
     d[1, ] <- 1:(T + 1)
     d[K + 1, ] <- 1:(T + 1)
     ##
-    for(t in 2:T) {
+    for(t1 in 2:T) {
         ##
         ## do sweeping bit
         ##
-        uu <- 0
-        vv <- 0
-        p <- t ## 0-based SNP index + 1
-        q <- t ## 0-based SNP index + 1
+        uu0 <- 0
+        vv0 <- 0
+        p <- t1 ## 0-based SNP index + 1
+        q <- t1 ## 0-based SNP index + 1
         for(k in 0:(K - 1)) { ## haps (1-based)
-            match_start <- d[k + 1, t]
+            match_start <- d[k + 1, t1]
             if (match_start > p) {
                 p <- match_start
             }
             if (match_start > q) {
                 q <- match_start
             }
-            if (X[a[k + 1, t] + 1, t] == 0) {
-                a[uu + 1, t + 1] <- a[k + 1, t]
-                d[uu + 1, t + 1] <- p
-                uu <- uu + 1
+            if (X[a[k + 1, t1] + 1, t1] == 0) {
+                a[uu0 + 1, t1 + 1] <- a[k + 1, t1]
+                d[uu0 + 1, t1 + 1] <- p
+                uu0 <- uu0 + 1
                 p <- 0
             } else {
-                b[vv + 1] <- a[k + 1, t]
-                dtemp[vv + 1] <- q
-                vv <- vv + 1
+                b[vv0 + 1] <- a[k + 1, t1]
+                dtemp[vv0 + 1] <- q
+                vv0 <- vv0 + 1
                 q <- 0
             }
-            u[k + 1 + 1, t] <- uu
-            v[k + 1 + 1, t] <- vv
+            u[k + 1 + 1, t1] <- uu0
+            v[k + 1 + 1, t1] <- vv0
         }
         ## add in b, if v > 1
-        if (vv > 0) {
-            a[uu + 0:(vv - 1) + 1, t + 1] <- b[0:(vv - 1) + 1]
-            d[uu + 0:(vv - 1) + 1, t + 1] <- dtemp[0:(vv - 1) + 1]
+        if (vv0 > 0) {
+            a[uu0 + 0:(vv0 - 1) + 1, t1 + 1] <- b[0:(vv0 - 1) + 1]
+            d[uu0 + 0:(vv0 - 1) + 1, t1 + 1] <- dtemp[0:(vv0 - 1) + 1]
         }
         if (do_checks) {
             dtemp[] <- NA
-            stopifnot(sum(is.na(a[, t + 1])) == 0)
-            stopifnot(sum(is.na(d[, t + 1])) == 0)            
+            stopifnot(sum(is.na(a[, t1 + 1])) == 0)
+            stopifnot(sum(is.na(d[, t1 + 1])) == 0)            
         }
         ##
-        c[t] <- uu
+        c[t1] <- uu0
         ## perform the check
         if (verbose) {
-            message(paste0("t = ", t))
+            message(paste0("t = ", t1))
         }
         ##
         ## do checks
         ##
         for(k in 0:(K - 1)) {
-            if (X[a[k + 1, t] + 1, t] == 0) {
-                w[k + 1, t] <- u[k + 1 + 1, t]
+            if (X[a[k + 1, t1] + 1, t1] == 0) {
+                w[k + 1, t1] <- u[k + 1 + 1, t1]
             } else {
-                w[k + 1, t] <- v[k + 1 + 1, t] + c[t]
+                w[k + 1, t1] <- v[k + 1 + 1, t1] + c[t1]
             }
             if (verbose) {
                 message(paste0(
                     "k=", k, ", ",
-                    "u=", u[k + 1 + 1, t], ", ",
-                    "v+c=", v[k + 1 + 1, t] + c[t], ", ",
-                    "X=", X[a[k + 1, t] + 1, t], ", ",
-                    "w=", w[k + 1,t], ", ",                    
-                    "a[w[k+1,t],t+1]=", a[w[k + 1, t], t + 1], ", ",
-                    "a[k+1,t]=", a[k + 1, t]
+                    "u=", u[k + 1 + 1, t1], ", ",
+                    "v+c=", v[k + 1 + 1, t1] + c[t1], ", ",
+                    "X=", X[a[k + 1, t1] + 1, t1], ", ",
+                    "w=", w[k + 1, t1], ", ",                    
+                    "a[w[k+1,t1],t1+1]=", a[w[k + 1, t1], t1 + 1], ", ",
+                    "a[k+1,t1]=", a[k + 1, t1]
                 ))
             }
             if (do_checks) {
-                stopifnot(a[w[k + 1, t], t + 1] == a[k + 1, t])
+                stopifnot(a[w[k + 1, t1], t1 + 1] == a[k + 1, t1])
             }
         }
     }
