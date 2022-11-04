@@ -33,8 +33,8 @@ test_that("intuition of building", {
         } else {
             ## make a few random points 3's
             X1 <- X + 1L
-            X1[sample(1:prod(dim(X)), 4)] <- 3L
-            ## check do NOT need to re-order
+            ## change one of the entries from a 2 to a 3
+            X1[2, 5] <- 3L
         }
 
         all_symbols <- list(1:nGrids)
@@ -58,36 +58,17 @@ test_that("intuition of building", {
             return_all_usg_check = TRUE,
             verbose = TRUE
         )
-
-k=0, X=0, a[w,t+1]=3, a[k+1,t]=3
-k=1, X=1, a[w,t+1]=2, a[k+1,t]=2
-k=2, X=1, a[w,t+1]=4, a[k+1,t]=4
-k=3, X=1, a[w,t+1]=1, a[k+1,t]=1
-k=4, X=0, a[w,t+1]=0, a[k+1,t]=0
-k=5, X=0, a[w,t+1]=5, a[k+1,t]=5
-        
-        ms_indices[["all_usg_check"]][[5]]
-        ## 1-based t = 5, puts results into 6th
-        X[a[, 6] + 1, ] ## sorts 5
-        ms_indices$all_usg_check[[5]]
-
-usg
-[1,]    0    0
-[2,]    1    0
-[3,]    1    1
-[4,]    1    2
-[5,]    1    3
-[6,]    2    3
-[7,]    3    3
-        
-        ms_indices$a
-        ms_indices$d
-        ms_indices$usge_all[[7]]
+        if (i_example == 1) {
+            ms_indices1 <- ms_indices    
+        } else {
+            ms_indices2 <- ms_indices    
+        }
 
     }
 
-    ## now want three plots
-    ## show a, d, u, v, usg, c
+    save(indices, ms_indices1, ms_indices2, X, X1, file = "~/temp2.RData")
+
+
 
 
 })

@@ -21,13 +21,14 @@ ms_BuildIndices_Algorithm5 <- function(
     return_all_usg_check = FALSE
 ) {
     if (1 == 0) {
+        verbose = FALSE
+        do_checks = FALSE
+        check_vs_indices = FALSE
+        indices = NULL
         egs = 100
         n_min_symbols = 100
-        do_checks <- FALSE
-        check_vs_indices <- TRUE
-        with_Rcpp <- FALSE
-        return_d <- TRUE
-        return_all_usg_check <- TRUE
+        with_Rcpp = FALSE
+        return_all_usg_check = FALSE
     }
     if (do_checks | check_vs_indices) {
         return_d <- TRUE
