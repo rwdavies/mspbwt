@@ -416,7 +416,7 @@ BuildIndices_Algorithm5 <- function(
     uu0 <- 0
     vv0 <- 0
     d[, 1] <- 0
-    d[, 2] <- 0    
+    d[, 2] <- 0
     for(k in 0:(K - 1)) {
         if (X[k + 1, 1] == 0) {
             a[uu0 + 1, 2] <- k
@@ -477,7 +477,7 @@ BuildIndices_Algorithm5 <- function(
         if (do_checks) {
             dtemp[] <- NA
             stopifnot(sum(is.na(a[, t1 + 1])) == 0)
-            stopifnot(sum(is.na(d[, t1 + 1])) == 0)            
+            stopifnot(sum(is.na(d[, t1 + 1])) == 0)
         }
         ##
         c[t1] <- uu0
@@ -499,15 +499,15 @@ BuildIndices_Algorithm5 <- function(
                     "k=", k, ", ",
                     "a[k+1, t1]=", a[k + 1, t1], ", ",
                     "d[k+1, t1]=", d[k + 1, t1], ", ",
-                    "Xval =", X[a[k + 1, t1] + 1, t1], ", ",                    
+                    "Xval =", X[a[k + 1, t1] + 1, t1], ", ",
                     "u=", u[k + 1 + 1, t1], ", ",
-                    "v=", v[k + 1 + 1, t1], ", ",                    
+                    "v=", v[k + 1 + 1, t1], ", ",
                     "v+c=", v[k + 1 + 1, t1] + c[t1], ", ",
                     "w=", w[k + 1, t1], ", ",
                     "a[w[k+1,t1], t1+1]=", a[w[k + 1, t1], t1 + 1], ", ",
                     "a[k+1,t1]=", a[k + 1, t1], ", ",
                     "a[k+1,t1 + 1]=", a[k + 1, t1 + 1],  ", ",
-                    "d[k+1,t1 + 1]=", d[k + 1, t1 + 1] 
+                    "d[k+1,t1 + 1]=", d[k + 1, t1 + 1]
                 ))
             }
             if (do_checks) {
@@ -555,7 +555,7 @@ MatchZ_Algorithm5 <- function(
     if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
     ##
     ## OK these all look fine
-    ## 
+    ##
     ## u
     ## t(t(v) + c(c[-length(c)]))
     ## a
@@ -602,10 +602,10 @@ MatchZ_Algorithm5 <- function(
         ## (a[w[k + 1, t], t + 1] == a[k + 1, t])
         ## i.e. if we're at index k in a[k + 1, t]
         ## then next time we go to index w[k + 1, t] in a at t + 1
-        ## 
+        ##
         ## NOW, when does this collapse? what does this mean?
         ## if there is a match, at least one, we'll always continue
-        ## 
+        ##
         ## if there are no matches, we collapse
         ## why? recall either u or v is increasing or constant
         ## i.e. those samples have a 0 or 1
@@ -615,7 +615,7 @@ MatchZ_Algorithm5 <- function(
         ##
         ## now, where are we after that collapse?
         ## we are somewhere just before, or just after, where Z would have matched to
-        ## 
+        ##
         ## that new index of a represents where the previous matches would have gone, had they continued
         ##
         f1 <- wf(fc, t, Z[t])
@@ -635,7 +635,7 @@ MatchZ_Algorithm5 <- function(
                 ## we loop from fc to (gc - 1) in 0-based
                 ##
                 ## together this gives
-                ## 
+                ##
                 ## 1st k is the 0-based what hap we're looking at
                 ## 2nd is a[k + 1, t] is the 0-based index. this is effectively back a SNP
                 ##     as a[, t + 1] is the index for 1-based SNP t
@@ -650,7 +650,7 @@ MatchZ_Algorithm5 <- function(
                 )
             }
             ## so what are f1 and g1 here? where this thing wants to go to?
-            pom(verbose, paste0("=== Before reset, e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))            
+            pom(verbose, paste0("=== Before reset, e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))
             e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
             pom(verbose, paste0("Z[e1 + 1] = ", Z[e1 + 1], ", f1 = ", f1, ", K = ", K))
             fc <- f1; gc <- g1 ## for visualization efficiency
@@ -662,12 +662,12 @@ MatchZ_Algorithm5 <- function(
             ## condition1_alt MAY FAIL as some might be out of bounds
             ##stopifnot(condition1_ori == condition1_alt)
             if (condition1_ori) {
-                pom(verbose, "In first option") 
+                pom(verbose, "In first option")
                 f1 <- g1 - 1
                 index <- a[f1 + 1, t + 1]
                 pom(verbose, paste0("f1 = ", f1, ", index = ", index))
                 pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches) 
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                     pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
@@ -677,7 +677,7 @@ MatchZ_Algorithm5 <- function(
                  while (d[f1 + 1, t + 1] <= e1) {
                     f1 <- f1 - 1
                     pom(verbose, paste0("f1 = ", f1, ", e1 = ", e1, ", d[f1 + 1, t + 1] = ", d[f1 + 1, t + 1]))
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
             } else if (f1 < K) {
                 pom(verbose, "In second option")
@@ -685,13 +685,13 @@ MatchZ_Algorithm5 <- function(
                 index <- a[f1 + 1, t + 1]
                 pom(verbose, paste0("g1 = ", g1, ", index = ", index))
                 pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                 
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
                     pom(verbose, paste0("e1 = ", e1, ", Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]))
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                                     
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
-                pom(verbose, paste0("g1 = ", g1, ", e1 = ", e1, ", d[g1 + 1, t + 1] = ", d[g1 + 1, t + 1]))                
+                pom(verbose, paste0("g1 = ", g1, ", e1 = ", e1, ", d[g1 + 1, t + 1] = ", d[g1 + 1, t + 1]))
                 while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) {
                     g1 <- g1 + 1
                     pom(verbose, paste0("g1 = ", g1, ", e1 = ", e1, ", d[g1 + 1, t + 1] = ", d[g1 + 1, t + 1]))
@@ -700,7 +700,7 @@ MatchZ_Algorithm5 <- function(
             } else {
                 stop("misunderstood condition")
             }
-            pom(verbose, paste0("=== After reset, with e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))            
+            pom(verbose, paste0("=== After reset, with e1 = ", e1, ", f1 = ", f1, ", g1 = ", g1))
             ec <- e1
         }
         ## perform switch over
@@ -756,18 +756,9 @@ check_Algorithm5 <- function(X, Z, top_matches, display = FALSE) {
 
 
 pom <- function(verbose, msg) {
-    if (verbose) 
+    if (verbose)
         print(msg)
 }
 
 
-
-
-boxer <- function(x, y, col) {
-    rect(xleft = x - 0.5, xright = x + 0.5, ybottom = y - 0.5, ytop = y + 0.5, border = col, col = NA)
-}
-
-flipy <- function(ny, y) {
-    ny - y
-}
 
