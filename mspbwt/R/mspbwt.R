@@ -17,7 +17,8 @@ ms_BuildIndices_Algorithm5 <- function(
     indices = NULL,
     egs = 100,
     n_min_symbols = 100,
-    with_Rcpp = FALSE
+    with_Rcpp = FALSE,
+    return_all_usg_check = FALSE
 ) {
     if (1 == 0) {
         egs = 100
@@ -25,21 +26,28 @@ ms_BuildIndices_Algorithm5 <- function(
         do_checks <- FALSE
         check_vs_indices <- TRUE
         with_Rcpp <- FALSE
-        return_d <- TRUE        
+        return_d <- TRUE
+        return_all_usg_check <- TRUE
     }
     if (do_checks | check_vs_indices) {
         return_d <- TRUE
     }
     if (do_checks) {
         ## here check validity of X1X
+        ## needs to be 1:maxEntry per column
+        ## each one used in decreasing order
         stopifnot(class(X1C[1, 1]) == "integer")
         for(iCol in 1:ncol(X1C)) {
             m1 <- min(X1C[, iCol])            
             m2 <- max(X1C[, iCol])
             stopifnot(m1 == 1)
             stopifnot(sort(unique(X1C[, iCol])) == (m1:m2))
+            ## also, check they are in decreasing order
+            t <- table(X1C[, icol])    
+            stopifnot(sort(t, decreasing = TRUE) == t)
         }
     }
+    all_usg_check <- as.list(1:nGrids)
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
     n_symbols_per_grid <- as.integer(sapply(all_symbols, nrow))
@@ -145,6 +153,9 @@ ms_BuildIndices_Algorithm5 <- function(
             usg <- out$usg
             usg_check <- out$usg_check
         }
+        if (return_all_usg_check) {
+            all_usg_check[[t]] <- usg_check
+        }
         usge <- out[["usge"]]
         ## 
         usge_all[[t]] <- usge
@@ -198,7 +209,8 @@ ms_BuildIndices_Algorithm5 <- function(
         usge_all = usge_all,
         egs = egs,
         n_min_symbols = n_min_symbols,
-        all_symbols = all_symbols
+        all_symbols = all_symbols,
+        all_usg_check = all_usg_check
     )
     to_return
 }

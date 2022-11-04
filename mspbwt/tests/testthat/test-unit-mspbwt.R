@@ -27,66 +27,6 @@ if (1 == 0) {
 ## do everything in grid form
 ## then from this, build equivalent SNP one, and test using previous code as well
 
-test_that("multi-version with >2 symbols can work, for simple version good for plotting", {
-
-    set.seed(2021)
-    
-    K <- 15
-    nGrids <- 20
-    w <- 6
-    irow <- 3
-    icol <- 3
-    out <- test_driver_multiple(
-        K = K,
-        nGrids = nGrids,
-        irow = irow,
-        icol = icol,
-        w = w
-    )
-
-    Xs <- out$Xs
-    Zs <- out$Zs
-    hapMatcher <- out$hapMatcher
-    all_symbols <- out$all_symbols
-    Z <- out$Z
-    
-    ## original version
-    indices <- BuildIndices_Algorithm5(Xs, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
-    top_matches <- MatchZ_Algorithm5(Xs, indices, Zs, verbose = FALSE, do_checks = TRUE)
-    ## check_expected_top_match(top_matches, irow, icol, K, nGrids, w = w, is_grid_check_snps = TRUE)
-            
-    ## etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches, return_only = TRUE)
-    etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)
-            
-    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
-
-    make_plot <- TRUE
-    ms_top_matches <- ms_MatchZ_Algorithm5(
-        X = hapMatcher,
-        ms_indices = ms_indices,
-        Z = Z,
-        ##verbose = TRUE,
-        do_checks = FALSE,
-        check_vs_indices = FALSE,
-        make_plot = make_plot,
-        pdfname = paste0("~/temp.simple.", irow, ".", icol, ".ms.pdf")
-    )
-
-    ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
-    etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)
-
-    Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
-        X = hapMatcher,
-        ms_indices = ms_indices,
-        Z = Z,
-        cols_to_use0 = integer(1),
-        do_checks = FALSE,
-        check_vs_indices = FALSE
-    )
-    expect_equal(ms_top_matches, Rcpp_ms_top_matches)
-
-})
-
     
 
 test_that("multi-version with >2 symbols can work", {
