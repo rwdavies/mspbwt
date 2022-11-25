@@ -93,17 +93,17 @@ visualize <- function(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc
 
 
 ## semi-manually make some plots
-plot_example_index <- function() {
+## plot_example_index <- function() {
 
-t = 5
-k=0, a[k + 1, t1]=3, Xval =0, u=1, v=0, v+c=3, w=1, a[w[k+1,t1],t1+1]=3, a[k+1,t1]=3
-k=1, a[k + 1, t1]=2, Xval =1, u=1, v=1, v+c=4, w=4, a[w[k+1,t1],t1+1]=2, a[k+1,t1]=2
-k=2, a[k + 1, t1]=4, Xval =1, u=1, v=2, v+c=5, w=5, a[w[k+1,t1],t1+1]=4, a[k+1,t1]=4
-k=3, a[k + 1, t1]=1, Xval =1, u=1, v=3, v+c=6, w=6, a[w[k+1,t1],t1+1]=1, a[k+1,t1]=1
-k=4, a[k + 1, t1]=0, Xval =0, u=2, v=3, v+c=6, w=2, a[w[k+1,t1],t1+1]=0, a[k+1,t1]=0
-k=5, a[k + 1, t1]=5, Xval =0, u=3, v=3, v+c=6, w=3, a[w[k+1,t1],t1+1]=5, a[k+1,t1]=5
+## t = 5
+## k=0, a[k + 1, t1]=3, Xval =0, u=1, v=0, v+c=3, w=1, a[w[k+1,t1],t1+1]=3, a[k+1,t1]=3
+## k=1, a[k + 1, t1]=2, Xval =1, u=1, v=1, v+c=4, w=4, a[w[k+1,t1],t1+1]=2, a[k+1,t1]=2
+## k=2, a[k + 1, t1]=4, Xval =1, u=1, v=2, v+c=5, w=5, a[w[k+1,t1],t1+1]=4, a[k+1,t1]=4
+## k=3, a[k + 1, t1]=1, Xval =1, u=1, v=3, v+c=6, w=6, a[w[k+1,t1],t1+1]=1, a[k+1,t1]=1
+## k=4, a[k + 1, t1]=0, Xval =0, u=2, v=3, v+c=6, w=2, a[w[k+1,t1],t1+1]=0, a[k+1,t1]=0
+## k=5, a[k + 1, t1]=5, Xval =0, u=3, v=3, v+c=6, w=3, a[w[k+1,t1],t1+1]=5, a[k+1,t1]=5
 
-}
+## }
 
 
 plot_matrix <- function() {

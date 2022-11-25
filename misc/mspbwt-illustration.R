@@ -73,8 +73,8 @@ mspbwt.plot.encode <- function(X) {
   for (i in seq(1, ncol(X))) {
     text(x = i, y = seq(nrow(X), 1), labels = X[, i])
   }
-  band(1, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 4, ylen = 6)
-  band(9, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 4, ylen = 6)
+  band(1, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 4, ylen = nrow(X))
+  band(9, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 4, ylen = nrow(X))
   rawGrids <- c()
   text(x = 22.3, y = nrow(X) + 1.2, labels = "Raw Grids")
   for (i in seq(1, nrow(X))) {
@@ -82,8 +82,8 @@ mspbwt.plot.encode <- function(X) {
     rawGrids <- c(rawGrids, hex)
     text(x = ncol(X):(ncol(X) + nGrids / 4 - 1) + 5, y = nrow(X) - i + 1, labels = hex)
   }
-  band(ncol(X) + 5, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = 6)
-  band(ncol(X) + 5 + 2, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = 6)
+  band(ncol(X) + 5, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = nrow(X))
+  band(ncol(X) + 5 + 2, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = nrow(X))
   rawGrids <- matrix(rawGrids, nrow = nrow(X), byrow = T)
   ## compGrids <- apply(rawGrids, 2, rank, ties.method = "min")
   compGrids <- apply(rawGrids, 2, function(x) as.integer(factor(x)))
@@ -91,8 +91,8 @@ mspbwt.plot.encode <- function(X) {
   for (i in seq(nrow(X))) {
     text(x = ncol(X):(ncol(X) + nGrids / 4 - 1) + 13, y = nrow(X) - i + 1, labels = compGrids[i, ])
   }
-  band(ncol(X) + 13, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = 6)
-  band(ncol(X) + 13 + 2, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = 6)
+  band(ncol(X) + 13, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = nrow(X))
+  band(ncol(X) + 13 + 2, 1, col = rgb(0, 0, 1.0, alpha = 0.3), xlen = 1, ylen = nrow(X))
 }
 
 
