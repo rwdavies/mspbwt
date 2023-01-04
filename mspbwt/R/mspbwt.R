@@ -39,15 +39,16 @@ ms_BuildIndices_Algorithm5 <- function(
         ## each one used in decreasing order
         stopifnot(class(X1C[1, 1]) == "integer")
         for(iCol in 1:ncol(X1C)) {
-            m1 <- min(X1C[, iCol])            
+            m1 <- min(X1C[, iCol])
             m2 <- max(X1C[, iCol])
             stopifnot(m1 == 1)
             stopifnot(sort(unique(X1C[, iCol])) == (m1:m2))
             ## also, check they are in decreasing order
-            t <- table(X1C[, icol])    
+            t <- table(X1C[, iCol])
             stopifnot(sort(t, decreasing = TRUE) == t)
         }
     }
+    nGrids <- ncol(X1C)
     all_usg_check <- as.list(1:nGrids)
     ## thoughts - what to do if "too" rare - bin into too rare category? keep working with?
     ## inefficient?
@@ -78,7 +79,7 @@ ms_BuildIndices_Algorithm5 <- function(
     ##
     ns_obs <- rep(0L, Smax)
     ##
-    usge_all <- list(1:T) ## us, but all of them    
+    usge_all <- list(1:T) ## us, but all of them
     Smax_for_usl <- 0
     for(t in 1:T) {
         x <- sum(all_symbols[[t]][, 2] > n_min_symbols)
@@ -87,13 +88,13 @@ ms_BuildIndices_Algorithm5 <- function(
         }
     }
     usg <- array(0L, c(K + 1, Smax_for_usl))
-    ## 
+    ##
     if (check_vs_indices) {
         t <- 1
         expect_equal(a[, t + 1], indices$a[, t + 1])
         expect_equal(d[, t + 1], indices$d[, t + 1])
     }
-    ## 
+    ##
     for(t in 1L:as.integer(T)) {
         ##
         ## re-set
@@ -104,7 +105,7 @@ ms_BuildIndices_Algorithm5 <- function(
         ##     St <- St + 1
         ##     symbol_count <- c(symbol_count, K - sum(symbol_count))
         ## }
-        ## 
+        ##
         if (do_checks) {
             usg_check <- array(0L, c(K + 1, St))
         } else {
@@ -123,7 +124,7 @@ ms_BuildIndices_Algorithm5 <- function(
             result <- eval(parse(text = paste0("class(", thing, "[1])")))
             if (result != "integer") {
                 eval(parse(text = paste0("class(", thing, ")")))
-                eval(parse(text = paste0("class(", thing, "[1])")))                
+                eval(parse(text = paste0("class(", thing, "[1])")))
                 stop(paste0("class of ", thing, " has changed"))
             }
         }
@@ -158,7 +159,7 @@ ms_BuildIndices_Algorithm5 <- function(
             all_usg_check[[t]] <- usg_check
         }
         usge <- out[["usge"]]
-        ## 
+        ##
         usge_all[[t]] <- usge
         if (do_checks) {
             expect_equal(
@@ -179,7 +180,7 @@ ms_BuildIndices_Algorithm5 <- function(
             expect_equal(a[, t + 1], indices$a[, t + 1])
             expect_equal(d[, t + 1], indices$d[, t + 1]) ## 160
         }
-        ## 
+        ##
         ## do checks
         ##
         if (do_checks) {
@@ -235,7 +236,7 @@ one_move_forward_buildindices <- function(
     X1C_can_have_zeroes
 ) {
     ##
-    ## 
+    ##
     ## get count of number of each
     usge <- list(1:St) ## us for this (g)rid (e)ncoded
     first_usg_minimal_symbol <- 1 ## 1-based
@@ -249,12 +250,12 @@ one_move_forward_buildindices <- function(
         prev_value <- symbol_count[s]
     }
     start_count <- c(0, cumsum(symbol_count))
-    ##    
+    ##
     nso <- rep(0L, St) ## n_symbols_observed
     pqs <- rep(as.integer(t), St) ## pqs - vector analogue to pq
     val <- c()
     usg[] <- 0L
-    ##    
+    ##
     for(k in 0:(K - 1)) { ## haps (1-based)
         s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
         if (s == 0) {
@@ -281,7 +282,7 @@ one_move_forward_buildindices <- function(
         }
         pqs[s] <- 0
         nso[s] <- nso[s] + 1
-        if (do_checks) {        
+        if (do_checks) {
             usg_check[k + 1 + 1,] <- usg_check[k + 1, ]
             usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
         }
@@ -351,9 +352,9 @@ ms_MatchZ_Algorithm5 <- function(
     pdfname = "~/Downloads/temp.pdf",
     make_plot = FALSE
 ) {
-    ## 
+    ##
     if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
-    ## 
+    ##
     K <- nrow(X)
     T <- ncol(X)
     ## indices
@@ -398,7 +399,7 @@ ms_MatchZ_Algorithm5 <- function(
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         }
         if (g1 > f1) {
-            ## nothing to do            
+            ## nothing to do
             if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
         } else {
             if (verbose) print("save start")
@@ -442,7 +443,7 @@ ms_MatchZ_Algorithm5 <- function(
                 }
                 if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
             }
-            ## 
+            ##
             ## this CAN happen, if there is a symbol mis-match, and have to go forward
             ##
             if (matches_upper) {
@@ -452,7 +453,7 @@ ms_MatchZ_Algorithm5 <- function(
                 ## should skip if both
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
                 while (d[f1 + 1, t + 1] <= e1) {
                     f1 <- f1 - 1
@@ -464,18 +465,18 @@ ms_MatchZ_Algorithm5 <- function(
                 index <- a[f1 + 1, t + 1] ## a
                 if (verbose) {
                     print(paste0(
-                        "e1 = ", e1, ", ", 
+                        "e1 = ", e1, ", ",
                         "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
                     ))
                 }
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
                     e1 <- e1 - 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
                 while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
                     g1 <- g1 + 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
                 }
             }
             if (verbose) print(paste0("e1 = ", e1))
@@ -631,7 +632,7 @@ map_Z_to_all_symbols <- function(Z, all_symbols) {
 
 ## hapc is the "haplotype" (value) in binary form
 ## a is available symbols in that grid in matrix form
-## so we need to return 1:(nrow(a)) because those are the available entries 
+## so we need to return 1:(nrow(a)) because those are the available entries
 map_one_binary_value_to_hapMatcher <- function(
     hapc,
     distinctHapsB,

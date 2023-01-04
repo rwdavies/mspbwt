@@ -301,9 +301,11 @@ int rcpp_wf(
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     Rcpp::IntegerMatrix & X,
+    Rcpp::RawMatrix & XR,    
     Rcpp::List & ms_indices,
     Rcpp::IntegerVector & Z,
-    Rcpp::IntegerVector & cols_to_use0,    
+    Rcpp::IntegerVector & cols_to_use0,
+    bool use_XR = false,
     bool verbose = false,
     bool do_checks  = false,
     bool check_vs_indices = false,
@@ -404,7 +406,11 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    } else {
               e1_local=cols_to_use0(e1);
 	    }
-            matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
+	    if (use_XR) {
+	      matches_upper = Z(e1) == XR(a(f1 - 1, t), e1_local);
+	    } else {
+	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
+	    }
 	  } else {
 	    matches_upper = false;
 	  }
@@ -414,7 +420,11 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    } else {
               e1_local=cols_to_use0(e1);
 	    }
-            matches_lower = Z(e1) == X(a(f1, t), e1_local);	    
+	    if (use_XR) {
+	      matches_lower = Z(e1) == XR(a(f1, t), e1_local);
+	    } else {
+	      matches_lower = Z(e1) == X(a(f1, t), e1_local);
+	    }
 	  } else {
 	    matches_lower = false;
 	  }
@@ -429,13 +439,25 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    f1--;
 	    index=a(f1, t);
             if (!use_cols_to_use0) {
+	      if (use_XR) {
+                while (Z(e1 - 1) == XR(index, e1 - 1)) {
+		    e1--;
+	        }
+	      } else {
                 while (Z(e1 - 1) == X(index, e1 - 1)) {
 		    e1--;
 	        }
+	      }
 	    } else {
+	      if (use_XR) {
+	        while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+		    e1--;
+	        }
+	      } else {
 	        while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
 		    e1--;
 	        }
+	      }
 	    }
 	    while (d(f1, t) <= e1) {
 	      f1--;
@@ -444,13 +466,25 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	if (matches_lower) {
 	    g1++;
 	    index=a(f1, t);
-	    if (!use_cols_to_use0) {	    
-	      while (Z(e1 - 1) == X(index, e1 - 1)) {
-		e1--;
+	    if (!use_cols_to_use0) {
+	      if (use_XR) {
+		while (Z(e1 - 1) == XR(index, e1 - 1)) {
+		  e1--;
+		}
+	      } else {
+		while (Z(e1 - 1) == X(index, e1 - 1)) {
+		  e1--;
+		}
 	      }
 	    } else {
-	      while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
-		e1--;
+	      if (use_XR) {
+		while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+		  e1--;
+		}
+	      } else {
+		while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+		  e1--;
+		}
 	      }
 	    }
 	    while ((g1 < K) && (d(g1, t) <= e1)) {

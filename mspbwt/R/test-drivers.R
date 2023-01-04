@@ -49,12 +49,12 @@ check_expected_top_match <- function(top_matches, irow, icol, K, T, w = 10, is_g
     ## expect_true(sum(a["row"] %in% top_matches[, "indexB0"]) == 1)
     if (!is_grid_check_snps) {
         expect_equivalent(top_matches[i, "start1"], a["c1"])
-        expect_equivalent(top_matches[i, "end1"], a["c2"])    
+        expect_equivalent(top_matches[i, "end1"], a["c2"])
     } else {
         a["c1"] <- 32 * (a["c1"] - 1) + 1
         a["c2"] <- 32 * a["c2"]
         expect_true(top_matches[i, "start1"] <= a["c1"])
-        expect_true(a["c2"] <= top_matches[i, "end1"]) 
+        expect_true(a["c2"] <= top_matches[i, "end1"])
     }
 }
 
@@ -107,6 +107,7 @@ build_and_check_indices <- function(
         all_symbols = all_symbols,
         indices = list()
     )
+    ms_indices[["all_usg_check"]] <- NULL
     expect_equal(ms_indices, ms_indices_only_Rcpp)
     ms_indices
 }
@@ -114,8 +115,8 @@ build_and_check_indices <- function(
 
 
 
-##  
-##  
+##
+##
 test_driver_multiple <- function(
     K = 95,
     nGrids = 12,
@@ -129,7 +130,7 @@ test_driver_multiple <- function(
     X <- array(1L, c(K, T))
     Z <- rep(1L, T)
     a <- get_row_col(irow, icol, nGrids, K, w) ## in grid notation
-    for(j in 1:nGrids) {    
+    for(j in 1:nGrids) {
         ## choose 2-5 symbols to be present
         starts <- sort(sample(5:14, 1 + sample(4, 1), replace = FALSE))
         ends <- sort(sample(16:25, length(starts), replace = FALSE))
@@ -149,9 +150,9 @@ test_driver_multiple <- function(
     X[a["row"], which_snps] <- Z[which_snps]
     ## re-name with "S" for SNP to make clear
     Xs <- X
-    Zs <- Z 
+    Zs <- Z
     ## rest
-    rhb_t <- make_rhb_t_from_rhi_t(X)    
+    rhb_t <- make_rhb_t_from_rhi_t(X)
     out <- QUILT::make_rhb_t_equality(
         rhb_t = rhb_t,
         nSNPs = T,
@@ -161,7 +162,7 @@ test_driver_multiple <- function(
     Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
     Z <- map_Z_to_all_symbols(Zg, out[["all_symbols"]])
     out <- append(
-        out, 
+        out,
         list(
             Xs = Xs,
             Zs = Zs,
@@ -170,13 +171,13 @@ test_driver_multiple <- function(
     )
     out
 }
-    
+
 
 
 
 ## slow but probably works
 exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALSE) {
-    ## 
+    ##
     ## get index, start and end of each match
     ##
     Y <- sapply(1:nrow(X), function(i) {
@@ -195,7 +196,7 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
     )
     etm <- NULL ## expected top matches
     while(nrow(Y) > 0) {
-        ## 
+        ##
         w <- which(Y[, 2] == max(Y[, 2]))
         ## here keep only those with first stop and end
         w <- w[which(
@@ -218,7 +219,7 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
     if (return_only) {
         return(etm)
     }
-    ## 
+    ##
     expect_equivalent(etm[, "index"], top_matches[, "indexB0"] + 1)
     expect_equivalent(etm[, "start1"], top_matches[, "start1"])
     expect_equivalent(etm[, "end1"], top_matches[, "end1"])
@@ -241,7 +242,7 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
     ##     }
     ## }
 
-    
+
     ## Y <- lapply(1:ncol(X), function(i) {
     ##     ## OK so this gives me (set) of longest
     ##     w <- which(M[, i] == max(M[, i]))
@@ -257,8 +258,8 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
 
     ##     ## AM HERE
     ##     ## FIX THIS
-        
-        
+
+
     ## })
     ## Y <- cbind(
     ##     grid = unlist(sapply(Y, function(x) x[, 1])),

@@ -19,7 +19,7 @@ if (1 == 0) {
 
 
 
-    
+
 
 
 
@@ -27,7 +27,7 @@ if (1 == 0) {
 ## do everything in grid form
 ## then from this, build equivalent SNP one, and test using previous code as well
 
-    
+
 
 test_that("multi-version with >2 symbols can work", {
 
@@ -41,7 +41,7 @@ test_that("multi-version with >2 symbols can work", {
         for(icol in 1:5) {
 
             set.seed(2021)
-            
+
             out <- test_driver_multiple(
                 K = K,
                 nGrids = nGrids,
@@ -55,15 +55,15 @@ test_that("multi-version with >2 symbols can work", {
             hapMatcher <- out$hapMatcher
             all_symbols <- out$all_symbols
             Z <- out$Z
-            
+
             ## original version
             indices <- BuildIndices_Algorithm5(Xs, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
             top_matches <- MatchZ_Algorithm5(Xs, indices, Zs, verbose = FALSE, do_checks = TRUE)
             ## check_expected_top_match(top_matches, irow, icol, K, nGrids, w = w, is_grid_check_snps = TRUE)
-            
+
             ## etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches, return_only = TRUE)
             etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)
-            
+
             if (irow == 3 & icol == 3) {
                 ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
             } else {
@@ -87,14 +87,16 @@ test_that("multi-version with >2 symbols can work", {
             )
             ##
             ##
-            ##    
-            
+            ##
+
 
             ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
             etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)
 
             Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
                 X = hapMatcher,
+                XR = matrix(raw(0), 1, 1),
+                use_XR = FALSE,
                 ms_indices = ms_indices,
                 Z = Z,
                 cols_to_use0 = integer(1),
@@ -102,8 +104,7 @@ test_that("multi-version with >2 symbols can work", {
                 check_vs_indices = FALSE
             )
             expect_equal(ms_top_matches, Rcpp_ms_top_matches)
-            
-            
+
         }
     }
 
@@ -117,7 +118,7 @@ test_that("multi-version with >2 symbols can work", {
 ##     nSNPs <- 32
 
 ##     for(nSNPs in c(32, 10)) {
-            
+
 ##         symbols <- c(3L, 0L, 15L) ## all 0, two 1's, 4 1's
 
 ##         ## 0 =  0000
@@ -125,7 +126,7 @@ test_that("multi-version with >2 symbols can work", {
 ##         ## 15 = 1111
 ##         ## now because of order, 3 > 0 > 15 in terms of preference
 ##         ## e.g. 1 will go to 3
-        
+
 ##         test_match     <- c(1L, 7L, 4L, 14L)
 ##         expected_match <- c(3L, 3L, 0L, 15L)
 
@@ -158,11 +159,11 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
     ## for the key point, force it to store this
 
     for(iKeyGrid in c(6, 1, nGrids)) {
-        
-        nMaxDH <- 4 
+
+        nMaxDH <- 4
         X[, iKeyGrid] <- rep(1L:4L, K)[1:K]
         X[20:40, iKeyGrid] <- 2000L + 100L:120L
-    
+
         ## add matches to 3rd and 12th haplotype, which are the same (in hapMatcher), but different underlying
         ## by the current strategy, these will both be captured
         w1 <- max(2, iKeyGrid - 3)
@@ -175,8 +176,8 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
         Z[-w] <- X[1, -w]
         X[12, c(w1 - 1, w2 + 1)] <- 5 - Z[c(w1 - 1, w2 + 1)]
         X[3, c(w1 - 1, w2 + 1)] <- 5 - Z[c(w1 - 1, w2 + 1)]
-        
-        ## 
+
+        ##
         rhb_t <- make_rhb_t_from_rhi_t(X)
         ## QUILT::
         out <- make_rhb_t_equality(
@@ -197,6 +198,7 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
             egs = 10,
             n_min_symbols = 3
         )
+        ms_indices[["all_usg_check"]] <- NULL
 
         ## OK - have captured the problem!
         Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
@@ -207,36 +209,38 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
             egs = 10,
             n_min_symbols = 3
         )
-        
+
         expect_equal(ms_indices, Rcpp_ms_indices)
 
-        Z1 <- map_Z_to_all_symbols(Z, all_symbols)    
-        rbind(X[c(1, 3, 12), ], NA, Z)    
+        Z1 <- map_Z_to_all_symbols(Z, all_symbols)
+        rbind(X[c(1, 3, 12), ], NA, Z)
         rbind(hapMatcher[c(1, 3, 12), ], NA, Z1)
-        
+
         ms_top_matches <- ms_MatchZ_Algorithm5(
             X = hapMatcher,
             ms_indices = ms_indices,
             Z = Z1
         )
-        
+
         ## check that both expected matches are there
         ## we expect 0-based 2 and 11 to match from 1-based SNPs 4 through 8
         a <- ms_top_matches
         expect_equal(sum((a[, 2] == 2) & a[, 3] <= w1 & a[, 4] >=w2), 1)
         expect_equal(sum((a[, 2] == 11) & a[, 3] <= w1 & a[, 4] >= w2), 1)
-        
+
         Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher,
+            XR = matrix(raw(0), 1, 1),
+            use_XR = FALSE,
             ms_indices = ms_indices,
             Z = Z1,
-            cols_to_use0 = integer(1)            
+            cols_to_use0 = integer(1)
         )
         expect_equal(ms_top_matches, Rcpp_ms_top_matches)
 
-        
+
     }
-    
+
 })
 
 
@@ -246,7 +250,7 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
 test_that("can work with different intervals", {
 
     set.seed(2028)
-    
+
     K <- 90
     nGrids <- 50
 
@@ -262,7 +266,7 @@ test_that("can work with different intervals", {
     Z <- out$Z
     nSNPs <- length(Zs)
 
-    nWindows <- 3    
+    nWindows <- 3
     ms_indices_multiple <- lapply(1:nWindows, function(iWindow) {
         which_grids <- seq(1, nGrids, nWindows)
         ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
@@ -273,12 +277,12 @@ test_that("can work with different intervals", {
         ms_indices
     })
 
-    
+
     ## check results are the same when run the two ways
     ## 1 = default way
     ## 2 = efficient way
     i_window <- 1
-    
+
     for(i_window in 1:nWindows) {
 
         ## default way
@@ -287,15 +291,17 @@ test_that("can work with different intervals", {
 
         ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher[, which_grids],
+            XR = matrix(raw(0), 1, 1),
             ms_indices = ms_indices_multiple[[i_window]],
             Z = Z_local,
             cols_to_use0 = integer(1),
-            verbose = FALSE           
+            verbose = FALSE
         )
 
         ## efficient way
         ms_top_matches2 <- Rcpp_ms_MatchZ_Algorithm5(
             X = hapMatcher,
+            XR = matrix(raw(0), 1, 1),
             ms_indices = ms_indices_multiple[[i_window]],
             Z = Z_local,
             cols_to_use0 = as.integer(which_grids - 1L),
