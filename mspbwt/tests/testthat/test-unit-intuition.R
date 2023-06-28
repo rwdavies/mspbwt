@@ -124,6 +124,7 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
 
     Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
         X = hapMatcher,
+        XR = matrix(as.raw(0), 1, 1),
         ms_indices = ms_indices,
         Z = Z,
         cols_to_use0 = integer(1),
