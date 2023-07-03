@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // Rcpp_encode_maximal_column_of_u
 Rcpp::List Rcpp_encode_maximal_column_of_u(Rcpp::IntegerVector u, int egs, bool efficient);
 RcppExport SEXP _mspbwt_Rcpp_encode_maximal_column_of_u(SEXP uSEXP, SEXP egsSEXP, SEXP efficientSEXP) {
@@ -164,8 +169,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_ms_MatchZ_Algorithm5
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool use_XR, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0, int min_length);
-RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP XRSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP use_XRSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP, SEXP min_lengthSEXP) {
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool use_XR, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0, int min_length, bool do_algorithm5, bool do_uppy_downy_scan, int pbwtL, int pbwtM);
+RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP XRSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP use_XRSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP, SEXP min_lengthSEXP, SEXP do_algorithm5SEXP, SEXP do_uppy_downy_scanSEXP, SEXP pbwtLSEXP, SEXP pbwtMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -181,7 +186,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type indices(indicesSEXP);
     Rcpp::traits::input_parameter< bool >::type use_cols_to_use0(use_cols_to_use0SEXP);
     Rcpp::traits::input_parameter< int >::type min_length(min_lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length));
+    Rcpp::traits::input_parameter< bool >::type do_algorithm5(do_algorithm5SEXP);
+    Rcpp::traits::input_parameter< bool >::type do_uppy_downy_scan(do_uppy_downy_scanSEXP);
+    Rcpp::traits::input_parameter< int >::type pbwtL(pbwtLSEXP);
+    Rcpp::traits::input_parameter< int >::type pbwtM(pbwtMSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length, do_algorithm5, do_uppy_downy_scan, pbwtL, pbwtM));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -229,7 +238,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},
     {"_mspbwt_rcpp_wf", (DL_FUNC) &_mspbwt_rcpp_wf, 6},
-    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 12},
+    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 16},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}

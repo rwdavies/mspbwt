@@ -1,3 +1,26 @@
+if (1 == 0) {
+
+    library("STITCH")
+    library("crayon")
+    library("testthat")
+    library("mspbwt")
+    dir <- "~/proj/mspbwt/"
+    setwd(paste0(dir, "/mspbwt/R"))
+    a <- dir(pattern = "*.R")
+    b <- grep("~", a)
+    if (length(b) > 0) {
+        a <- a[-b]
+    }
+    o <- sapply(a, source)
+
+
+}
+
+
+
+
+
+
 ## these tests are specifically designed to help with intuition and understanding the method
 ## the primary functionality of these tests is covered elsewhere
 
@@ -88,7 +111,8 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
         nGrids = nGrids,
         irow = irow,
         icol = icol,
-        w = w
+        w = w,
+        lots_of_matches = TRUE
     )
 
     Xs <- out$Xs
@@ -96,31 +120,37 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
     hapMatcher <- out$hapMatcher
     all_symbols <- out$all_symbols
     Z <- out$Z
-    
+
     ## original version
     indices <- BuildIndices_Algorithm5(Xs, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(Xs, indices, Zs, verbose = FALSE, do_checks = TRUE)
-    ## check_expected_top_match(top_matches, irow, icol, K, nGrids, w = w, is_grid_check_snps = TRUE)
-            
-    ## etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches, return_only = TRUE)
-    etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)
-            
-    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
+    etm <- exhaustive_top_matches_checker(Xs, Zs, top_matches)    
 
+    ## which all_symbols is this
+    ms_indices <- build_and_check_indices(hapMatcher, all_symbols, check_vs_indices = FALSE)
+    
     make_plot <- TRUE
     ms_top_matches <- ms_MatchZ_Algorithm5(
         X = hapMatcher,
         ms_indices = ms_indices,
         Z = Z,
-        ##verbose = TRUE,
         do_checks = FALSE,
         check_vs_indices = FALSE,
         make_plot = make_plot,
         pdfname = paste0("~/temp.simple.", irow, ".", icol, ".ms.pdf")
     )
 
-    ##etm <- exhaustive_top_matches_checker(hapMatcherA, Z, ms_top_matches, return_only = TRUE)
+    etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches, return_only = TRUE)
+    
     etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)
+    
+    ms_top_matches
+
+    ## so e.g. 1-based 4, 5:12 works
+    ms_top_matches[4:6, ]
+    etm[4:6, ]
+    
+    
 
     Rcpp_ms_top_matches <- Rcpp_ms_MatchZ_Algorithm5(
         X = hapMatcher,
@@ -133,5 +163,45 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
     )
     expect_equal(ms_top_matches, Rcpp_ms_top_matches)
 
+    ## also try uppy downy version
+    top_matches_uppy_downy <- ms_MatchZ_Algorithm5(
+        X = hapMatcher,
+        ms_indices = ms_indices,
+        Z = Z,
+        do_uppy_downy_scan = TRUE,
+        pbwtL = 2,
+        pbwtM = 2
+    )
+    
+    ## check
+    for(i_k in 1:nrow(top_matches_uppy_downy)) {
+        k1 <- top_matches_uppy_downy[i_k, "index0"] + 1
+        end1 <- top_matches_uppy_downy[i_k, "end1"]
+        len1 <- top_matches_uppy_downy[i_k, "len1"]
+        start1 <- end1 - len1 + 1
+        expect_equal(0, sum(X[k1, start1:end1] != Z[start1:end1]))
+    }
+
+    ## try in Rcpp as well
+    ## rcpp_top_matches_uppy_downy <- Rcpp_ms_MatchZ_Algorithm5(
+    ##     X = hapMatcher,
+    ##     ms_indices = ms_indices,
+    ##     Z = Z,
+    ##     do_algorithm5 = FALSE,
+    ##     do_uppy_downy_scan = TRUE,
+    ##     pbwtL = 2,
+    ##     pbwtM = 2
+    ## )
+    
+    
+    print("R version")
+    print(top_matches_uppy_downy)
+    print("Rcpp version")
+    print(rcpp_top_matches_uppy_downy)
+
+    expect_equal(top_matches_uppy_downy, rcpp_top_matches_uppy_downy)
+    
 })
 
+## could do simple one with just a
+## could re-build d later at some point

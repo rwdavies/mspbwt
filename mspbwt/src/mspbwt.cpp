@@ -311,7 +311,11 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     bool check_vs_indices = false,
     bool indices = false,
     bool use_cols_to_use0 = false,
-    int min_length = -1
+    int min_length = -1,
+    bool do_algorithm5 = true,
+    bool do_uppy_downy_scan = false,
+    int pbwtL = 3,
+    int pbwtM = 3
 ) {
     int K = X.nrow();
     int T;

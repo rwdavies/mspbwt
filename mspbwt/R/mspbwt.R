@@ -350,13 +350,23 @@ ms_MatchZ_Algorithm5 <- function(
     indices = FALSE,
     print_or_message = print,
     pdfname = "~/Downloads/temp.pdf",
-    make_plot = FALSE
+    make_plot = FALSE,
+    do_uppy_downy_scan = FALSE,
+    pbwtL = 3,
+    pbwtM = 3,
+    XR = NULL,
+    use_XR = FALSE
 ) {
     ##
     if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
     ##
-    K <- nrow(X)
-    T <- ncol(X)
+    if (!use_XR) {
+        K <- nrow(X)
+        T <- ncol(X)
+    } else {
+        K <- nrow(XR)
+        T <- ncol(XR)
+    }
     ## indices
     a <- ms_indices[["a"]]
     d <- ms_indices[["d"]]
@@ -384,6 +394,51 @@ ms_MatchZ_Algorithm5 <- function(
     if (verbose) {
         print(paste0("init, f[1] = ", f[1], ", g[1] = ", g[1]))
     }
+    ## set this up
+    if (do_uppy_downy_scan) {
+        ## uppy downy = ud
+        ## a = above, b = below
+        ud_up_prev <- integer(pbwtL)
+        ud_up_cur <- integer(pbwtL)
+        ud_up_length_prev <- integer(pbwtL)
+        ud_up_length_cur <- integer(pbwtL)        
+        ## 
+        ud_down_prev <- integer(pbwtL)
+        ud_down_cur <- integer(pbwtL)
+        ud_down_length_prev <- integer(pbwtL)
+        ud_down_length_cur <- integer(pbwtL)
+        ## 
+        ud_up_prev[] <- -1
+        ud_down_prev[] <- -1
+        ## initialize up
+        fg <- floor((f[1] + g[1] - 1) / 2) ## 0-based, include in "up"
+        ## do up, include first entry fg
+        i0 <- 0 ## 0-based
+        while(i0 <= (pbwtL - 1)) {
+            if (0 <= (fg - i0)) {
+                ud_up_prev[i0 + 1] <- a[fg - i0 + 1, 1 + 1] ## go up, so subtract
+                ud_up_length_prev[i0 + 1] <- 0
+            } else {
+                ud_up_prev[i0 + 1] <- -1
+                ud_up_length_prev[i0 + 1] <- -1
+            }
+            i0 <- i0 + 1
+        }
+        ## do down, go after first entry fg
+        i0 <- 0
+        while(i0 <= (pbwtL - 1)) {
+            if ((fg + i0 + 1) <= (K - 1)) {
+                ud_down_prev[i0 + 1] <- a[fg + i0 + 1 + 1, 1 + 1] ## go up, so subtract
+                ud_down_length_prev[i0 + 1] <- 0
+            } else {
+                ud_down_prev[i0 + 1] <- -1 
+                ud_down_length_prev[i0 + 1] <- -1
+            }
+            i0 <- i0 + 1
+        }
+        ##
+        uppy_downy_reporter <- NULL
+    }
     ##
     ## just do easy bit for now
     ##
@@ -397,6 +452,129 @@ ms_MatchZ_Algorithm5 <- function(
         g1 <- wf(k = gc, t = t, s = Z[t], usge_all = usge_all, all_symbols = all_symbols, egs = egs, indices = indices, check_vs_indices = check_vs_indices)
         if (verbose) {
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
+        }
+        if (do_uppy_downy_scan) {
+            fg <- floor((f1 + g1 - 1) / 2) ## 0-based, include in "up"
+            ##
+            ## go "up" i.e. above i.e. up in the matrix
+            ##
+            i0_cur <- 0 ## 0-based, through local
+            i0_prev <- 0
+            ## go through previous values
+            while((i0_prev <= (pbwtL - 1)) && (-1 < ud_up_prev[i0_cur + 1]) && (0 <= (fg - i0_cur))) {
+                ## focus on going through past list
+                prev <- ud_up_prev[i0_prev + 1]            
+                ## now what is the current, does that work
+                cur <- a[fg - i0_cur + 1, t + 1] ## go up, so subtract
+                if (cur == prev) {
+                    ## it is a match. save and increment match
+                    ud_up_cur[i0_cur + 1] <- cur
+                    ## do the same for length. use previous length
+                    ud_up_length_cur[i0_cur + 1] <- ud_up_length_prev[i0_prev + 1] + 1
+                    ## increment up one
+                    i0_cur <- i0_cur + 1
+                } else {
+                    ## it is not a match, report it
+                    ## do not increment cur
+                    len <- ud_up_length_prev[i0_prev + 1] ## 0-based
+                    ## print(paste0("losing:", prev, ", with len = ", len))
+                    if (pbwtM <= len) {
+                        uppy_downy_reporter <- rbind(
+                            uppy_downy_reporter,
+                            matrix(c(prev, t - 1, len), nrow = 1)
+                        )
+                    }
+                }
+                i0_prev <- i0_prev + 1
+            }
+            ## now fill in what was not set
+            while((i0_cur <= (pbwtL - 1))) {
+                if (0 <= (fg - i0_cur)) {
+                    cur <- a[fg - i0_cur + 1, t + 1] ## go up, so subtract
+                    ud_up_cur[i0_cur + 1] <- cur
+                    ## go backward, find start
+                    e1 <- t
+                    if (!use_XR) {
+                        while((1 <= e1) && (X[cur + 1, e1] == Z[e1])) {
+                            e1 <- e1 - 1
+                        }
+                    } else {
+                        while((1 <= e1) && (XR[cur + 1, e1] == as.raw(Z[e1]))) {
+                            e1 <- e1 - 1
+                        }
+                    }
+                    ## go backwards, sort out start, how many before
+                    ud_up_length_cur[i0_cur + 1] <- t - e1
+                } else {
+                    ud_up_cur[i0_cur + 1] <- -1
+                    ud_up_length_cur[i0_cur + 1] <- -1
+                }
+                i0_cur <- i0_cur + 1
+            }
+            ## now reset
+            if (verbose) {
+                print(paste0("ud_up_prev = ", paste0(ud_up_prev, collapse = ", ")))
+                print(paste0("ud_up_length_prev = ", paste0(ud_up_length_prev, collapse = ", ")))                
+                print(paste0("ud_up_cur = ", paste0(ud_up_cur, collapse = ", ")))
+                print(paste0("ud_up_length_cur = ", paste0(ud_up_length_cur, collapse = ", ")))                
+            }
+            ud_up_prev <- ud_up_cur
+            ud_up_length_prev <- ud_up_length_cur
+            ##
+            ## go "down" i.e. below
+            ##
+            i0_cur <- 0 ## 0-based, through local
+            i0_prev <- 0
+            ## go through previous values
+            while((i0_prev <= (pbwtL - 1)) && (-1 < ud_down_prev[i0_cur + 1]) && ((fg + i0 + 1 + 1) <= K)) {
+                ## focus on going through past list
+                prev <- ud_down_prev[i0_prev + 1]            
+                ## now what is the current, does that work
+                cur <- a[fg + i0 + 1 + 1, t + 1]
+                if (cur == prev) {
+                    ## it is a match. save and increment match
+                    ud_down_cur[i0_cur + 1] <- cur
+                    ## do the same for length. use previous length
+                    ud_down_length_cur[i0_cur + 1] <- ud_down_length_prev[i0_prev + 1] + 1
+                    ## increment up one
+                    i0_cur <- i0_cur + 1
+                } else {
+                    ## it is not a match, report it
+                    ## do not increment cur
+                    len <- ud_down_length_prev[i0_prev + 1] ## 0-based
+                    if (pbwtM <= len) {
+                        uppy_downy_reporter <- rbind(
+                            uppy_downy_reporter,
+                            matrix(c(prev, t - 1, len), nrow = 1)
+                        )
+                    }
+                }
+                i0_prev <- i0_prev + 1
+            }
+            ## now fill in what was not set
+            while((i0_cur <= (pbwtL - 1))) {
+                if ((fg + i0 + 1) <= (K - 1)) {
+                    cur <- a[fg + i0 + 1 + 1, t + 1] ## go up, so subtract
+                    ud_down_cur[i0_cur + 1] <- cur
+                    ## go backward, find start
+                    e1 <- t
+                    if (!use_XR) {
+                        while((1 <= e1) && (X[cur + 1, e1] == Z[e1])) {
+                            e1 <- e1 - 1
+                        }
+                    } else {
+                        while((1 <= e1) && (XR[cur + 1, e1] == as.raw(Z[e1]))) {
+                            e1 <- e1 - 1
+                        }
+                    }
+                    ## go backwards, sort out start, how many before
+                    ud_down_length_cur[i0_cur + 1] <- t - e1
+                } else {
+                    ud_down_cur[i0_cur + 1] <- -1
+                    ud_down_length_cur[i0_cur + 1] <- -1
+                }
+                i0_cur <- i0_cur + 1
+            }
         }
         if (g1 > f1) {
             ## nothing to do
@@ -509,8 +687,47 @@ ms_MatchZ_Algorithm5 <- function(
     colnames(top_matches) <- c("k0", "indexB0", "start1", "end1")
     ##
     if (make_plot) dev.off()
-    ##
-    return(top_matches)
+    if (!do_uppy_downy_scan) {
+        return(top_matches)
+    } else {
+        ## report everything
+        ## up
+        i0_cur <- 0
+        while((i0_cur <= (pbwtL - 1))) {
+            ## up
+            prev <- ud_up_cur[i0_cur + 1]            
+            len <- ud_up_length_cur[i0_cur + 1]
+            if (pbwtM <= len) {
+                uppy_downy_reporter <- rbind(
+                    uppy_downy_reporter,
+                    matrix(c(prev, t - 1, len), nrow = 1)
+                )
+            }
+            i0_cur <- i0_cur + 1            
+        }
+        ## down
+        i0_cur <- 0
+        while((i0_cur <= (pbwtL - 1))) {
+            ## up
+            prev <- ud_down_cur[i0_cur + 1]            
+            len <- ud_down_length_cur[i0_cur + 1]
+            if (pbwtM <= len) {
+                uppy_downy_reporter <- rbind(
+                    uppy_downy_reporter,
+                    matrix(c(prev, t - 1, len), nrow = 1)
+                )
+            }
+            i0_cur <- i0_cur + 1
+        }
+        colnames(uppy_downy_reporter) <- c("index0", "end1", "len1")
+        if (make_plot) dev.off()
+        return(
+            list(
+                uppy_downy_reporter = uppy_downy_reporter,
+                top_matches = top_matches
+            )
+        )
+    }
 }
 
 

@@ -92,8 +92,6 @@ test_that("can more exhaustively encode and decode columns of u, stored maximall
             })
             expect_equal(u, recoded2)            
             
-            
-
         }
     }
 

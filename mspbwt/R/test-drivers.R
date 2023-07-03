@@ -123,7 +123,8 @@ test_driver_multiple <- function(
     irow = 1,
     icol = 1,
     w = 6,
-    nMaxDH = 6
+    nMaxDH = 6,
+    lots_of_matches = FALSE
 ) {
     T <- nGrids * 32
     ## build SNP X
@@ -149,6 +150,16 @@ test_driver_multiple <- function(
     which_snps <- (32 * (a["c1"] - 1) + 1):(32 * a["c2"])
     X[a["row"], which_snps] <- Z[which_snps]
     ## re-name with "S" for SNP to make clear
+    if (lots_of_matches) {
+        for(i in 1:5) {
+            off <- 3
+            wSNPs <- (32 * (i - 1 + off) + 1):(32 * (i + 5 + off))
+            k <- sample(1:K, 1)
+            X[k, wSNPs] <- Z[wSNPs]
+            print(k)
+            print(range(wSNPs / 32))
+        }
+    }
     Xs <- X
     Zs <- Z
     ## rest
