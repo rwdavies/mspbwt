@@ -318,3 +318,135 @@ test_that("can work with different intervals", {
 
 
 })
+
+
+
+test_that("can do scan up and down", {
+
+    set.seed(2028)
+
+    K <- 90
+    nGrids <- 50
+
+    ## s = SNP
+    out <- test_driver_multiple(
+        K = K,
+        nGrids = nGrids
+    )
+    Xs <- out$Xs
+    Zs <- out$Zs
+    hapMatcher <- out$hapMatcher
+    all_symbols <- out$all_symbols
+    Z <- out$Z
+    nSNPs <- length(Zs)
+    hapMatcherR <- array(as.raw(0), dim(hapMatcher))
+    for(i in 1:ncol(hapMatcher)) {
+        hapMatcherR[, i] <- as.raw(hapMatcher[, i])
+    }
+
+    ## do on only some of them
+    which_grids <- seq(1, nGrids, 3)
+    
+    ## build indices (just do one)
+    ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = hapMatcher[, which_grids],
+        all_symbols = all_symbols[which_grids],
+        indices = list()
+    )
+
+    ## Z here
+    Z_local <- map_Z_to_all_symbols(Z[which_grids], ms_indices[["all_symbols"]])
+
+    ## test in R
+    R_results <- ms_MatchZ_Algorithm5(
+        X = hapMatcher[, which_grids],
+        ms_indices = ms_indices,
+        Z = Z_local,
+        do_up_and_down_scan = TRUE,
+        mspbwtL = 3,
+        mspbwtM = 3
+    )
+
+    ## check
+    for(i_k in 1:nrow(R_results)) {
+        k1 <- R_results[i_k, "index0"] + 1
+        end1 <- R_results[i_k, "end1"]
+        len1 <- R_results[i_k, "len1"]
+        start1 <- end1 - len1 + 1
+        w <- which_grids[start1:end1]
+        sum(hapMatcher[k1, w] != Z_local[w])
+        ##expect_equal(0, sum(hapMatcher[k1, w] != Z_local[w]))
+    }
+
+    ## X the simple way
+    Rcpp1_results <- Rcpp_ms_MatchZ_Algorithm5(
+        X = hapMatcher[, which_grids],
+        XR = matrix(as.raw(0), 1, 1),
+        ms_indices = ms_indices,
+        Z = Z_local,
+        do_up_and_down_scan = TRUE,
+        mspbwtL = 3,
+        mspbwtM = 3,
+        cols_to_use0 = integer(1)
+    )
+
+    ## XR the simple way
+    Rcpp2_results <- Rcpp_ms_MatchZ_Algorithm5(
+        X = matrix(0, 1, 1),
+        XR = hapMatcherR[, which_grids],
+        ms_indices = ms_indices,
+        Z = Z_local,
+        use_XR = TRUE,
+        do_up_and_down_scan = TRUE,
+        mspbwtL = 3,
+        mspbwtM = 3,
+        cols_to_use0 = integer(1)
+    )
+
+    ## X the cols0 way
+    Rcpp3_results <- Rcpp_ms_MatchZ_Algorithm5(
+        X = hapMatcher,
+        XR = matrix(as.raw(0), 1, 1),
+        ms_indices = ms_indices,
+        Z = Z_local,
+        do_up_and_down_scan = TRUE,
+        mspbwtL = 3,
+        mspbwtM = 3,
+        cols_to_use0 = as.integer(which_grids - 1),
+        use_cols_to_use0 = TRUE,
+        verbose = FALSE
+    )
+    
+    ## XR the cols0 way
+    Rcpp4_results <- Rcpp_ms_MatchZ_Algorithm5(
+        X = matrix(0, 1, 1),
+        XR = hapMatcherR,
+        ms_indices = ms_indices,
+        Z = Z_local,
+        use_XR = TRUE,
+        do_up_and_down_scan = TRUE,
+        mspbwtL = 3,
+        mspbwtM = 3,
+        cols_to_use0 = as.integer(which_grids - 1),
+        use_cols_to_use0 = TRUE
+    )
+
+    ## AM HERE
+    ## fix these!
+    expect_equal(R_results, Rcpp1_results)    
+    expect_equal(Rcpp1_results, Rcpp2_results)
+    expect_equal(Rcpp1_results, Rcpp3_results)
+    expect_equal(Rcpp1_results, Rcpp4_results)    
+
+    ## print("----R-----")
+    ## print(R_results)
+    ## print("----Rcpp1-----")    
+    ## print(Rcpp1_results)
+    ## print("----Rcpp2-----")    
+    ## print(Rcpp2_results)
+    ## print("----Rcpp3-----")        
+    ## print(Rcpp3_results)
+    ## print("----Rcpp4-----")        
+    ## print(Rcpp4_results)        
+    
+})

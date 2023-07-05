@@ -156,8 +156,8 @@ test_driver_multiple <- function(
             wSNPs <- (32 * (i - 1 + off) + 1):(32 * (i + 5 + off))
             k <- sample(1:K, 1)
             X[k, wSNPs] <- Z[wSNPs]
-            print(k)
-            print(range(wSNPs / 32))
+            ##print(k)
+            ##print(range(wSNPs / 32))
         }
     }
     Xs <- X

@@ -351,7 +351,7 @@ ms_MatchZ_Algorithm5 <- function(
     print_or_message = print,
     pdfname = "~/Downloads/temp.pdf",
     make_plot = FALSE,
-    do_uppy_downy_scan = FALSE,
+    do_up_and_down_scan = FALSE,
     mspbwtL = 3,
     mspbwtM = 3,
     XR = NULL,
@@ -395,7 +395,7 @@ ms_MatchZ_Algorithm5 <- function(
         print(paste0("init, f[1] = ", f[1], ", g[1] = ", g[1]))
     }
     ## set this up
-    if (do_uppy_downy_scan) {
+    if (do_up_and_down_scan) {
         ## uppy downy = ud
         ## a = above, b = below
         ud_up_prev <- integer(mspbwtL)
@@ -453,7 +453,7 @@ ms_MatchZ_Algorithm5 <- function(
         if (verbose) {
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         }
-        if (do_uppy_downy_scan) {
+        if (do_up_and_down_scan) {
             fg <- floor((f1 + g1 - 1) / 2) ## 0-based, include in "up"
             ##
             ## go "up" i.e. above i.e. up in the matrix
@@ -512,12 +512,16 @@ ms_MatchZ_Algorithm5 <- function(
                 i0_cur <- i0_cur + 1
             }
             ## now reset
-            if (verbose) {
-                print(paste0("ud_up_prev = ", paste0(ud_up_prev, collapse = ", ")))
-                print(paste0("ud_up_length_prev = ", paste0(ud_up_length_prev, collapse = ", ")))                
-                print(paste0("ud_up_cur = ", paste0(ud_up_cur, collapse = ", ")))
-                print(paste0("ud_up_length_cur = ", paste0(ud_up_length_cur, collapse = ", ")))                
-            }
+            ##if (verbose) {
+            ## if (t <= 3) {
+            ##     print(paste0("---------- t = ", t, " ------ reset up"))
+            ##     print(paste0("fg = ", fg))
+            ##     print(paste0("ud_up_prev = ", paste0(ud_up_prev, collapse = ", ")))
+            ##     print(paste0("ud_up_length_prev = ", paste0(ud_up_length_prev, collapse = ", ")))                
+            ##     print(paste0("ud_up_cur = ", paste0(ud_up_cur, collapse = ", ")))
+            ##     print(paste0("ud_up_length_cur = ", paste0(ud_up_length_cur, collapse = ", ")))
+            ## }
+            ##}
             ud_up_prev <- ud_up_cur
             ud_up_length_prev <- ud_up_length_cur
             ##
@@ -575,6 +579,9 @@ ms_MatchZ_Algorithm5 <- function(
                 }
                 i0_cur <- i0_cur + 1
             }
+            ##
+            ud_down_prev <- ud_down_cur
+            ud_down_length_prev <- ud_down_length_cur
         }
         if (g1 > f1) {
             ## nothing to do
@@ -687,7 +694,7 @@ ms_MatchZ_Algorithm5 <- function(
     colnames(top_matches) <- c("k0", "indexB0", "start1", "end1")
     ##
     if (make_plot) dev.off()
-    if (!do_uppy_downy_scan) {
+    if (!do_up_and_down_scan) {
         return(top_matches)
     } else {
         ## report everything
@@ -724,12 +731,12 @@ ms_MatchZ_Algorithm5 <- function(
         uppy_downy_reporter <- cbind(uppy_downy_reporter, start1 = uppy_downy_reporter[, "end1"] - uppy_downy_reporter[, "len1"] + 1)
         uppy_downy_reporter <- uppy_downy_reporter[, c("index0", "start1", "end1", "len1")]
         if (make_plot) dev.off()
-        return(
-            list(
-                uppy_downy_reporter = uppy_downy_reporter,
-                top_matches = top_matches
-            )
-        )
+        return(uppy_downy_reporter)
+        ##     list(
+        ##         uppy_downy_reporter = uppy_downy_reporter,
+        ##         top_matches = top_matches
+        ##     )
+        ## )
     }
 }
 
