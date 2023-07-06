@@ -453,7 +453,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
       if (do_up_and_down_scan) {
 	//fg = ((f1 + g1 - 1) / 2); // 0-based, include in "up"
 	// not ideal but OK
-	fg = f1;((f1 + g1 - 1) / 2); // 0-based, include in "up"	
+	fg = f1; 
 	//
 	if (verbose) {
 	  std::cout << "scan up" << std::endl;	// go "up" i.e. above i.e. up in the matrix
@@ -568,7 +568,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	i0_cur = 0; // ## 0-based, through local
 	i0_prev = 0;
 	//## go through previous values
-	while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev(i0_cur)) && ((fg + i0_cur + 1 + 1) <= K)) {
+	while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev(i0_cur)) && ((fg + i0_cur + 1) <= (K - 1))) {
 	  //## focus on going through past list
 	  prev = ud_down_prev(i0_prev);
 	  //## now what is the current, does that work
@@ -597,12 +597,12 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 		  }
 		  uppy_downy_matrix=new_uppy_downy_matrix;
 		}
-		if (prev == 542061 && len == (t - 1)) {
-		  std::cout << "Bhere I am, t = " << t << std::endl;
-		  std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
-		  std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
-		  std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
-		}
+		// if (prev == 542061 && len == (t - 1)) {
+		//   std::cout << "Bhere I am, t = " << t << std::endl;
+		//   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
+		//   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
+		//   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
+		// }
 		uppy_downy_matrix(uppy_downy_count, 0) = prev;
 		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
 		uppy_downy_matrix(uppy_downy_count, 2) = len;
