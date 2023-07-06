@@ -411,7 +411,8 @@ ms_MatchZ_Algorithm5 <- function(
         ud_up_prev[] <- -1
         ud_down_prev[] <- -1
         ## initialize up
-        fg <- floor((f[1] + g[1] - 1) / 2) ## 0-based, include in "up"
+        ## fg <- floor((f[1] + g[1] - 1) / 2) ## 0-based, include in "up"
+        fg <- f[1] ## not ideal but consistent
         ## do up, include first entry fg
         i0 <- 0 ## 0-based
         while(i0 <= (mspbwtL - 1)) {
@@ -454,7 +455,8 @@ ms_MatchZ_Algorithm5 <- function(
             print_or_message(paste0("Start of loop t=", t, ", fc = ", fc, ", gc = ", gc, ", ec = ", ec, ", Z[t] = ", Z[t],", f1=", f1, ", g1=", g1, ", e1 = ", e1))
         }
         if (do_up_and_down_scan) {
-            fg <- floor((f1 + g1 - 1) / 2) ## 0-based, include in "up"
+            ## fg <- floor((f1 + g1 - 1) / 2) ## 0-based, include in "up"
+            fg <- f1
             ##
             ## go "up" i.e. above i.e. up in the matrix
             ##
