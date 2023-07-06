@@ -297,6 +297,12 @@ int rcpp_wf(
 
 
 
+
+
+
+
+
+
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
@@ -388,6 +394,9 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     int i0_cur, i0_prev, prev, cur, len;
     Rcpp::IntegerVector temp_vector(3);
     Rcpp::List uppy_downy_reporter;
+    int uppy_downy_count = 0;
+    // make
+    Rcpp::IntegerMatrix uppy_downy_matrix(100, 4);    
     if (do_up_and_down_scan) {
         if (verbose) {
           std::cout << "Initialize up and down scan" << std::endl;
@@ -465,11 +474,23 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	      //## do not increment cur
 	      len = ud_up_length_prev(i0_prev);// ## 0-based
 	      if (mspbwtM <= len) {
-	      Rcpp::IntegerVector temp_vector(3);			  
-		temp_vector(0) = prev;
-		temp_vector(1) = t - 1;
-		temp_vector(2) = len;
-		uppy_downy_reporter.push_back(temp_vector);
+		// Rcpp::IntegerVector temp_vector(3);			  
+		// temp_vector(0) = prev;
+		// temp_vector(1) = t - 1;
+		// temp_vector(2) = len;
+		if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+		  // double the size!
+		  Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+		  for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+		    new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+		  }
+		  uppy_downy_matrix=new_uppy_downy_matrix;
+		}
+		uppy_downy_matrix(uppy_downy_count, 0) = prev;
+		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+		uppy_downy_matrix(uppy_downy_count, 2) = len;
+		uppy_downy_count++;
+		//uppy_downy_reporter.push_back(temp_vector);
 	      }
 	    }
 	    i0_prev++;
@@ -554,11 +575,22 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    //## do not increment cur
 	    len = ud_down_length_prev(i0_prev); // ## 0-based
 	    if (mspbwtM <= len) {
-	      Rcpp::IntegerVector temp_vector(3);			  
-	      temp_vector(0) = prev;
-	      temp_vector(1) = t - 1;
-	      temp_vector(2) = len;
-	      uppy_downy_reporter.push_back(temp_vector);
+		// Rcpp::IntegerVector temp_vector(3);			  
+		// temp_vector(0) = prev;
+		// temp_vector(1) = t - 1;
+		// temp_vector(2) = len;
+		if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+		  // double the size!
+		  Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+		  for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+		    new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+		  }
+		  uppy_downy_matrix=new_uppy_downy_matrix;
+		}
+		uppy_downy_matrix(uppy_downy_count, 0) = prev;
+		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+		uppy_downy_matrix(uppy_downy_count, 2) = len;
+		uppy_downy_count++;
 	    }
 	  }
 	  i0_prev++;
@@ -797,11 +829,23 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	prev = ud_up_cur(i0_cur);
 	len = ud_up_length_cur(i0_cur); 
 	if (mspbwtM <= len) {
-	      Rcpp::IntegerVector temp_vector(3);			  
-	  temp_vector(0) = prev;
-	  temp_vector(1) = t - 1;
-	  temp_vector(2) = len;
-	  uppy_downy_reporter.push_back(temp_vector);
+	  // Rcpp::IntegerVector temp_vector(3);			  
+	  // temp_vector(0) = prev;
+	  // temp_vector(1) = t - 1;
+	  // temp_vector(2) = len;
+	  if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+	    // double the size!
+	    Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+	    for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+	      new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+	    }
+	    uppy_downy_matrix=new_uppy_downy_matrix;
+	  }
+	  uppy_downy_matrix(uppy_downy_count, 0) = prev;
+	  uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+	  uppy_downy_matrix(uppy_downy_count, 2) = len;
+	  uppy_downy_count++;
+	  //uppy_downy_reporter.push_back(temp_vector);
 	}
 	i0_cur++;
       }
@@ -812,24 +856,36 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	prev = ud_down_cur(i0_cur);
 	len = ud_down_length_cur(i0_cur);
 	if (mspbwtM <= len) {
-	      Rcpp::IntegerVector temp_vector(3);			  
-	  temp_vector(0) = prev;
-	  temp_vector(1) = t - 1;
-	  temp_vector(2) = len;
-	  uppy_downy_reporter.push_back(temp_vector);
+	  // Rcpp::IntegerVector temp_vector(3);			  
+	  // temp_vector(0) = prev;
+	  // temp_vector(1) = t - 1;
+	  // temp_vector(2) = len;
+	  if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+	    // double the size!
+	    Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+	    for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+	      new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+	    }
+	    uppy_downy_matrix=new_uppy_downy_matrix;
+	  }
+	  uppy_downy_matrix(uppy_downy_count, 0) = prev;
+	  uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+	  uppy_downy_matrix(uppy_downy_count, 2) = len;
+	  uppy_downy_count++;
+	  //uppy_downy_reporter.push_back(temp_vector);
 	}
 	i0_cur++;
       }
-      Rcpp::NumericMatrix uppy_downy_matrix(uppy_downy_reporter.length(), 4);
-      for(k = 0; k < uppy_downy_reporter.length(); k++) {
-	Rcpp::IntegerVector temp_vector = uppy_downy_reporter(k);
-	uppy_downy_matrix(k, 0) = temp_vector(0);
-	uppy_downy_matrix(k, 1) = temp_vector(1) - temp_vector(2) + 1;	
-	uppy_downy_matrix(k, 2) = temp_vector(1);
-	uppy_downy_matrix(k, 3) = temp_vector(2);	
+      // now re-size again
+      Rcpp::NumericMatrix final_uppy_downy_matrix(uppy_downy_count, 4);
+      for(k = 0; k < uppy_downy_count; k++) {
+	final_uppy_downy_matrix(k, 0) = uppy_downy_matrix(k, 0);
+	final_uppy_downy_matrix(k, 1) = uppy_downy_matrix(k, 1) - uppy_downy_matrix(k, 2) + 1;	
+	final_uppy_downy_matrix(k, 2) = uppy_downy_matrix(k, 1);
+	final_uppy_downy_matrix(k, 3) = uppy_downy_matrix(k, 2);	
       }
-      colnames(uppy_downy_matrix) = Rcpp::CharacterVector({"index0", "start1", "end1", "len1"});
-      return(uppy_downy_matrix);
+      colnames(final_uppy_downy_matrix) = Rcpp::CharacterVector({"index0", "start1", "end1", "len1"});
+      return(final_uppy_downy_matrix);
     }
     return(top_matches);
 }
