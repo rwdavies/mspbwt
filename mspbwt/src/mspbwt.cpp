@@ -587,6 +587,12 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 		  }
 		  uppy_downy_matrix=new_uppy_downy_matrix;
 		}
+		// if (prev == 19558 && len == 23) {
+		//   std::cout << "Bhere I am!" << std::endl;
+		//   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
+		//   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
+		//   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
+		// }
 		uppy_downy_matrix(uppy_downy_count, 0) = prev;
 		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
 		uppy_downy_matrix(uppy_downy_count, 2) = len;
@@ -599,8 +605,8 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	  std::cout << "fill in" << std::endl;	//## now fill in what was not set
 	}
 	while((i0_cur <= (mspbwtL - 1))) {
-	  if ((fg + i0 + 1) <= (K - 1)) {
-	    cur = a(fg + i0 + 1, t); // ## go up, so subtract
+	  if ((fg + i0_cur + 1) <= (K - 1)) {
+	    cur = a(fg + i0_cur + 1, t); // ## go up, so subtract
 	    ud_down_cur(i0_cur) = cur;
 	    e1 = t;
 	    if (!use_cols_to_use0) {

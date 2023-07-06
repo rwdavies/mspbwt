@@ -557,8 +557,8 @@ ms_MatchZ_Algorithm5 <- function(
             }
             ## now fill in what was not set
             while((i0_cur <= (mspbwtL - 1))) {
-                if ((fg + i0 + 1) <= (K - 1)) {
-                    cur <- a[fg + i0 + 1 + 1, t + 1] ## go up, so subtract
+                if ((fg + i0_cur + 1) <= (K - 1)) {
+                    cur <- a[fg + i0_cur + 1 + 1, t + 1] ## go up, so subtract
                     ud_down_cur[i0_cur + 1] <- cur
                     ## go backward, find start
                     e1 <- t
