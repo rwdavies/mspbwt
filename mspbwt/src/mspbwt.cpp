@@ -648,14 +648,19 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	//
 	// save and re-start! first, save
 	//
-	for(k = fc; k <= (gc - 1); k++) {
-	  if ((t - ec) > min_length) {
-	    Rcpp::IntegerVector temp_vector(4);
-	    temp_vector(0) = k;
-	    temp_vector(1) = a(k, t - 1);
-	    temp_vector(2) = ec + 1;
-	    temp_vector(3) = t - 1;
-	    top_matches_list.push_back(temp_vector);
+	if (verbose) {
+	  std::cout << "save first, fc = " << fc << ", gc = " << gc << std::endl;
+	}
+	if (!do_up_and_down_scan) {	
+	  for(k = fc; k <= (gc - 1); k++) {
+	    if ((t - ec) > min_length) {
+	      Rcpp::IntegerVector temp_vector(4);
+	      temp_vector(0) = k;
+	      temp_vector(1) = a(k, t - 1);
+	      temp_vector(2) = ec + 1;
+	      temp_vector(3) = t - 1;
+	      top_matches_list.push_back(temp_vector);
+	    }
 	  }
 	}
 	//
