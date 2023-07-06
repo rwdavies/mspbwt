@@ -792,8 +792,15 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     //
     // done normal now wrap up
     //
+    if (verbose) {
+      std::cout << "done normal now wrap up" << std::endl;
+    }
     //t++; // no need to increment, for loop does that already
-    if (fc < gc) {
+    if (!do_up_and_down_scan) {
+      if (fc < gc) {
+	if (verbose) {
+	  std::cout << "fc = " << fc << ", gc = " << gc << std::endl;
+	}
 	for(k = fc; k <= (gc - 1); k++) {
 	  if ((t - ec) > min_length) {	  
 	    Rcpp::IntegerVector temp_vector(4);
@@ -804,26 +811,29 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	    top_matches_list.push_back(temp_vector);
 	  }
 	}
-    }
-    //
-    // build final matrix
-    //
-    Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
-    for(k = 0; k < top_matches_list.length(); k++) {
-      Rcpp::IntegerVector temp_vector = top_matches_list(k);
-      for(int j = 0; j < 4; j++) {
-	top_matches(k, j) = temp_vector(j);
       }
-    }
-    colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
-    //
-    // finish up and down
-    //
-    if (!do_up_and_down_scan) {
+      //
+      // build final matrix
+      //
+      if (verbose) {
+	std::cout << "build final matrix" << std::endl;
+      }
+      Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
+      for(k = 0; k < top_matches_list.length(); k++) {
+	Rcpp::IntegerVector temp_vector = top_matches_list(k);
+	for(int j = 0; j < 4; j++) {
+	  top_matches(k, j) = temp_vector(j);
+	}
+      }
+      colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
       return(top_matches);
     } else {
+      //
       // report everything
       // up
+      if (verbose) {
+	std::cout << "start final summary of up and down scan" << std::endl;
+      }
       i0_cur = 0;
       while((i0_cur <= (mspbwtL - 1))) {
 	prev = ud_up_cur(i0_cur);
@@ -877,6 +887,9 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	i0_cur++;
       }
       // now re-size again
+      if (verbose) {
+	std::cout << "resize" << std::endl;
+      }
       Rcpp::NumericMatrix final_uppy_downy_matrix(uppy_downy_count, 4);
       for(k = 0; k < uppy_downy_count; k++) {
 	final_uppy_downy_matrix(k, 0) = uppy_downy_matrix(k, 0);
@@ -885,9 +898,11 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	final_uppy_downy_matrix(k, 3) = uppy_downy_matrix(k, 2);	
       }
       colnames(final_uppy_downy_matrix) = Rcpp::CharacterVector({"index0", "start1", "end1", "len1"});
+      if (verbose) {
+	std::cout << "done" << std::endl;
+      }
       return(final_uppy_downy_matrix);
     }
-    return(top_matches);
 }
 
 
