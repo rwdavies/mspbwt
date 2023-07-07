@@ -295,9 +295,148 @@ int rcpp_wf(
 
 
 
-
-
-
+//' @export
+// [[Rcpp::export]]
+void rcpp_find_start_with_d(
+    int & e1,
+    int & f1,
+    int & g1,
+    int & ec,
+    int & fc,
+    int & gc,
+    Rcpp::IntegerMatrix & X,
+    Rcpp::RawMatrix & XR,
+    bool use_XR,    
+    Rcpp::IntegerMatrix & a,
+    Rcpp::IntegerVector & Z,
+    int & t,
+    Rcpp::IntegerMatrix & d,
+    Rcpp::IntegerVector & cols_to_use0,    
+    Rcpp::List & top_matches_list,
+    int K,
+    bool verbose,
+    bool use_cols_to_use0
+) {
+  //
+  bool matches_lower, matches_upper;
+  int e1_local, index;
+  //
+  e1 = d(f1, t) - 1;
+  fc = f1;
+  gc = g1;
+  matches_lower = false;
+  matches_upper = false;
+  // std::cout << "e1=" << e1 << ", t = " << t << ", f1 = " << f1 << ", K = " << K << std::endl;
+  if ((e1 == t) && (f1 == K)) {
+    e1 = t - 1;
+  }
+  //
+  // see R code for explanation / comments
+  if (verbose) {
+    std::cout << "both" << std::endl;
+    std::cout << "f1 = " << f1 << ", e1 = " << e1 << std::endl;
+  }
+  //
+  while((!matches_lower) && (!matches_upper)) {
+    if (f1 > 0) {
+      if (!use_cols_to_use0) {
+	e1_local = e1;
+      } else {
+	e1_local=cols_to_use0(e1);
+      }
+      if (use_XR) {
+	matches_upper = Z(e1) == XR(a(f1 - 1, t), e1_local);
+      } else {
+	matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
+      }
+    } else {
+      matches_upper = false;
+    }
+    if (f1 < K) {
+      if (!use_cols_to_use0) {
+	e1_local = e1;
+      } else {
+	e1_local=cols_to_use0(e1);
+      }
+      if (use_XR) {
+	matches_lower = Z(e1) == XR(a(f1, t), e1_local);
+      } else {
+	matches_lower = Z(e1) == X(a(f1, t), e1_local);
+      }
+    } else {
+      matches_lower = false;
+    }
+    if (!matches_lower & !matches_upper) {
+      e1++;
+    }
+  }
+  //
+  //this CAN happen, if there is a symbol mis-match, and have to go forward
+  if (verbose) {
+    std::cout << "matches upper" << std::endl;
+  }
+  //
+  if (matches_upper) {
+    f1--;
+    index=a(f1, t);
+    if (!use_cols_to_use0) {
+      if (use_XR) {
+	while (Z(e1 - 1) == XR(index, e1 - 1)) {
+	  e1--;
+	}
+      } else {
+	while (Z(e1 - 1) == X(index, e1 - 1)) {
+	  e1--;
+	}
+      }
+    } else {
+      if (use_XR) {
+	while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+	  e1--;
+	}
+      } else {
+	while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+	  e1--;
+	}
+      }
+    }
+    while (d(f1, t) <= e1) {
+      f1--;
+    }
+  }
+  if (verbose) {
+    std::cout << "matches lower" << std::endl;
+  }
+  if (matches_lower) {
+    g1++;
+    index=a(f1, t);
+    if (!use_cols_to_use0) {
+      if (use_XR) {
+	while (Z(e1 - 1) == XR(index, e1 - 1)) {
+	  e1--;
+	}
+      } else {
+	while (Z(e1 - 1) == X(index, e1 - 1)) {
+	  e1--;
+	}
+      }
+    } else {
+      if (use_XR) {
+	while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+	  e1--;
+	}
+      } else {
+	while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+	  e1--;
+	}
+      }
+    }
+    while ((g1 < K) && (d(g1, t) <= e1)) {
+      g1++;
+    }
+  }
+  return;
+}
 
 
 
@@ -337,9 +476,8 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     if (use_cols_to_use0) {
       T = cols_to_use0.length();
     }    
-    int k, index, t;
-    int f1, g1, e1_local;
-    bool matches_lower, matches_upper;
+    int k, t;
+    int f1, g1;
     //
     // get things out of lists so we can use them
     //
@@ -697,122 +835,10 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	if (verbose) {
 	  std::cout << "restart" << std::endl;
 	}
+	//
 	// now, re-start
 	//
-	e1 = d(f1, t) - 1;
-	fc = f1;
-	gc = g1;
-	matches_lower = false;
-	matches_upper = false;
-	// std::cout << "e1=" << e1 << ", t = " << t << ", f1 = " << f1 << ", K = " << K << std::endl;	    	    	  	  	
-	if ((e1 == t) && (f1 == K)) {
-	  e1 = t - 1;
-	}
-	//
-	// see R code for explanation / comments
-	if (verbose) {
-	  std::cout << "both" << std::endl;
-	  std::cout << "f1 = " << f1 << ", e1 = " << e1 << std::endl;
-	}
-	//
-	while((!matches_lower) && (!matches_upper)) {
-	  if (f1 > 0) {
-	    if (!use_cols_to_use0) {
-              e1_local = e1;
-	    } else {
-              e1_local=cols_to_use0(e1);
-	    }
-	    if (use_XR) {
-	      matches_upper = Z(e1) == XR(a(f1 - 1, t), e1_local);
-	    } else {
-	      matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
-	    }
-	  } else {
-	    matches_upper = false;
-	  }
-	  if (f1 < K) {
-	    if (!use_cols_to_use0) {
-              e1_local = e1;
-	    } else {
-              e1_local=cols_to_use0(e1);
-	    }
-	    if (use_XR) {
-	      matches_lower = Z(e1) == XR(a(f1, t), e1_local);
-	    } else {
-	      matches_lower = Z(e1) == X(a(f1, t), e1_local);
-	    }
-	  } else {
-	    matches_lower = false;
-	  }
-	  if (!matches_lower & !matches_upper) {
-	    e1++;
-	  }
-	}
-	//
-	//this CAN happen, if there is a symbol mis-match, and have to go forward
-	if (verbose) {
-	  std::cout << "matches upper" << std::endl;
-	}
-	//
-	if (matches_upper) {
-	    f1--;
-	    index=a(f1, t);
-            if (!use_cols_to_use0) {
-	      if (use_XR) {
-                while (Z(e1 - 1) == XR(index, e1 - 1)) {
-		    e1--;
-	        }
-	      } else {
-                while (Z(e1 - 1) == X(index, e1 - 1)) {
-		    e1--;
-	        }
-	      }
-	    } else {
-	      if (use_XR) {
-	        while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
-		    e1--;
-	        }
-	      } else {
-	        while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
-		    e1--;
-	        }
-	      }
-	    }
-	    while (d(f1, t) <= e1) {
-	      f1--;
-	    }
-	}
-	if (verbose) {
-	  std::cout << "matches lower" << std::endl;
-	}
-	if (matches_lower) {
-	    g1++;
-	    index=a(f1, t);
-	    if (!use_cols_to_use0) {
-	      if (use_XR) {
-		while (Z(e1 - 1) == XR(index, e1 - 1)) {
-		  e1--;
-		}
-	      } else {
-		while (Z(e1 - 1) == X(index, e1 - 1)) {
-		  e1--;
-		}
-	      }
-	    } else {
-	      if (use_XR) {
-		while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
-		  e1--;
-		}
-	      } else {
-		while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
-		  e1--;
-		}
-	      }
-	    }
-	    while ((g1 < K) && (d(g1, t) <= e1)) {
-	      g1++;
-	    }
-	}
+	rcpp_find_start_with_d(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0);
 	ec = e1;
 	if (verbose) {
 	  std::cout << "end of save and restart" << std::endl;

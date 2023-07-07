@@ -615,8 +615,6 @@ ms_MatchZ_Algorithm5 <- function(
                 )
             }
             ## for visualization efficiency            
-            fc <- f1
-            gc <- g1
             if (use_d) {
                 out <- find_start_with_d(e1 = e1, f1 = f1, g1 = g1, ec = ec, fc = fc, gc = gc, X = X, a = a, Z = Z, t = t, d = d, top_matches = top_matches, K = K, verbose = verbose, make_plot = make_plot)
                 e1 <- out[["e1"]]
@@ -851,6 +849,8 @@ find_start_with_d <- function(
     verbose,
     make_plot
 ) {
+    fc <- f1
+    gc <- g1
     e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
     if (verbose) print(paste0("e1 = ", e1))
     if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
