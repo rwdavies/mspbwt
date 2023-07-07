@@ -355,7 +355,8 @@ ms_MatchZ_Algorithm5 <- function(
     mspbwtL = 3,
     mspbwtM = 3,
     XR = NULL,
-    use_XR = FALSE
+    use_XR = FALSE,
+    use_d = TRUE
 ) {
     ##
     if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
@@ -369,11 +370,12 @@ ms_MatchZ_Algorithm5 <- function(
     }
     ## indices
     a <- ms_indices[["a"]]
-    if ("d" %in% names(ms_indices)) {
+    ##if ("d" %in% names(ms_indices)) {
+    if (use_d) {
         d <- ms_indices[["d"]]
         use_d <- TRUE
     } else {
-        d <- NULL
+        d <- ms_indices[["d"]] ##         d <- NULL
         use_d <- FALSE
     }
     ##d_store <- ms_indices[["d_store"]]
@@ -615,15 +617,11 @@ ms_MatchZ_Algorithm5 <- function(
                 )
             }
             ## for visualization efficiency            
-            if (use_d) {
-                out <- find_start_with_d(e1 = e1, f1 = f1, g1 = g1, ec = ec, fc = fc, gc = gc, X = X, a = a, Z = Z, t = t, d = d, top_matches = top_matches, K = K, verbose = verbose, make_plot = make_plot)
-                e1 <- out[["e1"]]
-                f1 <- out[["f1"]]
-                g1 <- out[["g1"]]
-                ec <- e1
-            } else {
-                1
-            }
+            out <- find_restart(e1 = e1, f1 = f1, g1 = g1, ec = ec, fc = fc, gc = gc, X = X, a = a, Z = Z, t = t, d = d, top_matches = top_matches, K = K, verbose = verbose, make_plot = make_plot, use_d = use_d)
+            e1 <- out[["e1"]]
+            f1 <- out[["f1"]]
+            g1 <- out[["g1"]]
+            ec <- e1
         }
         fc <- f1
         gc <- g1
@@ -832,7 +830,7 @@ map_one_binary_value_to_hapMatcher <- function(
 }
 
 
-find_start_with_d <- function(
+find_restart <- function(
     e1,
     f1,
     g1,
@@ -847,11 +845,37 @@ find_start_with_d <- function(
     top_matches,
     K,
     verbose,
-    make_plot
+    make_plot,
+    use_d
 ) {
+
+    save(e1,
+    f1,
+    g1,
+    ec,
+    fc,
+    gc,
+    X,
+    a,
+    Z,
+    t,
+    d,
+    top_matches,
+    K,
+    verbose,
+    make_plot,
+    use_d,
+    file = "~/temp.RData")
+    ## stop("WER")
+
+    load("~/temp.RData")
     fc <- f1
     gc <- g1
-    e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+    if (use_d) {
+        e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+    } else {
+        e1 <- t - 1
+    }
     if (verbose) print(paste0("e1 = ", e1))
     if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
     ##
@@ -882,11 +906,13 @@ find_start_with_d <- function(
         }
         if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
     }
+    
     ##
     ## this CAN happen, if there is a symbol mis-match, and have to go forward
     ##
     if (matches_upper) {
         f1 <- f1 - 1
+        f1ORI <- f1
         index <- a[f1 + 1, t + 1] ## a
         if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
         ## should skip if both
@@ -894,11 +920,42 @@ find_start_with_d <- function(
             e1 <- e1 - 1
             if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
         }
+        ## if (use_d) {
         while (d[f1 + 1, t + 1] <= e1) {
             f1 <- f1 - 1
             if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
         }
+        f1A <- f1
+        f1 <- f1ORI
+        ##} else {
+        ## so here, we need to check everything between e1 and t
+        ## only do if we can access the next index
+        cond <- TRUE
+        while(0 <= (f1 - 1) && cond) {
+            ## only
+            next_index <- a[f1 - 1 + 1, t + 1]
+            cond <- TRUE
+            for(tt0 in (e1 - 1):(t - 1 - 1)) {
+                if (X[index + 1, tt0 + 1] != X[next_index + 1, tt0 + 1]) {
+                    cond <- FALSE
+                }
+            }
+            if (cond) {
+                f1 <- f1 - 1
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)                    
+            }
+        }
+        f1B <- f1
+        stopifnot(f1A == f1B)
+
+
+        ## AM HERE
+        ## WORK ON THIS
+        ## SORT OUT THE MATCHING PROPERLY
+        X[a[, t + 1] + 1, 1:t]
+        
     }
+    
     if (matches_lower) {
         g1 <- g1 + 1
         index <- a[f1 + 1, t + 1] ## a
@@ -913,11 +970,31 @@ find_start_with_d <- function(
             e1 <- e1 - 1
             if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
         }
-        while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
-            g1 <- g1 + 1
-            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        if (use_d) {
+            while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
+                g1 <- g1 + 1
+                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+            }
+        } else {
+            ## so here, we need to check everything between e1 and t
+            cond <- TRUE
+            while((g1 < K) && cond) {
+                ## only
+                next_index <- a[f1 + 1 + 1, t + 1]
+                cond <- TRUE
+                for(tt0 in (e1 - 1):(t - 1)) {
+                    if (X[index + 1, tt0 + 1] != X[next_index + 1, tt0 + 1]) {
+                        cond <- FALSE
+                    }
+                }
+                if (cond) {
+                    g1 <- g1 + 1
+                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+                }
+            }
         }
     }
+    
     if (verbose) print(paste0("e1 = ", e1))
     if (verbose) print("save stop")
     return(
@@ -928,3 +1005,9 @@ find_start_with_d <- function(
         )
     )
 }
+
+
+
+
+
+
