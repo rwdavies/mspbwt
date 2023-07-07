@@ -369,7 +369,13 @@ ms_MatchZ_Algorithm5 <- function(
     }
     ## indices
     a <- ms_indices[["a"]]
-    d <- ms_indices[["d"]]
+    if ("d" %in% names(ms_indices)) {
+        d <- ms_indices[["d"]]
+        use_d <- TRUE
+    } else {
+        d <- NULL
+        use_d <- FALSE
+    }
     ##d_store <- ms_indices[["d_store"]]
     usge_all <- ms_indices[["usge_all"]]
     ## things needed as well
@@ -457,6 +463,10 @@ ms_MatchZ_Algorithm5 <- function(
         if (do_up_and_down_scan) {
             ## fg <- floor((f1 + g1 - 1) / 2) ## 0-based, include in "up"
             fg <- f1
+            ## if would point out of bounds, re-set
+            if (fg == K) {
+                fg <- K - 1
+            }
             ##
             ## go "up" i.e. above i.e. up in the matrix
             ##
@@ -467,6 +477,13 @@ ms_MatchZ_Algorithm5 <- function(
                 ## focus on going through past list
                 prev <- ud_up_prev[i0_prev + 1]            
                 ## now what is the current, does that work
+                ## print("A")
+                ## print(paste0("f1 = ", f1, ", g1 = ", g1))
+                ## print(paste0("fg = ", fg, ", i0_cur = ", i0_cur))
+                ## print(paste0("Z[t] = ", Z[t]))
+                ## print(X[, t])
+                ## print(fg - i0_cur)
+                ## print(dim(a))
                 cur <- a[fg - i0_cur + 1, t + 1] ## go up, so subtract
                 if (cur == prev) {
                     ## it is a match. save and increment match
@@ -532,11 +549,11 @@ ms_MatchZ_Algorithm5 <- function(
             i0_cur <- 0 ## 0-based, through local
             i0_prev <- 0
             ## go through previous values
-            while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev[i0_cur + 1]) && ((fg + i0 + 1 + 1) <= K)) {
+            while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev[i0_cur + 1]) && ((fg + i0_cur + 1 + 1) <= K)) {
                 ## focus on going through past list
                 prev <- ud_down_prev[i0_prev + 1]            
                 ## now what is the current, does that work
-                cur <- a[fg + i0 + 1 + 1, t + 1]
+                cur <- a[fg + i0_cur + 1 + 1, t + 1]
                 if (cur == prev) {
                     ## it is a match. save and increment match
                     ud_down_cur[i0_cur + 1] <- cur
@@ -597,78 +614,18 @@ ms_MatchZ_Algorithm5 <- function(
                     matrix(c(k, a[k + 1, t], ec + 1, t - 1), nrow = 1)
                 )
             }
-            ##d_vec <- decompress_d(d_store, t + 1, K)
-            e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
-            if (verbose) print(paste0("e1 = ", e1))
-            fc <- f1; gc <- g1 ## for visualization efficiency
-            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
-            ##
-            ## do complicated matching here, need to potentially come back more
-            ##
-            ##save(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, file = "~/temp.RData")
-            ##load("~/temp.RData")
-            matches_lower <- FALSE
-            matches_upper <- FALSE
-            if ((e1 == t) && (f1 == K)) {
-                e1 <- t - 1
+            ## for visualization efficiency            
+            fc <- f1
+            gc <- g1
+            if (use_d) {
+                out <- find_start_with_d(e1 = e1, f1 = f1, g1 = g1, ec = ec, fc = fc, gc = gc, X = X, a = a, Z = Z, t = t, d = d, top_matches = top_matches, K = K, verbose = verbose, make_plot = make_plot)
+                e1 <- out[["e1"]]
+                f1 <- out[["f1"]]
+                g1 <- out[["g1"]]
+                ec <- e1
+            } else {
+                1
             }
-            while((!matches_lower) && (!matches_upper)) {
-                ## here I check if I can do ABOVE i.e. one value up (reduced)
-                if (f1 > 0) {
-                    matches_upper <- Z[e1 + 1] == X[a[f1 - 1 + 1, t + 1] + 1, e1 + 1]
-                } else {
-                    matches_upper <- FALSE
-                }
-                ## here I check if I can go BELOW i.e. one value down
-                if (f1 < K) {
-                    matches_lower <- Z[e1 + 1] == X[a[f1 + 1, t + 1] + 1, e1 + 1]
-                } else {
-                    matches_lower <- FALSE
-                }
-                if (!matches_lower & !matches_upper) {
-                    e1 <- e1 + 1
-                }
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-            }
-            ##
-            ## this CAN happen, if there is a symbol mis-match, and have to go forward
-            ##
-            if (matches_upper) {
-                f1 <- f1 - 1
-                index <- a[f1 + 1, t + 1] ## a
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                ## should skip if both
-                while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
-                    e1 <- e1 - 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                }
-                while (d[f1 + 1, t + 1] <= e1) {
-                    f1 <- f1 - 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                }
-            }
-            if (matches_lower) {
-                g1 <- g1 + 1
-                index <- a[f1 + 1, t + 1] ## a
-                if (verbose) {
-                    print(paste0(
-                        "e1 = ", e1, ", ",
-                        "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
-                    ))
-                }
-                if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
-                    e1 <- e1 - 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                }
-                while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
-                    g1 <- g1 + 1
-                    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
-                }
-            }
-            if (verbose) print(paste0("e1 = ", e1))
-            if (verbose) print("save stop")
-            ec <- e1
         }
         fc <- f1
         gc <- g1
@@ -874,4 +831,100 @@ map_one_binary_value_to_hapMatcher <- function(
         nSNPs
     )
     which(dist == min(dist))[1]
+}
+
+
+find_start_with_d <- function(
+    e1,
+    f1,
+    g1,
+    ec,
+    fc,
+    gc,
+    X,
+    a,
+    Z,
+    t,
+    d,
+    top_matches,
+    K,
+    verbose,
+    make_plot
+) {
+    e1 <- d[f1 + 1, t + 1] - 1 ## this is 0-based, probably!
+    if (verbose) print(paste0("e1 = ", e1))
+    if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, use_fc = FALSE)
+    ##
+    ## do complicated matching here, need to potentially come back more
+    ##
+    ##save(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches, file = "~/temp.RData")
+    ##load("~/temp.RData")
+    matches_lower <- FALSE
+    matches_upper <- FALSE
+    if ((e1 == t) && (f1 == K)) {
+        e1 <- t - 1
+    }
+    while((!matches_lower) && (!matches_upper)) {
+        ## here I check if I can do ABOVE i.e. one value up (reduced)
+        if (f1 > 0) {
+            matches_upper <- Z[e1 + 1] == X[a[f1 - 1 + 1, t + 1] + 1, e1 + 1]
+        } else {
+            matches_upper <- FALSE
+        }
+        ## here I check if I can go BELOW i.e. one value down
+        if (f1 < K) {
+            matches_lower <- Z[e1 + 1] == X[a[f1 + 1, t + 1] + 1, e1 + 1]
+        } else {
+            matches_lower <- FALSE
+        }
+        if (!matches_lower & !matches_upper) {
+            e1 <- e1 + 1
+        }
+        if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+    }
+    ##
+    ## this CAN happen, if there is a symbol mis-match, and have to go forward
+    ##
+    if (matches_upper) {
+        f1 <- f1 - 1
+        index <- a[f1 + 1, t + 1] ## a
+        if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        ## should skip if both
+        while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
+            e1 <- e1 - 1
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        }
+        while (d[f1 + 1, t + 1] <= e1) {
+            f1 <- f1 - 1
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        }
+    }
+    if (matches_lower) {
+        g1 <- g1 + 1
+        index <- a[f1 + 1, t + 1] ## a
+        if (verbose) {
+            print(paste0(
+                "e1 = ", e1, ", ",
+                "Z[e1 - 1 + 1] = ", Z[e1 - 1 + 1], ", X[index + 1, e1 - 1 + 1] = ", X[index + 1, e1 - 1 + 1]
+            ))
+        }
+        if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        while (Z[e1 - 1 + 1] == X[index + 1, e1 - 1 + 1]) {
+            e1 <- e1 - 1
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        }
+        while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
+            g1 <- g1 + 1
+            if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
+        }
+    }
+    if (verbose) print(paste0("e1 = ", e1))
+    if (verbose) print("save stop")
+    return(
+        list(
+            e1 = e1,
+            f1 = f1,
+            g1 = g1
+        )
+    )
 }

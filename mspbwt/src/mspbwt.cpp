@@ -453,7 +453,11 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
       if (do_up_and_down_scan) {
 	//fg = ((f1 + g1 - 1) / 2); // 0-based, include in "up"
 	// not ideal but OK
-	fg = f1; 
+	fg = f1;
+	// I do not think this can happen, but if it can
+	if (fg == K) {
+	  fg = K - 1;
+	}
 	//
 	if (verbose) {
 	  std::cout << "scan up" << std::endl;	// go "up" i.e. above i.e. up in the matrix
