@@ -14,8 +14,16 @@ if (!suppressPackageStartupMessages(require("rrbgen")))
     install.packages("https://github.com/rwdavies/rrbgen/releases/download/0.0.6/rrbgen_0.0.6.tar.gz", repos=NULL)
 
 if (!suppressPackageStartupMessages(require("STITCH")))
-    install.packages("https://github.com/rwdavies/STITCH/releases/download/1.6.6/STITCH_1.6.6.tar.gz", repos=NULL)
+    install.packages("https://github.com/rwdavies/STITCH/releases/download/1.6.6/STITCH_1.6.10.tar.gz", repos=NULL)
 
-if (!suppressPackageStartupMessages(require("QUILT")))
-    install.packages("https://github.com/rwdavies/QUILT/releases/download/1.0.4/QUILT_1.0.4.tar.gz", repos=NULL)
-
+if (!suppressPackageStartupMessages(require("QUILT"))) {
+    check <- as.logical(Sys.getenv("DEV_QUILT")) == TRUE
+    if (is.na(check)) {
+        check <- FALSE
+    }
+    if (check) {
+        install_github("rwdavies/QUILT", subdir = "QUILT", upgrade = "never", ref = "zilong")
+    } else {
+        install.packages("https://github.com/rwdavies/QUILT/releases/download/1.0.4/QUILT_1.0.4.tar.gz", repos=NULL)
+    }
+}

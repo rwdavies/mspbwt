@@ -27,7 +27,11 @@ if (1 == 0) {
 ## work on intuition of the two
 test_that("intuition of building", {
 
-    pdf("~/plots/mspbwt.example.indices.pdf", height = 12, width = 12)
+    if (dir.exists("~/plots")) {
+        pdf("~/plots/mspbwt.example.indices.pdf", height = 12, width = 12)
+    } else {
+        pdf(tempfile(fileext = ".pdf"), height = 12, width = 12)
+    }
     
     ## build example using 0, 1 for here
     set.seed(10)
