@@ -55,13 +55,13 @@ rcpp_wf <- function(k, t, s, usge_all, all_symbols, egs) {
 }
 
 #' @export
-rcpp_find_restart <- function(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d) {
-    invisible(.Call('_mspbwt_rcpp_find_restart', PACKAGE = 'mspbwt', e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d))
+rcpp_find_restart <- function(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d, cap_scan_count) {
+    invisible(.Call('_mspbwt_rcpp_find_restart', PACKAGE = 'mspbwt', e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d, cap_scan_count))
 }
 
 #' @export
-Rcpp_ms_MatchZ_Algorithm5 <- function(X, XR, ms_indices, Z, cols_to_use0, use_XR = FALSE, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE, use_cols_to_use0 = FALSE, min_length = -1L, do_up_and_down_scan = FALSE, mspbwtL = 3L, mspbwtM = 3L, test_d = FALSE, have_d = TRUE) {
-    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length, do_up_and_down_scan, mspbwtL, mspbwtM, test_d, have_d)
+Rcpp_ms_MatchZ_Algorithm5 <- function(X, XR, ms_indices, Z, cols_to_use0, use_XR = FALSE, verbose = FALSE, do_checks = FALSE, check_vs_indices = FALSE, indices = FALSE, use_cols_to_use0 = FALSE, min_length = -1L, do_up_and_down_scan = FALSE, mspbwtL = 3L, mspbwtM = 3L, test_d = FALSE, have_d = TRUE, cap_scan_count = -1L) {
+    .Call('_mspbwt_Rcpp_ms_MatchZ_Algorithm5', PACKAGE = 'mspbwt', X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length, do_up_and_down_scan, mspbwtL, mspbwtM, test_d, have_d, cap_scan_count)
 }
 
 #' @export

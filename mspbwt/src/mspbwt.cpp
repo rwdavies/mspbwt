@@ -317,11 +317,12 @@ void rcpp_find_restart(
     bool verbose,
     bool use_cols_to_use0,
     bool test_d,
-    bool use_d
+    bool use_d,
+    int cap_scan_count
 ) {
   //
   bool matches_lower, matches_upper, cond;
-  int e1_local, index, f1_with_d, f1_init, next_index, tt0, g1_init, g1_with_d;
+  int e1_local, index, f1_with_d, f1_init, next_index, tt0, g1_init, g1_with_d, count;
   //
   fc = f1;
   gc = g1;
@@ -427,6 +428,7 @@ void rcpp_find_restart(
       if (verbose) {
 	std::cout << "before while, f1_init = " << f1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
       }
+      count = 0;
       while(0 <= (f1 - 1) && cond) {
 	next_index = a(f1 - 1, t);
 	cond = true;
@@ -437,6 +439,15 @@ void rcpp_find_restart(
 	if (cond) {
 	  f1--;
 	}
+	if (cap_scan_count > 0) {
+	  if (count > cap_scan_count) {
+	    cond = false;
+	  }
+	}
+	count++;
+      }
+      if (verbose) {
+	std::cout << "after while, f1 = " << f1 << std::endl;
       }
       if (test_d) {
 	if (f1_with_d != f1) {
@@ -483,6 +494,10 @@ void rcpp_find_restart(
     if (!use_d | test_d) {
       g1 = g1_init;
       cond = true;
+      count = 0;
+      if (verbose) {
+	std::cout << "before while, g1_init = " << g1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
+      }
       while((g1 < K) && cond) {
 	next_index = a(f1 + 1, t);
 	cond = true;
@@ -493,6 +508,15 @@ void rcpp_find_restart(
 	if (cond) {
 	  g1++;
 	}
+	if (cap_scan_count > 0) {
+	  if (count > cap_scan_count) {
+	    cond = false;
+	  }
+	}
+	count++;
+      }
+      if (verbose) {
+	std::cout << "after while, g1 = " << g1 << std::endl;
       }
       if (test_d) {
 	if (g1_with_d != g1) {
@@ -527,7 +551,8 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     int mspbwtL = 3,
     int mspbwtM = 3,
     bool test_d = false,
-    bool have_d = true
+    bool have_d = true,
+    int cap_scan_count = -1
 ) {
     if (verbose) {
       std::cout << "Inside Rcpp ms algorithm" << std::endl;
@@ -919,7 +944,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	//
 	// now, re-start
 	//
-	rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d);
+	rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d, cap_scan_count);
 	ec = e1;
 	if (verbose) {
 	  std::cout << "end of save and restart" << std::endl;
