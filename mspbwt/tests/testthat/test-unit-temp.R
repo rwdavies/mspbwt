@@ -5,6 +5,7 @@ if (1 == 0) {
     library("testthat")
     library("mspbwt")
     dir <- "~/proj/mspbwt/"
+    dir <- "~/Downloads/tempAAA/mspbwt/"
     setwd(paste0(dir, "/mspbwt/R"))
     a <- dir(pattern = "*.R")
     b <- grep("~", a)
@@ -13,7 +14,7 @@ if (1 == 0) {
     }
     o <- sapply(a, source)
     ## test in R
-    
+
 }
 
 
@@ -43,7 +44,7 @@ test_that("can avoid use of d", {
 
     ## do on only some of them
     which_grids <- seq(1, nGrids, 3)
-    
+
     ## build indices (just do one)
     ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
         X1C = hapMatcher[, which_grids],
@@ -73,14 +74,15 @@ test_that("can avoid use of d", {
     ## try removing d
     ms_indices_no_d <- ms_indices
     ms_indices_no_d[["d"]] <- NULL
-    
+
+    ## do test
     R_results_no_d <- ms_MatchZ_Algorithm5(
         X = hapMatcher[, which_grids],
         ms_indices = ms_indices,
         Z = Z_local,
-        use_d = FALSE
+        test_d = TRUE
     )
 
     expect_equal(R_results, R_results_no_d)
-    
+
 })
