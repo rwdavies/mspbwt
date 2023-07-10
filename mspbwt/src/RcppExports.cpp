@@ -168,9 +168,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpp_find_start_with_d
-void rcpp_find_start_with_d(int& e1, int& f1, int& g1, int& ec, int& fc, int& gc, Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, bool use_XR, Rcpp::IntegerMatrix& a, Rcpp::IntegerVector& Z, int& t, Rcpp::IntegerMatrix& d, Rcpp::IntegerVector& cols_to_use0, Rcpp::List& top_matches_list, int K, bool verbose, bool use_cols_to_use0);
-RcppExport SEXP _mspbwt_rcpp_find_start_with_d(SEXP e1SEXP, SEXP f1SEXP, SEXP g1SEXP, SEXP ecSEXP, SEXP fcSEXP, SEXP gcSEXP, SEXP XSEXP, SEXP XRSEXP, SEXP use_XRSEXP, SEXP aSEXP, SEXP ZSEXP, SEXP tSEXP, SEXP dSEXP, SEXP cols_to_use0SEXP, SEXP top_matches_listSEXP, SEXP KSEXP, SEXP verboseSEXP, SEXP use_cols_to_use0SEXP) {
+// rcpp_find_restart
+void rcpp_find_restart(int& e1, int& f1, int& g1, int& ec, int& fc, int& gc, Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, bool use_XR, Rcpp::IntegerMatrix& a, Rcpp::IntegerVector& Z, int& t, Rcpp::IntegerMatrix& d, Rcpp::IntegerVector& cols_to_use0, Rcpp::List& top_matches_list, int K, bool verbose, bool use_cols_to_use0, bool test_d, bool use_d);
+RcppExport SEXP _mspbwt_rcpp_find_restart(SEXP e1SEXP, SEXP f1SEXP, SEXP g1SEXP, SEXP ecSEXP, SEXP fcSEXP, SEXP gcSEXP, SEXP XSEXP, SEXP XRSEXP, SEXP use_XRSEXP, SEXP aSEXP, SEXP ZSEXP, SEXP tSEXP, SEXP dSEXP, SEXP cols_to_use0SEXP, SEXP top_matches_listSEXP, SEXP KSEXP, SEXP verboseSEXP, SEXP use_cols_to_use0SEXP, SEXP test_dSEXP, SEXP use_dSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int& >::type e1(e1SEXP);
@@ -191,13 +191,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type use_cols_to_use0(use_cols_to_use0SEXP);
-    rcpp_find_start_with_d(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0);
+    Rcpp::traits::input_parameter< bool >::type test_d(test_dSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_d(use_dSEXP);
+    rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d);
     return R_NilValue;
 END_RCPP
 }
 // Rcpp_ms_MatchZ_Algorithm5
-Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool use_XR, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0, int min_length, bool do_up_and_down_scan, int mspbwtL, int mspbwtM);
-RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP XRSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP use_XRSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP, SEXP min_lengthSEXP, SEXP do_up_and_down_scanSEXP, SEXP mspbwtLSEXP, SEXP mspbwtMSEXP) {
+Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(Rcpp::IntegerMatrix& X, Rcpp::RawMatrix& XR, Rcpp::List& ms_indices, Rcpp::IntegerVector& Z, Rcpp::IntegerVector& cols_to_use0, bool use_XR, bool verbose, bool do_checks, bool check_vs_indices, bool indices, bool use_cols_to_use0, int min_length, bool do_up_and_down_scan, int mspbwtL, int mspbwtM, bool test_d, bool have_d);
+RcppExport SEXP _mspbwt_Rcpp_ms_MatchZ_Algorithm5(SEXP XSEXP, SEXP XRSEXP, SEXP ms_indicesSEXP, SEXP ZSEXP, SEXP cols_to_use0SEXP, SEXP use_XRSEXP, SEXP verboseSEXP, SEXP do_checksSEXP, SEXP check_vs_indicesSEXP, SEXP indicesSEXP, SEXP use_cols_to_use0SEXP, SEXP min_lengthSEXP, SEXP do_up_and_down_scanSEXP, SEXP mspbwtLSEXP, SEXP mspbwtMSEXP, SEXP test_dSEXP, SEXP have_dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -216,7 +218,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type do_up_and_down_scan(do_up_and_down_scanSEXP);
     Rcpp::traits::input_parameter< int >::type mspbwtL(mspbwtLSEXP);
     Rcpp::traits::input_parameter< int >::type mspbwtM(mspbwtMSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length, do_up_and_down_scan, mspbwtL, mspbwtM));
+    Rcpp::traits::input_parameter< bool >::type test_d(test_dSEXP);
+    Rcpp::traits::input_parameter< bool >::type have_d(have_dSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ms_MatchZ_Algorithm5(X, XR, ms_indices, Z, cols_to_use0, use_XR, verbose, do_checks, check_vs_indices, indices, use_cols_to_use0, min_length, do_up_and_down_scan, mspbwtL, mspbwtM, test_d, have_d));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -264,8 +268,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},
     {"_mspbwt_rcpp_wf", (DL_FUNC) &_mspbwt_rcpp_wf, 6},
-    {"_mspbwt_rcpp_find_start_with_d", (DL_FUNC) &_mspbwt_rcpp_find_start_with_d, 18},
-    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 15},
+    {"_mspbwt_rcpp_find_restart", (DL_FUNC) &_mspbwt_rcpp_find_restart, 20},
+    {"_mspbwt_Rcpp_ms_MatchZ_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_MatchZ_Algorithm5, 17},
     {"_mspbwt_BuildIndices_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_BuildIndices_Algorithm5_Rcpp, 1},
     {"_mspbwt_MatchZ_Algorithm5_Rcpp", (DL_FUNC) &_mspbwt_MatchZ_Algorithm5_Rcpp, 10},
     {NULL, NULL, 0}

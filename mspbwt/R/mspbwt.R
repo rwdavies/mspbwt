@@ -965,6 +965,7 @@ find_restart <- function(
     }
     if (matches_lower) {
         g1 <- g1 + 1
+        g1_init <- g1
         index <- a[f1 + 1, t + 1] ## a
         if (verbose) {
             print(paste0(
@@ -979,6 +980,7 @@ find_restart <- function(
         }
         ## so should match from (1-based) e1 + 1
         if (use_d | test_d) {
+            g1 <- g1_init
             while ((g1 < K) && (d[g1 + 1, t + 1] <= e1)) { ## d
                 g1 <- g1 + 1
                 if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
@@ -986,6 +988,7 @@ find_restart <- function(
             g1_with_d <- g1
         }
         if (!use_d | test_d) {
+            g1 <- g1_init            
             ## so here, we need to check everything between e1 and t
             cond <- TRUE
             while((g1 < K) && cond) {

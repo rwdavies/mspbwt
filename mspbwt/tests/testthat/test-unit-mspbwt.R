@@ -483,7 +483,7 @@ test_that("can avoid use of d", {
 
     ## do on only some of them
     which_grids <- seq(1, nGrids, 3)
-    
+
     ## build indices (just do one)
     ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
         X1C = hapMatcher[, which_grids],
@@ -510,16 +510,84 @@ test_that("can avoid use of d", {
         sum(hapMatcher[k1, w] != Z_local[w])
     }
 
-    ## try removing d
+    ## do test with both ways
+    R_results_test <- ms_MatchZ_Algorithm5(
+        X = hapMatcher[, which_grids],
+        ms_indices = ms_indices,
+        Z = Z_local,
+        test_d = TRUE
+    )
+
+    expect_equal(R_results, R_results_test)
+
+    ## confirm again, now without d
     ms_indices_no_d <- ms_indices
     ms_indices_no_d[["d"]] <- NULL
-    
-    ## R_results_no_d <- ms_MatchZ_Algorithm5(
-    ##     X = hapMatcher[, which_grids],
-    ##     ms_indices = ms_indices_no_d,
-    ##     Z = Z_local
-    ## )
 
-    ## expect_equal(R_results, R_results_no_d)
+    ## do test with both ways
+    R_results_no_d <- ms_MatchZ_Algorithm5(
+        X = hapMatcher[, which_grids],
+        ms_indices = ms_indices_no_d,
+        Z = Z_local
+    )
+
+    expect_equal(R_results, R_results_no_d)
+
+    ## now for Rcpp, do the same thing
+    ## test both use of double condition, and simpler
+
+    for(i_test in 1:2) {
+
+        if (i_test == 1) {
+            X <- hapMatcher[, which_grids]
+            XR <- matrix(as.raw(0), 1, 1)
+            cols_to_use0 <- as.integer(1)
+            use_cols_to_use0 <- FALSE
+            use_XR <- FALSE
+        } else {
+            X <- matrix(as.integer(1), 1, 1)
+            XR <- hapMatcherR
+            cols_to_use0 <- as.integer(which_grids - 1)
+            use_cols_to_use0 <- TRUE
+            use_XR <- TRUE
+        }
+
+        ## test one with d
+        Rcpp_results_test <- Rcpp_ms_MatchZ_Algorithm5(
+            ms_indices = ms_indices,
+            X = X,
+            XR = XR,
+            cols_to_use0 = cols_to_use0,
+            use_cols_to_use0 = use_cols_to_use0,
+            use_XR = use_XR,            
+            Z = Z_local,
+            test_d = TRUE,
+            have_d = TRUE,
+            verbose = FALSE
+        )
+        
+        expect_equal(R_results, Rcpp_results_test)
+
+        ## other test
+        ## confirm again, now without d
+        ms_indices_tiny_d <- ms_indices
+        ms_indices_tiny_d[["d"]] <- matrix(as.integer(1), 1, 1)
+        
+        Rcpp_results_test2 <- Rcpp_ms_MatchZ_Algorithm5(
+            ms_indices = ms_indices_tiny_d,
+            X = X,
+            XR = XR,
+            cols_to_use0 = cols_to_use0,
+            use_cols_to_use0 = use_cols_to_use0,
+            use_XR = use_XR,
+            Z = Z_local,
+            test_d = FALSE,
+            have_d = FALSE,
+            verbose = FALSE
+        )
+        
+        expect_equal(R_results, Rcpp_results_test2)
+
+    }
     
 })

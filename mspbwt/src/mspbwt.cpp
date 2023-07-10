@@ -297,7 +297,7 @@ int rcpp_wf(
 
 //' @export
 // [[Rcpp::export]]
-void rcpp_find_start_with_d(
+void rcpp_find_restart(
     int & e1,
     int & f1,
     int & g1,
@@ -315,15 +315,21 @@ void rcpp_find_start_with_d(
     Rcpp::List & top_matches_list,
     int K,
     bool verbose,
-    bool use_cols_to_use0
+    bool use_cols_to_use0,
+    bool test_d,
+    bool use_d
 ) {
   //
-  bool matches_lower, matches_upper;
-  int e1_local, index;
+  bool matches_lower, matches_upper, cond;
+  int e1_local, index, f1_with_d, f1_init, next_index, tt0, g1_init, g1_with_d;
   //
-  e1 = d(f1, t) - 1;
   fc = f1;
   gc = g1;
+  if (use_d) {
+    e1 = d(f1, t) - 1;
+  } else {
+    e1 = t - 1;
+  }
   matches_lower = false;
   matches_upper = false;
   // std::cout << "e1=" << e1 << ", t = " << t << ", f1 = " << f1 << ", K = " << K << std::endl;
@@ -333,8 +339,15 @@ void rcpp_find_start_with_d(
   //
   // see R code for explanation / comments
   if (verbose) {
-    std::cout << "both" << std::endl;
-    std::cout << "f1 = " << f1 << ", e1 = " << e1 << std::endl;
+    std::cout << "both:";
+    std::cout << "use_d = " << use_d << "; ";                
+    std::cout << "t = " << t << "; ";            
+    std::cout << "f1 = " << f1 << "; ";
+    if (use_d) {
+      std::cout << "d(f1, t) = " << d(f1, t) << "; ";
+    }
+    std::cout << "e1 = " << e1 << "; ";    
+    std::cout << std::endl;
   }
   //
   while((!matches_lower) && (!matches_upper)) {
@@ -378,6 +391,7 @@ void rcpp_find_start_with_d(
   //
   if (matches_upper) {
     f1--;
+    f1_init = f1;
     index=a(f1, t);
     if (!use_cols_to_use0) {
       if (use_XR) {
@@ -400,8 +414,35 @@ void rcpp_find_start_with_d(
 	}
       }
     }
-    while (d(f1, t) <= e1) {
-      f1--;
+    if (use_d | test_d) {
+      f1 = f1_init;
+      while (d(f1, t) <= e1) {
+	f1--;
+      }
+      f1_with_d = f1;
+    }
+    if (!use_d | test_d) {
+      f1 = f1_init;
+      cond = true;
+      if (verbose) {
+	std::cout << "before while, f1_init = " << f1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
+      }
+      while(0 <= (f1 - 1) && cond) {
+	next_index = a(f1 - 1, t);
+	cond = true;
+	if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+	if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
+	if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+	if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
+	if (cond) {
+	  f1--;
+	}
+      }
+      if (test_d) {
+	if (f1_with_d != f1) {
+	  stop("Problem:f1_with_d = %i and f1 = %i", f1_with_d, f1);
+	}
+      }
     }
   }
   if (verbose) {
@@ -409,6 +450,7 @@ void rcpp_find_start_with_d(
   }
   if (matches_lower) {
     g1++;
+    g1_init = g1;
     index=a(f1, t);
     if (!use_cols_to_use0) {
       if (use_XR) {
@@ -431,8 +473,32 @@ void rcpp_find_start_with_d(
 	}
       }
     }
-    while ((g1 < K) && (d(g1, t) <= e1)) {
-      g1++;
+    if (use_d | test_d) {
+      g1 = g1_init;
+      while ((g1 < K) && (d(g1, t) <= e1)) {
+	g1++;
+      }
+      g1_with_d = g1;
+    }
+    if (!use_d | test_d) {
+      g1 = g1_init;
+      cond = true;
+      while((g1 < K) && cond) {
+	next_index = a(f1 + 1, t);
+	cond = true;
+	if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+	if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
+	if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+	if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
+	if (cond) {
+	  g1++;
+	}
+      }
+      if (test_d) {
+	if (g1_with_d != g1) {
+	  stop("Problem:g1_with_d = %i and g1 = %i", g1_with_d, g1);	  
+	}
+      }
     }
   }
   return;
@@ -459,7 +525,9 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     int min_length = -1,
     bool do_up_and_down_scan = false,
     int mspbwtL = 3,
-    int mspbwtM = 3
+    int mspbwtM = 3,
+    bool test_d = false,
+    bool have_d = true
 ) {
     if (verbose) {
       std::cout << "Inside Rcpp ms algorithm" << std::endl;
@@ -482,10 +550,23 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
     // get things out of lists so we can use them
     //
     Rcpp::IntegerMatrix a = ms_indices["a"];
-    Rcpp::IntegerMatrix d = ms_indices["d"];
     Rcpp::List usge_all = ms_indices["usge_all"];
     int egs = ms_indices["egs"];
     Rcpp::List all_symbols = ms_indices["all_symbols"];
+    //
+    // special optional setup for d
+    bool use_d;
+    // so always extract it, it just might be small!
+    Rcpp::IntegerMatrix d = ms_indices["d"];
+    if (test_d) {
+      use_d = true;
+    } else {
+      if (have_d) {
+	use_d = true;
+      } else {
+	use_d = false;
+      }
+    }
     //
     // initialize
     //
@@ -838,7 +919,7 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	//
 	// now, re-start
 	//
-	rcpp_find_start_with_d(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0);
+	rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d);
 	ec = e1;
 	if (verbose) {
 	  std::cout << "end of save and restart" << std::endl;
