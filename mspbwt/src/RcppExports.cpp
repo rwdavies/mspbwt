@@ -24,13 +24,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_decode_maximal_value_of_u
-int Rcpp_decode_maximal_value_of_u(Rcpp::NumericMatrix& out_mat, Rcpp::NumericVector& out_vec, int v, int egs, bool do_checks);
+int Rcpp_decode_maximal_value_of_u(Rcpp::IntegerMatrix& out_mat, Rcpp::IntegerVector& out_vec, int v, int egs, bool do_checks);
 RcppExport SEXP _mspbwt_Rcpp_decode_maximal_value_of_u(SEXP out_matSEXP, SEXP out_vecSEXP, SEXP vSEXP, SEXP egsSEXP, SEXP do_checksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type out_mat(out_matSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector& >::type out_vec(out_vecSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type out_mat(out_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type out_vec(out_vecSEXP);
     Rcpp::traits::input_parameter< int >::type v(vSEXP);
     Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
     Rcpp::traits::input_parameter< bool >::type do_checks(do_checksSEXP);

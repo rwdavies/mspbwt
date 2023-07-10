@@ -28,7 +28,8 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
         col_value = 2;
         col_vec_pos = 3;
     }
-    Rcpp::NumericMatrix out_mat(n_rows, col_names.length());
+    //Rcpp::NumericMatrix out_mat(n_rows, col_names.length());
+    Rcpp::IntegerMatrix out_mat(n_rows, col_names.length());    
     colnames(out_mat) = col_names;
     //
     //
@@ -110,8 +111,8 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
 //' @export
 // [[Rcpp::export]]
 int Rcpp_decode_maximal_value_of_u(
-    Rcpp::NumericMatrix & out_mat,
-    Rcpp::NumericVector & out_vec,
+    Rcpp::IntegerMatrix & out_mat,
+    Rcpp::IntegerVector & out_vec,
     int v,
     int egs,
     bool do_checks = false
@@ -232,8 +233,8 @@ int Rcpp_decode_value_of_usge(
 ) {
   if (Rf_isNewList(usge(s - 1))) {
       Rcpp::List l = usge[s - 1];
-      Rcpp::NumericMatrix out_mat = l[0];
-      Rcpp::NumericVector out_vec = l[1];
+      Rcpp::IntegerMatrix out_mat = l[0];
+      Rcpp::IntegerVector out_vec = l[1];
       return( Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs));
     } else {
       Rcpp::IntegerVector x = usge[s - 1];
@@ -252,8 +253,8 @@ int Rcpp_decode_value_of_usge_v2(
 ) {
   if (Rf_isNewList(usge(s - 1))) {
       Rcpp::List l = usge[s - 1];
-      Rcpp::NumericMatrix out_mat = l[0];
-      Rcpp::NumericVector out_vec = l[1];
+      Rcpp::IntegerMatrix out_mat = l[0];
+      Rcpp::IntegerVector out_vec = l[1];
       return(Rcpp_decode_maximal_value_of_u(out_mat, out_vec, v, egs));
     } else {
       Rcpp::IntegerVector x = usge[s - 1];
