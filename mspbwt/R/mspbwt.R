@@ -372,12 +372,11 @@ ms_MatchZ_Algorithm5 <- function(
     }
     ## indices
     a <- ms_indices[["a"]]
-    ##if ("d" %in% names(ms_indices)) {
     if (test_d) {
         d <- ms_indices[["d"]]
         use_d <- TRUE ## shouldn't matter
     } else {
-        if (use_d) {
+        if ("d" %in% names(ms_indices)) {
             d <- ms_indices[["d"]]
             use_d <- TRUE
         } else {
@@ -984,7 +983,7 @@ find_restart <- function(
                 g1 <- g1 + 1
                 if (make_plot) visualize(ec, fc, gc, X, a, Z, t, d, e1, f1, g1, top_matches)
             }
-            g1_from_d <- g1
+            g1_with_d <- g1
         }
         if (!use_d | test_d) {
             ## so here, we need to check everything between e1 and t

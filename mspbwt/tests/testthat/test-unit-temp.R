@@ -71,16 +71,25 @@ test_that("can avoid use of d", {
         sum(hapMatcher[k1, w] != Z_local[w])
     }
 
-    ## try removing d
-    ms_indices_no_d <- ms_indices
-    ms_indices_no_d[["d"]] <- NULL
-
-    ## do test
-    R_results_no_d <- ms_MatchZ_Algorithm5(
+    ## do test with both ways
+    R_results_test <- ms_MatchZ_Algorithm5(
         X = hapMatcher[, which_grids],
         ms_indices = ms_indices,
         Z = Z_local,
         test_d = TRUE
+    )
+
+    expect_equal(R_results, R_results_test)
+
+    ## confirm again, now without d
+    ms_indices_no_d <- ms_indices
+    ms_indices_no_d[["d"]] <- NULL
+
+    ## do test with both ways
+    R_results_no_d <- ms_MatchZ_Algorithm5(
+        X = hapMatcher[, which_grids],
+        ms_indices = ms_indices_no_d,
+        Z = Z_local
     )
 
     expect_equal(R_results, R_results_no_d)
