@@ -366,12 +366,18 @@ ms_MatchZ_Algorithm5 <- function(
     mspbwtM = 3,
     XR = NULL,
     use_XR = FALSE,
-    test_d = FALSE
+    test_d = FALSE,
+    height = NA,
+    width = NA
 ) {
     ##
-    ## if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 2, width = 8 * 2)
-    ## if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 4, width = 8 * 1)
-    if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 2, width = 8  / 2)
+    if (is.na(height)) {
+        height <- nrow(X) / 2 * 1.25 / 2
+    }
+    if (is.na(width)) {
+        width <- 8
+    }
+    if (make_plot) pdf(pdfname, height = height, width = width)
     ##
     if (!use_XR) {
         K <- nrow(X)
@@ -638,6 +644,7 @@ ms_MatchZ_Algorithm5 <- function(
             f1 <- out[["f1"]]
             g1 <- out[["g1"]]
             ec <- e1
+            print_or_message(paste0("After re-start f1=", f1, ", g1=", g1))
         }
         fc <- f1
         gc <- g1
@@ -701,7 +708,6 @@ ms_MatchZ_Algorithm5 <- function(
         ##
         uppy_downy_reporter <- cbind(uppy_downy_reporter, start1 = uppy_downy_reporter[, "end1"] - uppy_downy_reporter[, "len1"] + 1)
         uppy_downy_reporter <- uppy_downy_reporter[, c("index0", "start1", "end1", "len1")]
-        if (make_plot) dev.off()
         return(uppy_downy_reporter)
         ##     list(
         ##         uppy_downy_reporter = uppy_downy_reporter,
@@ -998,7 +1004,7 @@ find_restart <- function(
             g1_with_d <- g1
         }
         if (!use_d | test_d) {
-            g1 <- g1_init            
+            g1 <- g1_init
             ## so here, we need to check everything between e1 and t
             cond <- TRUE
             while((g1 < K) && cond) {
