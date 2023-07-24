@@ -80,13 +80,15 @@ ms_BuildIndices_Algorithm5 <- function(
     ns_obs <- rep(0L, Smax)
     ##
     usge_all <- list(1:T) ## us, but all of them
-    Smax_for_usl <- 0
-    for(t in 1:T) {
-        x <- sum(all_symbols[[t]][, 2] > n_min_symbols)
-        if (x > Smax_for_usl) {
-            Smax_for_usl <- x
-        }
-    }
+    ## Smax_for_usl <- 0
+    ## for(t in 1:T) {
+    ##     x <- sum(all_symbols[[t]][, 2] > n_min_symbols)
+    ##     if (x > Smax_for_usl) {
+    ##         Smax_for_usl <- x
+    ##     }
+    ## }
+    ## change it up, make it bigger, who cares, only done once
+    Smax_for_usl <- max(sapply(all_symbols, nrow))
     usg <- array(0L, c(K + 1, Smax_for_usl))
     ##
     if (check_vs_indices) {
@@ -238,16 +240,21 @@ one_move_forward_buildindices <- function(
     ##
     ##
     ## get count of number of each
-    usge <- list(1:St) ## us for this (g)rid (e)ncoded
+    usge <- as.list(1:St) ## us for this (g)rid (e)ncoded
     first_usg_minimal_symbol <- 1 ## 1-based
     prev_value <- symbol_count[1]
     for(s in 1:St) {
-        if (symbol_count[s] > n_min_symbols & symbol_count[s] <= prev_value) {
-            first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
-        } else {
+        if (symbol_count[s] <= n_min_symbols) {
             usge[[s]] <- rep(-1, symbol_count[s])
         }
-        prev_value <- symbol_count[s]
+        ##     & symbol_count[s] <= prev_value) {
+        ##     first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
+        ## } else {
+        ##     usge[[s]] <- rep(-1, symbol_count[s])
+        ## }
+        ## ## see if this works! do for ALL of them
+        ## usge[[s]] <- rep(-1, symbol_count[s])
+        ## prev_value <- symbol_count[s]
     }
     start_count <- c(0, cumsum(symbol_count))
     ##
@@ -275,7 +282,7 @@ one_move_forward_buildindices <- function(
         d[start_count[s] + nso[s] + 1, t + 1] <- as.integer(pqs[s])
         ## d_vec[start_count[s] + nso[s] + 1] <- as.integer(pqs[s])
         usg[k + 1 + 1,] <- usg[k + 1, ]
-        if (s < first_usg_minimal_symbol) {
+        if (symbol_count[s] > n_min_symbols) {
             usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
         } else {
             usge[[s]][nso[s] + 1] <- k + 1
@@ -287,9 +294,10 @@ one_move_forward_buildindices <- function(
             usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
         }
     }
-    if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
-        for(s in 0:(first_usg_minimal_symbol - 1 - 1)) {
-            usge[[s + 1]] <- Rcpp_encode_maximal_column_of_u(usg[, s + 1], egs = egs)
+    ## encode the rest of them
+    for(s in 1:St) {
+        if (symbol_count[s] > n_min_symbols) {
+            usge[[s]] <- Rcpp_encode_maximal_column_of_u(usg[, s], egs = egs)
         }
     }
     list(
@@ -361,7 +369,9 @@ ms_MatchZ_Algorithm5 <- function(
     test_d = FALSE
 ) {
     ##
-    if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2, width = 8)
+    ## if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 2, width = 8 * 2)
+    ## if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 4, width = 8 * 1)
+    if (make_plot) pdf(pdfname, height = nrow(X) / 2 * 1.25 / 2 * 2, width = 8  / 2)
     ##
     if (!use_XR) {
         K <- nrow(X)

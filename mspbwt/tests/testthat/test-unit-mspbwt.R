@@ -20,6 +20,99 @@ if (1 == 0) {
 
 
 
+test_that("can avoid having to order columns by frequency", {
+
+    ## recall 
+    ## so "0"s i.e. non-captured
+    ## are stored in the final entry of all_symbols
+    ## which gets the same row value as the first symbol
+    ## here this is done in the 3rd one
+    
+    set.seed(1199)
+    K <- 100
+    nGrids <- 50
+    ##
+    X1C <- matrix(0, K, nGrids)
+    
+    out <- lapply(1:nGrids, function(iGrid) {
+        m <- sample(5:10, 1)
+        vals <- as.integer(sample(1:m, K, replace = TRUE))
+        if (iGrid == 3) {
+            vals[sample(1:K, 5)] <- 0L
+        }
+        a <- table(vals)
+        ## put 0s at the end if they exist
+        if ("0" %in% names(a)) {
+            a <- a[c(2:length(a), 1)]
+            names(a)[length(a)] <- names(a)[1]
+        }
+        names_a <- as.integer(names(a))
+        a <- cbind(names_a, a)
+        rownames(a) <- NULL
+        colnames(a) <- c("symbol", "count")
+        return(list(vals, a))
+    })
+    X1C <- sapply(out, function(x) x[[1]])
+    all_symbols <- lapply(out, function(x) x[[2]])
+    
+    ## re-do so no missing
+    ms_indices <- ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        egs = 10,
+        n_min_symbols = 10
+    )
+
+    ## OK this seems to work
+    ## need to make these changes in Rcpp
+
+    Z <- c(X1C[20, 1:10], X1C[30, -(1:10)])
+    ms_top_matches <- ms_MatchZ_Algorithm5(
+        X = X1C,
+        ms_indices = ms_indices,
+        Z = Z
+    )
+
+    ## it happens to be in there nicely
+    w <- which(ms_top_matches[, "indexB0"] == 19)
+    expect_equal(length(w), 1)
+    expect_true(ms_top_matches[w, "start1"] == 1)
+    expect_true(ms_top_matches[w, "end1"] == 10)
+    ## 
+    w <- which(ms_top_matches[, "indexB0"] == 29)
+    expect_equal(length(w), 1)
+    expect_true(ms_top_matches[w, "start1"] == 11)
+    expect_true(ms_top_matches[w, "end1"] == 50)
+
+    ## OK now need to do Rcpp version, start with build indices R version
+    ms_rcpp_indices <- ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        egs = 10,
+        n_min_symbols = 10,
+        with_Rcpp = TRUE
+    )
+
+    expect_equal(ms_indices, ms_rcpp_indices)
+
+    ## pure Rcpp version
+    Rcpp_ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        indices = list(),
+        verbose = FALSE,
+        egs = 10,
+        n_min_symbols = 10
+    )
+
+    expect_equal(ms_indices$a, Rcpp_ms_indices$a)
+    expect_equal(ms_indices$usge_all, Rcpp_ms_indices$usge_all) 
+
+    
+})
+
+
+
 
 
 

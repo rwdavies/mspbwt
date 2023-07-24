@@ -47,18 +47,25 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
   int i;
   //
   Rcpp::List usge(St);
-  int first_usg_minimal_symbol = 1; // 1-based
+  //int first_usg_minimal_symbol = 1; // 1-based
   int s0;
-  int prev_value = symbol_count(0);
+  //int prev_value = symbol_count(0);
+  // for(s0 = 0; s0 < St; s0++) {
+  //   if ((symbol_count(s0) > n_min_symbols) & (symbol_count(s0) <= prev_value)) {
+  //     first_usg_minimal_symbol++;
+  //   } else {
+  //     Rcpp::IntegerVector temp_vec(symbol_count(s0));
+  //     temp_vec.fill(-1);
+  //     usge[s0] = temp_vec;
+  //   }
+  //   prev_value = symbol_count(s0);
+  // }
   for(s0 = 0; s0 < St; s0++) {
-    if ((symbol_count(s0) > n_min_symbols) & (symbol_count(s0) <= prev_value)) {
-      first_usg_minimal_symbol++;
-    } else {
+    if (symbol_count[s0] <= n_min_symbols) {
       Rcpp::IntegerVector temp_vec(symbol_count(s0));
       temp_vec.fill(-1);
       usge[s0] = temp_vec;
     }
-    prev_value = symbol_count(s0);
   }
   //
   //
@@ -94,7 +101,7 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
     a(start_count[s0] + nso[s0], t0 + 1) = a(k0, t0);
     d(start_count[s0] + nso[s0], t0 + 1) = pqs(s0);
     usg.row(k0 + 1) = usg.row(k0);
-    if (s0 < first_usg_minimal_symbol - 1) {
+    if (symbol_count(s0) > n_min_symbols) {
       usg(k0 + 1, s0) = usg(k0 + 1, s0) + 1;
     } else {
       // this the problem with s0
@@ -110,8 +117,15 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
       usg_check(k0 + 1, s0)++;
     }
   }
-  if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
-    for(s0 = 0; s0 < first_usg_minimal_symbol - 1; s0++) {
+  // if ((first_usg_minimal_symbol - 1 - 1) >= 0) {
+  //   for(s0 = 0; s0 < first_usg_minimal_symbol - 1; s0++) {
+  //     usge[s0] = Rcpp_encode_maximal_column_of_u(usg(_, s0), egs);
+  //   }
+  // }
+  for(s0 = 0; s0 < St; s0++) {
+    //std::cout << "s0 = " << s0 << ", St = " << St << std::endl;
+    if (symbol_count[s0] > n_min_symbols) {
+      //std::cout << "encode me" << std::endl;
       usge[s0] = Rcpp_encode_maximal_column_of_u(usg(_, s0), egs);
     }
   }
@@ -215,12 +229,13 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     int Smax_for_usl = 0;
     for(t = 0; t < T; t++) {
         Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t]);
-	int x = 0;
-	for(i = 0; i < temp2.nrow(); i++) {
-	    if (temp2(i, 1) > n_min_symbols) {
-	        x += 1;
-	    }
-	}
+	// int x = 0;
+	// for(i = 0; i < temp2.nrow(); i++) {
+	//     if (temp2(i, 1) > n_min_symbols) {
+	//         x += 1;
+	//     }
+	// }
+	int x = temp2.nrow();
 	if (x > Smax_for_usl) {
 	    Smax_for_usl = x;
 	}
@@ -231,6 +246,9 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
     //
     for(t = 1; t <= T; t++) {
       //
+      if (verbose) {
+	std::cout << "iterate, t = " << t << std::endl;
+      }
       //
       int St = n_symbols_per_grid(t - 1);
       Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);

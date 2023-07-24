@@ -14,6 +14,7 @@ if (1 == 0) {
     o <- sapply(a, source)
 
 
+
 }
 
 
@@ -28,7 +29,7 @@ if (1 == 0) {
 test_that("intuition of building", {
 
     if (dir.exists("~/plots")) {
-        pdf("~/plots/mspbwt.example.indices.pdf", height = 12, width = 12)
+        pdf("~/plots/mspbwt/mspbwt.example.indices.pdf", height = 12, width = 12)
     } else {
         pdf(tempfile(fileext = ".pdf"), height = 12, width = 12)
     }
@@ -104,20 +105,23 @@ test_that("intuition of building", {
 test_that("multi-version with >2 symbols can work, for simple version good for plotting", {
 
     set.seed(2021)
-    
-    K <- 15
-    nGrids <- 20
+
+    K <- 6
+    nGrids <- 10
     w <- 6
-    irow <- 3
-    icol <- 3
-    out <- test_driver_multiple(
+    irow <- 2
+    icol <- 2
+    out <- test_driver_intuition(
         K = K,
         nGrids = nGrids,
         irow = irow,
         icol = icol,
         w = w,
-        lots_of_matches = TRUE
+        nMaxDH = 10
     )
+
+    ## make something pretty simple!
+    
 
     Xs <- out$Xs
     Zs <- out$Zs
@@ -125,6 +129,12 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
     all_symbols <- out$all_symbols
     Z <- out$Z
 
+    if (dir.exists("~/plots")) {
+        pdfname <- paste0("~/plots/mspbwt/temp.simple.", irow, ".", icol, ".ms.pdf")
+    } else {
+        pdfname <- tempfile(fileext = ".pdf")
+    }
+    
     ## original version
     indices <- BuildIndices_Algorithm5(Xs, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(Xs, indices, Zs, verbose = FALSE, do_checks = TRUE)
@@ -141,7 +151,7 @@ test_that("multi-version with >2 symbols can work, for simple version good for p
         do_checks = FALSE,
         check_vs_indices = FALSE,
         make_plot = make_plot,
-        pdfname = paste0("~/temp.simple.", irow, ".", icol, ".ms.pdf")
+        pdfname = pdfname
     )
 
     etm <- exhaustive_top_matches_checker(hapMatcher, Z, ms_top_matches)

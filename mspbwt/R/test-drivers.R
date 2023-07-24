@@ -115,6 +115,64 @@ build_and_check_indices <- function(
 
 
 
+
+test_driver_intuition <- function(
+    K = 6,
+    nGrids = 10,
+    irow = 2,
+    icol = 2,
+    w = 6,
+    nMaxDH = 6,
+    lots_of_matches = FALSE
+) {
+    T <- nGrids * 32
+    ## build SNP X
+    X <- array(1L, c(K, T))
+    Z <- rep(1L, T)
+    a <- get_row_col(irow, icol, nGrids, K, w) ## in grid notation
+    ## 
+    for(j in 1:nGrids) {
+        ## choose 2-5 symbols to be present in each grid
+        starts <- sort(sample(5:14, 1 + sample(4, 1), replace = FALSE))
+        ends <- sort(sample(16:25, length(starts), replace = FALSE))
+        for(i in 1:nrow(X)) {
+            k <- sample(length(starts), 1)
+            X[i, 32 * (j - 1) + starts[k]:ends[k]] <- 0L
+        }
+        ## do Z as well, always choose "first" one
+        k <- 1
+        Z[32 * (j - 1) + starts[k]:ends[k]] <- 0L
+        ## make sure focal X otherwise is distinct
+        k <- 2
+        X[a["row"], 32 * (j - 1) + starts[k]:ends[k]] <- 0L
+    }
+    ## now make the match
+    which_snps <- (32 * (a["c1"] - 1) + 1):(32 * a["c2"])
+    X[a["row"], which_snps] <- Z[which_snps]
+    ## re-name with "S" for SNP to make clear
+    Xs <- X
+    Zs <- Z
+    ## rest
+    rhb_t <- make_rhb_t_from_rhi_t(X)
+    out <- QUILT::make_rhb_t_equality(
+        rhb_t = rhb_t,
+        nSNPs = T,
+        nMaxDH = nMaxDH,
+        ref_error = 0.001
+    )
+    Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
+    Z <- map_Z_to_all_symbols(Zg, out[["all_symbols"]])
+    out <- append(
+        out,
+        list(
+            Xs = Xs,
+            Zs = Zs,
+            Z = Z
+        )
+    )
+    out
+}
+
 ##
 ##
 test_driver_multiple <- function(
@@ -223,7 +281,7 @@ exhaustive_top_matches_checker <- function(X, Z, top_matches, return_only = FALS
         s <- Y[w, "start1"]
         e <- Y[w, "end1"]
         to_remove <- (Y[, "start1"] >= s) & (Y[, "end1"] <= e)
-        Y <- Y[!to_remove, ]
+        Y <- Y[!to_remove, , drop = FALSE]
     }
     etm <- etm[order(etm[, "start1"], etm[, "index"]), ]
     top_matches <- top_matches[order(top_matches[, "start1"], top_matches[, "indexB0"]), ]
