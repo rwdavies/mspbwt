@@ -41,11 +41,11 @@ ms_BuildIndices_Algorithm5 <- function(
         for(iCol in 1:ncol(X1C)) {
             m1 <- min(X1C[, iCol])
             m2 <- max(X1C[, iCol])
-            stopifnot(m1 == 1)
+            ## stopifnot(m1 == 1)
             stopifnot(sort(unique(X1C[, iCol])) == (m1:m2))
             ## also, check they are in decreasing order
-            t <- table(X1C[, iCol])
-            stopifnot(sort(t, decreasing = TRUE) == t)
+            ##t <- table(X1C[, iCol])
+            ##stopifnot(sort(t, decreasing = TRUE) == t)
         }
     }
     nGrids <- ncol(X1C)
@@ -150,6 +150,9 @@ ms_BuildIndices_Algorithm5 <- function(
             n_min_symbols = n_min_symbols,
             do_checks = do_checks
         )
+        if (verbose) {
+            print("done one move forward")
+        }
         ## op <- options(digits.secs = 6); print("--out--"); print(Sys.time())
         if (!with_Rcpp) {
             a <- out$a
@@ -186,8 +189,14 @@ ms_BuildIndices_Algorithm5 <- function(
         ## do checks
         ##
         if (do_checks) {
+            if (verbose) {
+                print("do so checks")
+            }
             for(k in 0:(K - 1)) {
                 s <- X1C[a[k + 1, t] + 1, t] ## symbol here
+                if (s == 0) {
+                    s <- St
+                }
                 c <- c(0, cumsum(all_symbols[[t]][, 2]))[s]
                 w <- decode_value_of_usge(
                     usge = usge_all[[t]],
@@ -195,15 +204,18 @@ ms_BuildIndices_Algorithm5 <- function(
                     v = k + 1,
                     egs = egs
                 ) + c
-                if (verbose) {
-                    message(paste0(
-                        "k=", k, ", ",
-                        "X=", X[a[k + 1, t] + 1, t], ", ",
-                        "a[w,t+1]=", a[w, t + 1], ", ",
-                        "a[k+1,t]=", a[k + 1, t]
-                    ))
-                }
+                ## if (verbose) {
+                ##     message(paste0(
+                ##         "k=", k, ", ",
+                ##         "X=", X1C[a[k + 1, t] + 1, t], ", ",
+                ##         "a[w,t+1]=", a[w, t + 1], ", ",
+                ##         "a[k+1,t]=", a[k + 1, t]
+                ##     ))
+                ## }
                 stopifnot(a[w, t + 1] == a[k + 1, t])
+            }
+            if (verbose) {
+                print("done those  checks")
             }
         }
     }
@@ -235,8 +247,29 @@ one_move_forward_buildindices <- function(
     St,
     n_min_symbols,
     do_checks,
-    X1C_can_have_zeroes
+    X1C_can_have_zeroes,
+    verbose = FALSE
 ) {
+
+    ## spave(
+    ## X1C,
+    ## a,
+    ## d,
+    ## usg,
+    ## usg_check,
+    ## t,
+    ## K,
+    ## symbol_count,
+    ## egs,
+    ## St,
+    ## n_min_symbols,
+    ## do_checks,
+    ## X1C_can_have_zeroes,
+    ## file = paste0("~/temp.", t, ".RData"))
+
+    ## load(paste0("~/temp.", t, ".RData"))
+    ## verbose <- TRUE
+    ## n_min_symbols <- -1
     ##
     ##
     ## get count of number of each
@@ -268,6 +301,10 @@ one_move_forward_buildindices <- function(
         if (s == 0) {
             s <- St
         }
+        if (verbose) {
+            message("-----")
+            message(paste0("k = ", k, ", s = ", s))
+        }
         ## match_start <- prev_d[k + 1]
         match_start <- d[k + 1, t]
         for(i in 0:(St - 1)) {
@@ -278,14 +315,22 @@ one_move_forward_buildindices <- function(
         ## now - where it goes - 0 based
         stopifnot(s <= length(nso))
         val <- c(val, start_count[s] + nso[s] + 1)
+        v <- start_count[s] + nso[s]
         a[start_count[s] + nso[s] + 1, t + 1] <- a[k + 1, t]
         d[start_count[s] + nso[s] + 1, t + 1] <- as.integer(pqs[s])
+        if (verbose) {
+            message(paste0("v = ", v, ", a[v + 1, t + 1] <- a[k + 1, t] = ", a[k + 1, t]))
+        }
         ## d_vec[start_count[s] + nso[s] + 1] <- as.integer(pqs[s])
         usg[k + 1 + 1,] <- usg[k + 1, ]
         if (symbol_count[s] > n_min_symbols) {
             usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
         } else {
             usge[[s]][nso[s] + 1] <- k + 1
+        }
+        if (verbose) {
+            message(paste0(usg[k + 1, ],collapse = "-"))
+            message(paste0(usg[k + 1 + 1, ],collapse = "-"))
         }
         pqs[s] <- 0
         nso[s] <- nso[s] + 1
@@ -294,10 +339,12 @@ one_move_forward_buildindices <- function(
             usg_check[k + 1 + 1, s] <- usg_check[k + 1 + 1, s] + 1
         }
     }
+
     ## encode the rest of them
     for(s in 1:St) {
         if (symbol_count[s] > n_min_symbols) {
-            usge[[s]] <- Rcpp_encode_maximal_column_of_u(usg[, s], egs = egs)
+            ## usge[[s]] <- Rcpp_encode_maximal_column_of_u(usg[, s], egs = egs)
+            usge[[s]] <- encode_maximal_column_of_u(usg[, s], egs = egs)
         }
     }
     list(
