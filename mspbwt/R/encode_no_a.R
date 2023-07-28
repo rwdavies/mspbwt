@@ -16,7 +16,7 @@ get_f_given_Z <- function(Z, all_symbols, usge_all, egs, all_usg_check, use_U = 
     for(g in 1:(nGrids - 1)) {
         C <- all_symbols[[g + 1]] ## effectively
         s <- Z[g + 1]
-        k <- f[g] + 1
+        k <- f[g] ## keep 0-based
         if (use_U) {
             U <- all_usg_check[[g + 1]]
             u <- U[f[g] + 1, s]
@@ -52,24 +52,42 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
         ##
         done <- FALSE
         c <- 0 ## count
-        i_row <- floor(v2 / C[s, 2] * K / egs)
+        up_i <- 0
+        up_val <- 0
+        down_i <- nrow(out_mat) - 1
+        down_val <- C[s, 2]
+        frac <- (v2 - up_val) / (down_val - up_val)
+        i_row <- round(frac * K /egs)
         while(!done) {
+            ## message(paste0("c = ", c, ", ", "i_row = ", i_row, ", ", "frac = ", frac, ", ",
+            ##                "up_i = ", up_i, ", up_val = ", up_val, ", ",
+            ##                "down_i = ", down_i, ", down_val = ", down_val
+            ##                ))
             ## not entirely sure what to do about last entry, we'll see
             ## here let's make an estimate
             ## check below then above
             ## if neither we're good
             if (v2 < out_mat[i_row + 1, 1]) {
-                ## eventually, re-estimate, something more efficient
-                ## here, re-estimate based on new value?
-                ## inc <- floor(v2 / out_mat[i + 1, 1] * K / egs)
-                i_row <- i_row - 1
+                ## OK, so we're under
+                ## so re-set the bounds
+                down_i <- i_row
+                down_val <- out_mat[i_row + 1, 1]
+                ## re-estimate
+                i_row_proposed <- round((v2 - up_val) / (down_val - up_val) * (down_i - up_i)) + up_i
+                i_row <- min(i_row - 1, i_row_proposed)
+                ## 
             } else if (out_mat[i_row + 1 + 1, 1] <= v2) {
-                i_row <- i_row + 1
+                up_i <- i_row
+                up_val <- out_mat[i_row + 1 + 1, 1]
+                ## re-estimate
+                i_row_proposed <- round((v2 - up_val) / (down_val - up_val) * (down_i - up_i)) + up_i
+                i_row <- max(i_row + 1, i_row_proposed)
+                ## 
             } else {
                 done <- TRUE
             }
             c <- c + 1
-            if (c > 10000) {
+            if (c > 100000) {
                 stop("problem")
             }
         }
@@ -218,11 +236,11 @@ go_backwards_one_step <- function(
         K <- sum(C[, 2])
         k <- get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = do_checks, U = U)
     }
-    k
+    c(s, k)
 }
 
 
-find_index_backward <- function(g_in, v_in, all_symbols, usge_all = NULL, egs = NULL, K = NULL, all_usg_check = NULL, do_checks = FALSE, A = NULL, use_U = FALSE, return_trajectory = FALSE) {
+find_index_backward <- function(g_in, v_in, all_symbols, usge_all = NULL, egs = NULL, all_usg_check = NULL, do_checks = FALSE, A = NULL, use_U = FALSE, return_trajectory = FALSE) {
     g <- g_in
     v <- v_in
     if (do_checks) {
@@ -240,17 +258,19 @@ find_index_backward <- function(g_in, v_in, all_symbols, usge_all = NULL, egs = 
     for(g in (g_in - 1):(-1)) {
         usge <- usge_all[[g + 1 + 1]]
         C <- all_symbols[[g + 1 + 1]] ## symbols at g+1
-        k <- go_backwards_one_step(
+        out <- go_backwards_one_step(
             g = g,
             v = v,
             C = C,
             usge = usge,
             all_usg_check = all_usg_check,
-            do_checks = do_checks,
+            do_checks = FALSE,
             use_U = use_U,
             egs = egs,
             U = U
         )
+        s <- out[1]
+        k <- out[2]
         if (do_checks) {
             stopifnot(A[k + 1, g + 1 + 1] == A[v + 1, g + 1 + 1 + 1])
             to_out[g_in - g, 1] <- g + 1
