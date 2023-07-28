@@ -1,3 +1,189 @@
+find_good_matches_without_a <- function(
+    Z,
+    all_symbols,
+    usge_all,
+    egs,
+    pbwtL,
+    pbwtM,
+    hapMatcherR,
+    do_checks = FALSE,
+    A = NULL
+) {
+    ##
+    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    ## 
+nam <- c("v", "s", "k", "l", "trueA")
+    mat_up <- matrix(-1, pbwtL, length(nam))
+    colnames(mat_up) <- nam
+    mat_down <- matrix(-1, pbwtL, length(nam))
+    colnames(mat_down) <- nam
+    do_checks <- TRUE
+    a <- -1
+    to_out <- as.list(1:length(f))
+    g <- length(f) - 1
+    mat_up_prev <- mat_up
+    mat_down_prev <- mat_down
+    ##
+    for(g in (length(f) - 1):0) {
+        message(paste0(g, ", ", date()))
+        fc <- f[g + 1]
+        Zc <- Z[g + 1]
+        C <- all_symbols[[g + 1]]
+        usge <- usge_all[[g + 1]]
+        ## intialize the ones we want to store here
+        c_up <- 0
+        c_down <- 0
+        for(l in 0:(pbwtL - 1)) {
+            v_up <- fc - l - 1
+            if (v_up >= 0 && v_up <= (K - 1)) {
+                out <- go_backwards_one_step(g = g + 1, v = v_up, C = C, usge = usge, egs = egs)
+                s <- out[1]
+                k <- out[2]
+                if (do_checks) {
+                    a <- A[v_up + 1, g + 1 + 1]
+                }
+                mat_up[l + 1, ] <- c(v_up, s, k, 0, a)
+                cur_v <- mat_up[l + 1, "v"]
+                prev_k <- mat_up_prev[c_up + 1, "k"]
+                if (cur_v == prev_k) {
+                    mat_up[l + 1, "l"] <- mat_up_prev[c_up + 1, "l"] + 1
+                    c_up <- c_up + 1
+                }
+            } else {
+                mat_up[l + 1, ] <- c(-1, -1, -1, -1, -1)
+            }
+            v_down <- fc + l
+            if (v_down >= 0 && v_down <= (K - 1)) {
+                out <- go_backwards_one_step(g = g + 1, v = v_down, C = C, usge = usge, egs = egs)
+                s <- out[1]
+                k <- out[2]
+                if (do_checks) {
+                    a <- A[v_down + 1, g + 1 + 1]
+                }
+                mat_down[l + 1, ] <- c(v_down, s, k, 0, a)
+                cur_v <- mat_down[l + 1, "v"]
+                prev_k <- mat_down_prev[c_down + 1, "k"]
+                if (cur_v == prev_k) {
+                    mat_down[l + 1, "l"] <- mat_down_prev[c_down + 1, "l"] + 1
+                    c_down <- c_down + 1
+                }
+            } else {
+                mat_down[l + 1, ] <- c(-1, -1, -1, -1, -1)
+            }
+        }
+        ##
+        ## check if need save condition
+        ##
+        if (g < (length(f) - 1) & (c_up < pbwtL | c_down < pbwtL)) {            
+            mat_out <- matrix(0, 2 * pbwtL - c_up - c_down, 3) ## somehow, g, index, l
+            c_mat <- 0
+            if (c_up < pbwtL) {
+                for(ic in (c_up):(pbwtL - 1)) {
+                    if (mat_up_prev[ic + 1, "v"] >= 0) {
+                        v = mat_up_prev[ic + 1, "v"]
+                        k = mat_up_prev[ic + 1, "k"]
+                        len = mat_up_prev[ic + 1, "l"]
+                        index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs)
+                        ## so might disagree
+                        g2 <- g
+                        done <- FALSE
+                        while(!done & g2 >= 0) {
+                            if (as.integer(hapMatcherR[index + 1, which_snps_in_hapMatcherR[g2 + 1]]) == Z[g2 + 1]) {
+                                len <- len + 1
+                                g2 <- g2 - 1
+                            } else {
+                                done <- TRUE
+                            }
+                        }
+                        ## so might disagree
+                        if (len > pbwtM) {
+                            ## store this value
+                            if (do_checks) {
+                                stopifnot(index == mat_up_prev[ic + 1, "trueA"])
+                            }
+                            mat_out[c_mat + 1, ] <- c(g2 + 1, index, len)
+                            c_mat <- c_mat + 1
+                        }
+                    }
+                }
+            }
+            ## down
+            if (c_down < pbwtL) {
+                for(ic in (c_down):(pbwtL - 1)) {
+                    if (mat_down_prev[ic + 1, "v"] >= (0)) {                    
+                        v = mat_down_prev[ic + 1, "v"]
+                        k = mat_down_prev[ic + 1, "k"]
+                        len = mat_down_prev[ic + 1, "l"]
+                        index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs)
+                        ## so might disagree
+                        g2 <- g
+                        done <- FALSE                        
+                        while(!done & g2 >= 0) {
+                            if (as.integer(hapMatcherR[index + 1, which_snps_in_hapMatcherR[g2 + 1]]) == Z[g2 + 1]) {
+                                len <- len + 1
+                                g2 <- g2 - 1
+                            } else {
+                                done <- TRUE                                
+                            }
+                        }
+                        ## so might disagree
+                        if (len > pbwtM) {
+                            ## store this value
+                            if (do_checks) {
+                                stopifnot(index == mat_down_prev[ic + 1, "trueA"])
+                            }
+                            mat_out[c_mat + 1, ] <- c(g2 + 1, index, len)
+                            c_mat <- c_mat + 1
+                        }
+                    }
+                }
+            }
+            if (c_mat > 0) {
+                to_out[[g + 1]] <- mat_out[1:(c_mat - 1), , drop = FALSE]
+            }
+            ## save these results
+        }
+        mat_up_prev <- mat_up
+        mat_down_prev <- mat_down
+    }
+    ## 
+    ## pretty good
+    ## note that these can be too short, i.e. could extend back further
+    ## so this will miss some of the matches, particularly at the start?
+    ##
+    
+    ## 
+    ## 99999 gets chucked out at 103? not at the end? does this make sense?
+    ## 
+    ## also, not sure which part the slowest
+    ## should do quick profile?
+    ## 
+    
+    ##
+    ## at the end, merge
+    ## not sure about R, might need to update the other ones as I go?
+    ##
+
+    ## meh good enough
+    
+    ## merge them together
+    w <- sapply(to_out, length) > 1
+    n <- sum(sapply(to_out[w], nrow))
+    mat_out <- matrix(0, n, 3)
+    c <- 1
+    for(m in to_out[w]) {
+        mat_out[c + 0:(nrow(m) - 1), ] <- m
+        c <- c + nrow(m)
+    }
+    ## check it out
+    colnames(mat_out) <- c("g", "index", "len")
+    mat_out
+
+
+find_start <- function(v, k, len, g, all_symbols, usge_all, egs) {
+    return(g2)
+}
+
 get_f_given_Z <- function(Z, all_symbols, usge_all, egs, all_usg_check, use_U = FALSE) {
     ##
     ## f update
