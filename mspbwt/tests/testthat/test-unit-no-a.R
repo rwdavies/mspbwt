@@ -18,200 +18,6 @@ if (1 == 0) {
 
 
 
-get_k_given_matrix_u <- function(s, v2, U) {
-    k <- which.max(U[, s] == (v2 + 1)) - 1 - 1
-    k
-}
-get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U = NULL) {
-    if (class(usge[[s]]) == "list") {
-        ##
-        out_mat <- usge[[s]][[1]]
-        out_vec <- usge[[s]][[2]]
-        ##
-        ## first, need the 0-based first position lower than it in out_mat
-        ## call it i_row
-        ##
-        done <- FALSE
-        c <- 0 ## count
-        i_row <- floor(v2 / C[s, 2] * K / egs)
-        while(!done) {
-            ## not entirely sure what to do about last entry, we'll see
-            ## here let's make an estimate
-            ## check below then above
-            ## if neither we're good
-            if (v2 < out_mat[i_row + 1, 1]) {
-                ## eventually, re-estimate, something more efficient
-                ## here, re-estimate based on new value?
-                ## inc <- floor(v2 / out_mat[i + 1, 1] * K / egs)
-                i_row <- i_row - 1
-            } else if (out_mat[i_row + 1 + 1, 1] <= v2) {
-                i_row <- i_row + 1
-            } else {
-                done <- TRUE
-            }
-            c <- c + 1
-            if (c > 10000) {
-                stop("problem")
-            }
-        }
-        ##
-        ## special cases
-        ## if all 0 we can skip
-        ## if all 1 (increasing) we might need to consider
-        ##
-        if ((out_mat[i_row + 1 + 1, 1] - out_mat[i_row + 1, 1]) == egs) {
-            stop("figure me out")
-        }
-        ##
-        ##
-        ## now second part of decoding
-        ## slightly trickier
-        ## need to figure out how much further to go
-        ##
-        ## figure out where to start in vector
-        if (i_row == 0) {
-            vec_pos <- 0
-        } else {
-            vec_pos <- out_mat[i_row, "vec_pos"] + 1 ## still 0-based
-        }
-        ## now second part of decoding (different from original decoding idea)
-        ##
-        ##
-        val <- out_mat[i_row + 1, 1] ## at this point
-        remainder <- v2 - val
-        ## keep adding until it's reached then go back one
-        u <- 0 ## is how much we've added
-        steps <- 0 ## count of how many steps forward we've gone in original vector
-        is_plus <- TRUE
-        done <- FALSE
-        while(!done) {
-            ## print(paste0("before: vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
-            if (is_plus) {
-                u <- u + out_vec[vec_pos + 1]
-            }
-            steps <- steps + out_vec[vec_pos + 1]
-            if (do_checks) {
-                stopifnot(U[egs * i_row + steps + 1, s] == (val + u))
-            }
-            ## print(paste0("consider:vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
-            if (u > remainder) {
-                ## something like this
-                k <- egs * i_row + steps - (u - remainder)
-                if (do_checks) {
-                    stopifnot(U[k + 1, s] == v2)
-                    stopifnot(U[k + 1 + 1, s] == (v2 + 1))
-                }
-                done <- TRUE
-            }
-            vec_pos <- vec_pos + 1
-            is_plus <- !is_plus
-            if (!done && (vec_pos) > (out_mat[i_row + 1, 2])) {
-                ## must need all steps
-                k <- egs * (i_row + 1) - 1
-                done <- TRUE
-            }
-        }
-        return(as.integer(k))
-    } else {
-        return(as.integer(usge[[s]][v2 + 1] - 1))
-    }
-}
-
-
-
-find_index_backward <- function(g_in, v_in, all_symbols, usge = NULL, egs = NULL, K = NULL, all_usg_check = NULL, do_checks = FALSE, A = NULL, use_U = TRUE) {
-    g <- g_in
-    v <- v_in
-    if (do_checks) {
-        g <- g_in
-        message(paste0("Truth is (0-based) A[v, g + 1] = A[", v, ", ", g + 1, "] = ", A[v + 1, g + 1 + 1]))
-        to_out <- matrix(0, g_in + 1, 4)
-    }
-    ## now this g needs to be one lower
-    g <- g_in - 1
-    for(g in (g_in - 1):(-1)) {
-        C <- all_symbols[[g + 1 + 1]] ## symbols at g+1
-        ## find k
-        ## first find column (gives s)
-        symbol_counts <- cumsum(C[, 2])
-        s <- which.max((v + 1) <= symbol_counts) ## 1-based (as usual)s
-        ## v2 is 0-based instance of first time this symbol occurs in that column
-        if (s == 1) {
-            v2 <- v ## 0-based
-        } else {
-            v2 <- v - symbol_counts[s - 1] ## 0-based instance
-        }
-        ## find first instance of this
-        if (use_U) {
-            U <- all_usg_check[[g + 1 + 1]] ## "U" i.e. FM index at g+1
-            k <- get_k_given_matrix_u(s, v2, U) ## 0-based
-            ## k <- which.max(U[, s] == (v2 + 1)) - 1 - 1
-        } else {
-            if (do_checks) {
-                U <- all_usg_check[[g + 1 + 1]] ## "U" i.e. FM index at g+1
-            } else {
-                U <- NULL
-            }
-            k <- get_k_given_encoded_u(s, v2, usge[[g + 1 + 1]], C, K, egs, do_checks = do_checks, U = U)
-        }
-        if (do_checks) {
-            ## print(A[k + 1, g + 1 + 1])
-            ## print(A[v + 1, g + 1 + 1 + 1])
-            stopifnot(A[k + 1, g + 1 + 1] == A[v + 1, g + 1 + 1 + 1])
-            to_out[g_in - g, 1] <- g + 1
-            to_out[g_in - g, 2] <- k
-            to_out[g_in - g, 3] <- A[k + 1, g + 1 + 1]
-        }
-        ## update
-        v <- k ## 0-based
-        ## checks
-    }
-    index <- k ## first col is 0:(K - 1) so this is OK!
-    if (do_checks) {
-        message(paste0("Inferred is ", index))
-    }
-    index
-}
-
-
-find_index_forward <- function(g_in, k_in, all_usg_check, all_symbols, A_last_col, do_checks = FALSE, A = NULL) {
-    g <- g_in
-    k <- k_in
-    nGrids <- length(all_symbols)
-    if (do_checks) {
-        message(paste0("Truth is (0-based) A[k, g + 1] = A[", k, ", ", g + 1, "] = ", A[k + 1, g + 1 + 1]))
-        to_out <- matrix(0, nGrids - g_in + 1, 4)
-    }
-    ## now this g needs to be one lower
-    for(g in (g_in:(nGrids - 2))) {
-        U <- all_usg_check[[g + 1 + 1]] ## "U" i.e. FM index at g+1
-        C <- all_symbols[[g + 1 + 1]] ## symbols at g+1
-        symbol_counts <- c(0, cumsum(C[, 2]))
-        ##
-        s <- which.max(U[k + 1 + 1, ] - U[k + 1, ]) ## symbol
-        ##
-        v <- symbol_counts[s] + U[k + 1, s]
-        ##
-        if (do_checks) {
-            stopifnot(A[k + 1, g + 1 + 1] == A[v + 1, g + 1 + 1 + 1])
-            to_out[g - g_in + 1, 1] <- g + 1
-            to_out[g - g_in + 1, 2] <- k
-            to_out[g - g_in + 1, 3] <- A[k + 1, g + 1 + 1]
-        }
-        ## update
-        k <- v
-        ## checks
-    }
-    index <- A_last_col[k + 1]
-    if (do_checks) {
-        message(paste0("Inferred is ", index))
-    }
-    index
-}
-
-
-
-
 test_that("no a initial evaluation", {
 
     ## from some simulated data
@@ -259,7 +65,7 @@ test_that("no a initial evaluation", {
     A_last_col <- ms_indices$a[, ncol(ms_indices$a)]
     all_usg_check <- ms_indices$all_usg_check
     all_symbols <- ms_indices$all_symbols
-    usge <- ms_indices$usge
+    usge_all <- ms_indices$usge_all
     egs <- ms_indices$egs
     n_min_symbols <- ms_indices$n_min_symbols
     K <- sum(ms_indices$all_symbols[[1]][, 2])
@@ -284,7 +90,7 @@ test_that("no a initial evaluation", {
             g_in = g_in,
             v_in = v_in,
             all_symbols = all_symbols,
-            usge = usge,
+            usge_all = usge_all,
             egs = egs,
             K = K,
             use_U = FALSE
@@ -304,6 +110,9 @@ test_that("no a initial evaluation", {
 
 })
 
+
+
+
 test_that("no a slightly larger experiments", {
 
     K <- 1000
@@ -315,6 +124,8 @@ test_that("no a slightly larger experiments", {
     out <- lapply(1:nGrids, function(iGrid) {
         m <- sample(5:10, 1)
         vals <- as.integer(sample(1:m, K, replace = TRUE, prob = (sample(m) ** 2) / sum((1:m) ** 2)))
+        ## make sure at least one
+        vals[sample(1:m, replace = FALSE)] <- 1:m
         if (iGrid == 3) {
             vals[sample(1:K, 5)] <- 0L
         }
@@ -332,7 +143,8 @@ test_that("no a slightly larger experiments", {
     })
     X1C <- sapply(out, function(x) x[[1]])
     all_symbols <- lapply(out, function(x) x[[2]])
-
+    Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
+    
     ## make something big here
     n_min_symbols <- 50
     egs <- 10
@@ -344,8 +156,6 @@ test_that("no a slightly larger experiments", {
         n_min_symbols = n_min_symbols,
         egs = egs
     )
-
-
 
     ## all of these 0-based
     s <- 2
@@ -361,7 +171,7 @@ test_that("no a slightly larger experiments", {
     k1 <- get_k_given_matrix_u(s, v2, U)
     which.max(U[, s] == (v2 + 1)) - 1 - 1
 
-    ## exhaustive check!
+    ## exhaustive check! decently slow, but sure, why not
     for(s in 1:nrow(C)) {
         for(v2 in 0:(C[s, 2] - 1)) {
             ## print(paste0("s = ", s, " v2 = ", v2))
@@ -371,6 +181,99 @@ test_that("no a slightly larger experiments", {
         }
     }
 
-    ## OK this works!
+    skip("rest not checked")
+    
+    ##
+    ## now try to find f, see what it looks like
+    ##
+    usge_all <- ms_indices$usge_all
+
+
+    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    m <- cbind(0:(length(all_symbols) - 1), f)
+
+    ## am here
+    ## tomorrow, write algorithm to go backwards from this
+    ## determine what I need to scan up and down
+    ##
+    K <- sum(all_symbols[[1]][, 2])
+
+    
+    g_in <- 49
+    stuff <- sapply(806 + -1:1, function(v_in) {
+        out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
+        out[[2]][, 2]
+    })
+    t(stuff)
+
+    ## see if this is enough, as is. hopefully?
+    ## implement as is, test as is
+    
+    ## 805 is the one (above?) whatevs
+
+    rbind(X1C[1 + t(stuff)[, 51], ], NA, Z)
+
+    ## looks OK, can I get some real, or semi-real, stuff in here
+    rbind(X1C[20,], Z[])
+    
+    
+    cbind(stuff[[4]]$trajectory, stuff[[3]]$trajectory[, 2], stuff[[2]]$trajectory[, 2], stuff[[1]]$trajectory[, 2])
+
+
+    load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
+    all_symbols <- ms_indices[[1]]$all_symbols
+    usge_all <- ms_indices[[1]]$usge_all
+    egs <- ms_indices[[1]]$egs
+
+    ## fake one
+    Z <- hapMatcherR[100000, ]
+    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    
+
+})
+
+
+test_that("explore", {
+
+    skip("WIP")
+
+
+    load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
+
+    all_symbols <- ms_indices[[1]]$all_symbols
+    usge_all <- ms_indices[[1]]$usge_all
+    egs <- ms_indices[[1]]$egs
+
+    ## fake one
+    Z <- as.integer(hapMatcherR[100000, seq(1, ncol(hapMatcherR), 4)])
+    K <- nrow(hapMatcherR)
+    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    A <- ms_indices[[1]]$a
+    
+    ## check up and down (wtf early ones?)
+    g_in <- length(Z) - 1
+    v_in <- tail(f, 1)
+    out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE, do_checks = TRUE, A = A)
+    ## OK, but a little slow
+    ## I kind of want to walk back one step at a time
+    
+
+    ## haha am at figure me out bit
+
+    ## OK TRY AGAIN
+    ## SOMETHING NOT QUITE RIGH
+    ## PROMISING
+    ## AM HERE
+    
+    ## breaks at one point
+    A[cbind(out$trajectory[, 2] + 1, out$trajectory[, 1] + 1)]
+    
+    stuff <- sapply(-3:3, function(v_in) {
+        out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
+        out[[2]][, 2]
+    })
+    
+    t(stuff)
+
 
 })
