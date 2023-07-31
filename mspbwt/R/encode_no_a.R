@@ -15,6 +15,10 @@ find_good_matches_without_a <- function(
     use_rcpp = FALSE
 ) {
     ##
+    stopifnot(class(all_symbols[[1]][1, 1]) == "integer")
+    ## check class, should be only ints
+    stopifnot(!("numeric" %in% unlist(lapply(usge_all[[1]], function(x) sapply(x, class)))))
+    ## 
     if (is.null(which_snps_in_hapMatcherR)) {
         which_snps_in_hapMatcherR <- 1:ncol(hapMatcherR)
     }
@@ -39,7 +43,7 @@ find_good_matches_without_a <- function(
     ##
     for(g in (length(f) - 1):0) {
         if (verbose) {
-            message(paste0(g, ", ", date()))
+            print(paste0(g, ", ", date()))
         }
         fc <- f[g + 1]
         Zc <- Z[g + 1]
@@ -93,7 +97,7 @@ find_good_matches_without_a <- function(
         ##
         if ((g < (length(f) - 1) & (c_up < pbwtL | c_down < pbwtL)) | g == 0) {
             if (verbose) {
-                message(paste0("to check: up ", pbwtL - c_up, ", down = ", pbwtL - c_down))
+                print(paste0("to check: up ", pbwtL - c_up, ", down = ", pbwtL - c_down))
             }
             ## force test on everything
             if (g == 0) {
@@ -108,10 +112,13 @@ find_good_matches_without_a <- function(
                         v = mat_up_prev[ic + 1, "v"]
                         k = mat_up_prev[ic + 1, "k"]
                         len = mat_up_prev[ic + 1, "l"]
-                        ## message(paste0("Find index backward: g = ", g, ", v_in = ", k))
+                        if (verbose) {
+                            print(paste0("Find index backward: g = ", g, ", v_in = ", k))
+                        }
                         if (use_rcpp) {
                             ##print(paste0("g = ", g, ", k = ", k))
-                            ##save(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, file = "~/temp.RData")
+                            ##print("saving")
+                            ##save(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, file = "/dev/shm/rwdavies/temp.RData", compress = FALSE)
                             index <- Rcpp_find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, K = K, list_of_columns_of_A = list_of_columns_of_A, use_list_of_columns_of_A = !is.null(list_of_columns_of_A))
                         } else {
                             index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, list_of_columns_of_A = list_of_columns_of_A)

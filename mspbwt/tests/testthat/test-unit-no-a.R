@@ -192,7 +192,7 @@ test_that("no a slightly larger experiments", {
             names(a)[length(a)] <- names(a)[1]
         }
         names_a <- as.integer(names(a))
-        a <- cbind(names_a, a)
+        a <- cbind(names_a, as.integer(a))
         rownames(a) <- NULL
         colnames(a) <- c("symbol", "count")
         return(list(vals, a))
@@ -385,7 +385,8 @@ test_that("explore", {
         A = ms_indices[[1]]$a,
         do_checks = TRUE,
         verbose = TRUE,
-        list_of_columns_of_A = list_of_columns_of_A
+        list_of_columns_of_A = list_of_columns_of_A,
+        use_rcpp = TRUE
     )
 
     mat_out <- out[["mat_out"]]

@@ -278,7 +278,7 @@ one_move_forward_buildindices <- function(
     prev_value <- symbol_count[1]
     for(s in 1:St) {
         if (symbol_count[s] <= n_min_symbols) {
-            usge[[s]] <- rep(-1, symbol_count[s])
+            usge[[s]] <- rep(-1L, symbol_count[s])
         }
         ##     & symbol_count[s] <= prev_value) {
         ##     first_usg_minimal_symbol <- first_usg_minimal_symbol + 1
@@ -296,7 +296,7 @@ one_move_forward_buildindices <- function(
     val <- c()
     usg[] <- 0L
     ##
-    for(k in 0:(K - 1)) { ## haps (1-based)
+    for(k in as.integer(0:(K - 1))) { ## haps (1-based)
         s <- X1C[a[k + 1, t] + 1, t] ## this symbol to consider
         if (s == 0) {
             s <- St
@@ -326,7 +326,7 @@ one_move_forward_buildindices <- function(
         if (symbol_count[s] > n_min_symbols) {
             usg[k + 1 + 1, s] <- usg[k + 1 + 1, s] + 1L
         } else {
-            usge[[s]][nso[s] + 1] <- k + 1
+            usge[[s]][nso[s] + 1] <- k + 1L
         }
         if (verbose) {
             message(paste0(usg[k + 1, ],collapse = "-"))
@@ -343,8 +343,8 @@ one_move_forward_buildindices <- function(
     ## encode the rest of them
     for(s in 1:St) {
         if (symbol_count[s] > n_min_symbols) {
-            ## usge[[s]] <- Rcpp_encode_maximal_column_of_u(usg[, s], egs = egs)
-            usge[[s]] <- encode_maximal_column_of_u(usg[, s], egs = egs)
+            usge[[s]] <- Rcpp_encode_maximal_column_of_u(usg[, s], egs = egs)
+            ## usge[[s]] <- encode_maximal_column_of_u(usg[, s], egs = egs)
         }
     }
     list(

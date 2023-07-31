@@ -33,8 +33,19 @@ int Rcpp_get_k_given_encoded_u(
       int up_i = 0;
       int up_val = 0;
       int down_i = out_mat_nrow - 1;
-      int down_val = C[s, 1];
+      int down_val = C(s - 1, 1);
       double frac = (double(v2) - double(up_val)) / (double(down_val) - double(up_val));
+      if (frac > 1.001) {
+	std::cout << "here comes an error!" << std::endl;
+	std::cout << "s=" << s << ", v2 = " << v2 << std::endl;
+	std::cout << "frac=" << frac <<  std::endl;	
+	std::cout << "C" << std::endl;
+	std::cout << C << std::endl;
+	std::cout << "C(s - 1, 1) = " << C(s - 1, 1) << std::endl;            
+	std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;
+	std::cout << "out_mat_nrow = " << out_mat_nrow << std::endl;
+	Rcpp::stop("Something went wrong, with the choice of frac");
+      }
       // for reasons I do not fully understand, round parentheses not workign properly
       //std::cout << "C(s, 1) = " << C(s, 1) << std::endl;            
       //std::cout << "C[s, 1] = " << C[s, 1] << std::endl;      
@@ -43,6 +54,11 @@ int Rcpp_get_k_given_encoded_u(
       int i_row = int(frac * double(K) /double(egs));
       i_row = std::min(out_mat_nrow - 2, i_row);      
       if (verbose) {
+	std::cout << "C" << std::endl;
+	std::cout << C << std::endl;
+	std::cout << "s=" << s <<  std::endl;	
+	std::cout << "C(s - 1, 1) = " << C(s - 1, 1) << std::endl;            
+	std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;      
 	std::cout << "frac = " << frac << std::endl;
 	std::cout << "at start, initial i_row=" << i_row << std::endl;
       }
@@ -155,7 +171,9 @@ int rcpp_go_backwards_one_step(
   while(v > (count - 1)) {
     s++;
     count += C(s - 1, 1);
-    //std::cout << "s = " << s << ", C[s - 1, 1] = " << C[s - 1, 1] << ", C(s - 1, 1) = " << C(s - 1, 1) << ", v = " << v << ", count = " << count << std::endl;
+    if (verbose) {
+      std::cout << "s = " << s << ", C[s - 1, 1] = " << C[s - 1, 1] << ", C(s - 1, 1) = " << C(s - 1, 1) << ", v = " << v << ", count = " << count << std::endl;
+    }
   }
   // remember s is always 1-based
   int v2 = 0;
@@ -164,8 +182,13 @@ int rcpp_go_backwards_one_step(
   } else {
     v2 = v - (count - C(s - 1, 1));
   }
-  //std::cout << "s = " << s << ", v2 = " << v2 << std::endl;
-  int k = Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs);
+  if (verbose) {
+    std::cout << "s = " << s << ", v2 = " << v2 << std::endl;
+  }
+  int k = Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs, verbose);
+  if (verbose) {
+    std::cout << "k = " << k << std::endl;
+  }
   return(k);
 }
 
@@ -208,7 +231,7 @@ int Rcpp_find_index_backward(
     Rcpp::IntegerMatrix C = all_symbols[g + 1];
     //std::cout << "C" << std::endl;
     //std::cout << C << std::endl;      
-    k = rcpp_go_backwards_one_step(g, v, C, usge, egs, K, true);
+    k = rcpp_go_backwards_one_step(g, v, C, usge, egs, K, false);
     v = k;
   }
   // first col is 0:(K - 1) so this is OK!
