@@ -100,6 +100,59 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_get_k_given_encoded_u
+int Rcpp_get_k_given_encoded_u(int s, int v2, Rcpp::List& usge, Rcpp::IntegerMatrix& C, int K, int egs, bool verbose);
+RcppExport SEXP _mspbwt_Rcpp_get_k_given_encoded_u(SEXP sSEXP, SEXP v2SEXP, SEXP usgeSEXP, SEXP CSEXP, SEXP KSEXP, SEXP egsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type v2(v2SEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge(usgeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_go_backwards_one_step
+int rcpp_go_backwards_one_step(int g, int v, Rcpp::IntegerMatrix& C, Rcpp::List& usge, int egs, int K, bool verbose);
+RcppExport SEXP _mspbwt_rcpp_go_backwards_one_step(SEXP gSEXP, SEXP vSEXP, SEXP CSEXP, SEXP usgeSEXP, SEXP egsSEXP, SEXP KSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type g(gSEXP);
+    Rcpp::traits::input_parameter< int >::type v(vSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge(usgeSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_go_backwards_one_step(g, v, C, usge, egs, K, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Rcpp_find_index_backward
+int Rcpp_find_index_backward(int g_in, int v_in, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs, int K, Rcpp::List& list_of_columns_of_A, bool verbose, bool use_list_of_columns_of_A);
+RcppExport SEXP _mspbwt_Rcpp_find_index_backward(SEXP g_inSEXP, SEXP v_inSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP, SEXP KSEXP, SEXP list_of_columns_of_ASEXP, SEXP verboseSEXP, SEXP use_list_of_columns_of_ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type g_in(g_inSEXP);
+    Rcpp::traits::input_parameter< int >::type v_in(v_inSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type all_symbols(all_symbolsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge_all(usge_allSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type list_of_columns_of_A(list_of_columns_of_ASEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_list_of_columns_of_A(use_list_of_columns_of_ASEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_find_index_backward(g_in, v_in, all_symbols, usge_all, egs, K, list_of_columns_of_A, verbose, use_list_of_columns_of_A));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Rcpp_one_move_forward_buildindices
 Rcpp::List Rcpp_one_move_forward_buildindices(Rcpp::IntegerMatrix X1C, Rcpp::IntegerMatrix a, Rcpp::IntegerMatrix d, Rcpp::IntegerMatrix usg, Rcpp::IntegerMatrix usg_check, int t, int K, Rcpp::IntegerVector symbol_count, int egs, int St, int n_min_symbols, bool do_checks);
 RcppExport SEXP _mspbwt_Rcpp_one_move_forward_buildindices(SEXP X1CSEXP, SEXP aSEXP, SEXP dSEXP, SEXP usgSEXP, SEXP usg_checkSEXP, SEXP tSEXP, SEXP KSEXP, SEXP symbol_countSEXP, SEXP egsSEXP, SEXP StSEXP, SEXP n_min_symbolsSEXP, SEXP do_checksSEXP) {
@@ -266,6 +319,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_is_list", (DL_FUNC) &_mspbwt_is_list, 1},
     {"_mspbwt_Rcpp_decode_value_of_usge", (DL_FUNC) &_mspbwt_Rcpp_decode_value_of_usge, 4},
     {"_mspbwt_Rcpp_decode_value_of_usge_v2", (DL_FUNC) &_mspbwt_Rcpp_decode_value_of_usge_v2, 4},
+    {"_mspbwt_Rcpp_get_k_given_encoded_u", (DL_FUNC) &_mspbwt_Rcpp_get_k_given_encoded_u, 7},
+    {"_mspbwt_rcpp_go_backwards_one_step", (DL_FUNC) &_mspbwt_rcpp_go_backwards_one_step, 7},
+    {"_mspbwt_Rcpp_find_index_backward", (DL_FUNC) &_mspbwt_Rcpp_find_index_backward, 9},
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},

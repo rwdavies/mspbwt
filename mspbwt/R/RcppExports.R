@@ -36,6 +36,21 @@ Rcpp_decode_value_of_usge_v2 <- function(usge, s, v, egs) {
 }
 
 #' @export
+Rcpp_get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, verbose = FALSE) {
+    .Call('_mspbwt_Rcpp_get_k_given_encoded_u', PACKAGE = 'mspbwt', s, v2, usge, C, K, egs, verbose)
+}
+
+#' @export
+rcpp_go_backwards_one_step <- function(g, v, C, usge, egs, K, verbose = FALSE) {
+    .Call('_mspbwt_rcpp_go_backwards_one_step', PACKAGE = 'mspbwt', g, v, C, usge, egs, K, verbose)
+}
+
+#' @export
+Rcpp_find_index_backward <- function(g_in, v_in, all_symbols, usge_all, egs, K, list_of_columns_of_A, verbose = FALSE, use_list_of_columns_of_A = FALSE) {
+    .Call('_mspbwt_Rcpp_find_index_backward', PACKAGE = 'mspbwt', g_in, v_in, all_symbols, usge_all, egs, K, list_of_columns_of_A, verbose, use_list_of_columns_of_A)
+}
+
+#' @export
 Rcpp_one_move_forward_buildindices <- function(X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
     .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks)
 }

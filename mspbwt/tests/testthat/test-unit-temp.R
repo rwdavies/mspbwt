@@ -20,134 +20,75 @@ if (1 == 0) {
 
 test_that("can avoid use of d", {
 
-    set.seed(2029)
-
-    K <- 90
+    K <- 1000
     nGrids <- 50
+    ##
+    X1C <- matrix(0, K, nGrids)
 
-    ## s = SNP
-    out <- test_driver_multiple(
-        K = K,
-        nGrids = nGrids
-    )
-    Xs <- out$Xs
-    Zs <- out$Zs
-    hapMatcher <- out$hapMatcher
-    all_symbols <- out$all_symbols
-    Z <- out$Z
-    nSNPs <- length(Zs)
-    hapMatcherR <- array(as.raw(0), dim(hapMatcher))
-    for(i in 1:ncol(hapMatcher)) {
-        hapMatcherR[, i] <- as.raw(hapMatcher[, i])
-    }
-
-    ## do on only some of them
-    which_grids <- seq(1, nGrids, 3)
-
-    ## build indices (just do one)
-    ms_indices <- Rcpp_ms_BuildIndices_Algorithm5(
-        X1C = hapMatcher[, which_grids],
-        all_symbols = all_symbols[which_grids],
-        indices = list()
-    )
-
-    ## Z here
-    Z_local <- map_Z_to_all_symbols(Z[which_grids], ms_indices[["all_symbols"]])
-
-    ## test in R
-    R_results <- ms_MatchZ_Algorithm5(
-        X = hapMatcher[, which_grids],
-        ms_indices = ms_indices,
-        Z = Z_local
-    )
-
-    ## check
-    for(i_k in 1:nrow(R_results)) {
-        k1 <- R_results[i_k, "indexB0"] + 1
-        start1 <- R_results[i_k, "start1"]
-        end1 <- R_results[i_k, "end1"]
-        w <- which_grids[start1:end1]
-        sum(hapMatcher[k1, w] != Z_local[w])
-    }
-
-    ## do test with both ways
-    R_results_test <- ms_MatchZ_Algorithm5(
-        X = hapMatcher[, which_grids],
-        ms_indices = ms_indices,
-        Z = Z_local,
-        test_d = TRUE
-    )
-
-    expect_equal(R_results, R_results_test)
-
-    ## confirm again, now without d
-    ms_indices_no_d <- ms_indices
-    ms_indices_no_d[["d"]] <- NULL
-
-    ## do test with both ways
-    R_results_no_d <- ms_MatchZ_Algorithm5(
-        X = hapMatcher[, which_grids],
-        ms_indices = ms_indices_no_d,
-        Z = Z_local
-    )
-
-    expect_equal(R_results, R_results_no_d)
-
-    ## now for Rcpp, do the same thing
-    ## test both use of double condition, and simpler
-
-    for(i_test in 1:2) {
-
-        if (i_test == 1) {
-            X <- hapMatcher[, which_grids]
-            XR <- matrix(as.raw(0), 1, 1)
-            cols_to_use0 <- as.integer(1)
-            use_cols_to_use0 <- FALSE
-            use_XR <- FALSE
-        } else {
-            X <- matrix(as.integer(1), 1, 1)
-            XR <- hapMatcherR
-            cols_to_use0 <- as.integer(which_grids - 1)
-            use_cols_to_use0 <- TRUE
-            use_XR <- TRUE
+    ## simulate
+    out <- lapply(1:nGrids, function(iGrid) {
+        m <- sample(5:10, 1)
+        vals <- as.integer(sample(1:m, K, replace = TRUE, prob = (sample(m) ** 2) / sum((1:m) ** 2)))
+        ## make sure at least one
+        vals[sample(1:m, replace = FALSE)] <- 1:m
+        if (iGrid == 3) {
+            vals[sample(1:K, 5)] <- 0L
         }
+        a <- table(vals)
+        ## put 0s at the end if they exist
+        if ("0" %in% names(a)) {
+            a <- a[c(2:length(a), 1)]
+            names(a)[length(a)] <- names(a)[1]
+        }
+        names_a <- as.integer(names(a))
+        a <- cbind(names_a, a)
+        rownames(a) <- NULL
+        colnames(a) <- c("symbol", "count")
+        return(list(vals, a))
+    })
+    X1C <- sapply(out, function(x) x[[1]])
+    all_symbols <- lapply(out, function(x) x[[2]])
+    Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
+    
+    ## make something big here
+    n_min_symbols <- 50
+    egs <- 10
+    ms_indices <- ms_BuildIndices_Algorithm5(
+        X1C = X1C,
+        all_symbols = all_symbols,
+        return_all_usg_check = TRUE,
+        do_checks = TRUE,
+        n_min_symbols = n_min_symbols,
+        egs = egs
+    )
 
-        ## test one with d
-        Rcpp_results_test <- Rcpp_ms_MatchZ_Algorithm5(
-            ms_indices = ms_indices,
-            X = X,
-            XR = XR,
-            cols_to_use0 = cols_to_use0,
-            use_cols_to_use0 = use_cols_to_use0,
-            use_XR = use_XR,            
-            Z = Z_local,
-            test_d = TRUE,
-            have_d = TRUE,
-            verbose = FALSE
-        )
-        
-        expect_equal(R_results, Rcpp_results_test)
+    ## all of these 0-based
+    s <- 2
+    v2 <- 12
+    g <- 1 ## think about this as 0-based
+    usge <- ms_indices$usge_all[[g + 1]]
+    C <- ms_indices$all_symbols[[g + 1]]
+    U <- ms_indices$all_usg_check[[g + 1]]
+    ##
+    out <- encode_maximal_column_of_u(U[, s], egs = egs, efficient = FALSE)
+    out_mat2 <- out[["out_mat"]]
+    out_vec2 <- out[["out_vec"]]
+    k1 <- get_k_given_matrix_u(s, v2, U)
+    which.max(U[, s] == (v2 + 1)) - 1 - 1
 
-        ## other test
-        ## confirm again, now without d
-        ms_indices_tiny_d <- ms_indices
-        ms_indices_tiny_d[["d"]] <- matrix(as.integer(1), 1, 1)
-        
-        Rcpp_results_test2 <- Rcpp_ms_MatchZ_Algorithm5(
-            ms_indices = ms_indices_tiny_d,
-            X = X,
-            XR = XR,
-            cols_to_use0 = cols_to_use0,
-            use_cols_to_use0 = use_cols_to_use0,
-            use_XR = use_XR,
-            Z = Z_local,
-            test_d = FALSE,
-            have_d = FALSE,
-            verbose = FALSE
-        )
-        
-        expect_equal(R_results, Rcpp_results_test2)
-
+    ## exhaustive check! decently slow, but sure, why not
+    for(s in 1:nrow(C)) {
+        for(v2 in 0:5) {
+            ## (C[s, 2] - 1)) {
+            ## print(paste0("s = ", s, " v2 = ", v2))
+            k1 <- get_k_given_matrix_u(s, v2, U) ## 0-based
+            k2 <- get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = TRUE, U = U)
+            k3 <- Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = FALSE, U = matrix(0, 1, 1))
+            print(paste0("k1 = ", k1, ", k2 = ", k2, ", k3 = ", k3))
+            expect_equal(k1, k2)
+            expect_equal(k1, k3)
+        }
     }
+
     
 })

@@ -106,6 +106,22 @@ test_that("no a initial evaluation", {
         expect_equal(ms_indices$a[k + 1, g_in + 1 + 1], index)
     }
 
+    ## test using Rcpp version, works
+    for(v_in in 0:7) {
+        index <- Rcpp_find_index_backward(
+            g_in = g_in,
+            v_in = v_in,
+            all_symbols = all_symbols,
+            usge_all = usge_all,
+            egs = egs,
+            K = K,
+            list_of_columns_of_A = list(),
+            use_list_of_columns_of_A = FALSE
+        )
+        v <- v_in
+        expect_equal(ms_indices$a[v + 1, g_in + 1 + 1], index)
+    }
+    
     ## test using compressed version, with columns
     list_of_columns_of_A <- as.list(1:ncol(ms_indices$a))
     list_of_columns_of_A[[3]] <- ms_indices$a[, 3]
@@ -124,8 +140,23 @@ test_that("no a initial evaluation", {
         v <- v_in
         expect_equal(ms_indices$a[v + 1, g_in + 1 + 1], index)
     }
-    
 
+    ## same as above, but using Rcpp
+    g_in <- 2    
+    for(v_in in 0:7) {
+        index <- Rcpp_find_index_backward(
+            g_in = g_in,
+            v_in = v_in,
+            all_symbols = all_symbols,
+            usge_all = usge_all,
+            egs = egs,
+            K = K,
+            list_of_columns_of_A = list_of_columns_of_A,
+            use_list_of_columns_of_A = TRUE
+        )
+        v <- v_in
+        expect_equal(ms_indices$a[v + 1, g_in + 1 + 1], index)
+    }
 
 
 })
@@ -135,6 +166,11 @@ test_that("no a initial evaluation", {
 
 test_that("no a slightly larger experiments", {
 
+    set.seed(10)
+    ## for(seed in 1:100) {
+    ##     print(paste0("seed = ", seed))
+    ##     set.seed(seed)
+        
     K <- 1000
     nGrids <- 50
     ##
@@ -192,21 +228,25 @@ test_that("no a slightly larger experiments", {
     which.max(U[, s] == (v2 + 1)) - 1 - 1
 
     ## exhaustive check! decently slow, but sure, why not
+    print("start exhaustive check")
     for(s in 1:nrow(C)) {
         for(v2 in 0:(C[s, 2] - 1)) {
-            ## print(paste0("s = ", s, " v2 = ", v2))
             k1 <- get_k_given_matrix_u(s, v2, U) ## 0-based
             k2 <- get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = TRUE, U = U)
+            k3 <- Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs)
             expect_equal(k1, k2)
+            expect_equal(k1, k3)
+            ## print("we gooooood")
         }
     }
+    print("end exhaustive check")
 
     hapMatcherR <- matrix(as.raw(0), nrow(X1C), ncol(X1C))
     for(icol in 1:ncol(hapMatcherR)) {
         hapMatcherR[, icol] <- as.raw(X1C[, icol])
     }
     
-    out_mat <-  find_good_matches_without_a(
+    out <-  find_good_matches_without_a(
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,
@@ -217,63 +257,81 @@ test_that("no a slightly larger experiments", {
         do_checks = TRUE,
         A = ms_indices$a
     )
+    mat_out <- out[["mat_out"]]
 
     ## check it has what we expect given construction
-    i <- which(out_mat[, "index"] == 19)
+    i <- which(mat_out[, "index"] == 19)
     expect_true(length(i) > 0)
-    i <- which(out_mat[, "index"] == 9)
+    i <- which(mat_out[, "index"] == 9)
     expect_true(length(i) > 0)
+
+    ## check rcpp version
+    out <-  find_good_matches_without_a(
+        Z = Z,
+        all_symbols = ms_indices$all_symbols,
+        usge_all = ms_indices$usge_all,
+        egs = ms_indices$egs,
+        pbwtL = 10,
+        pbwtM = 2,
+        hapMatcherR = hapMatcherR,
+        use_rcpp = TRUE
+    )
+    mat_out2 <- out
+
+    ## check it is the same
+    expect_equal(mat_out, mat_out2)
+
+    ## }
+        
+    ## skip("rest not checked")
+
+    ## Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
+    
+    ## ##
+    ## ## now try to find f, see what it looks like
+    ## ##
+    ## usge_all <- ms_indices$usge_all
+
+
+    ## f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    ## m <- cbind(0:(length(all_symbols) - 1), f)
+
+    ## ## am here
+    ## ## tomorrow, write algorithm to go backwards from this
+    ## ## determine what I need to scan up and down
+    ## ##
+    ## K <- sum(all_symbols[[1]][, 2])
+
+    
+    ## g_in <- 49
+    ## stuff <- sapply(806 + -1:1, function(v_in) {
+    ##     out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
+    ##     out[[2]][, 2]
+    ## })
+    ## t(stuff)
+
+    ## ## see if this is enough, as is. hopefully?
+    ## ## implement as is, test as is
+    
+    ## ## 805 is the one (above?) whatevs
+
+    ## rbind(X1C[1 + t(stuff)[, 51], ], NA, Z)
+
+    ## ## looks OK, can I get some real, or semi-real, stuff in here
+    ## rbind(X1C[20,], Z[])
     
     
-    Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
-    
-    skip("rest not checked")
-    
-    ##
-    ## now try to find f, see what it looks like
-    ##
-    usge_all <- ms_indices$usge_all
+    ## cbind(stuff[[4]]$trajectory, stuff[[3]]$trajectory[, 2], stuff[[2]]$trajectory[, 2], stuff[[1]]$trajectory[, 2])
 
 
-    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
-    m <- cbind(0:(length(all_symbols) - 1), f)
+    ## load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
+    ## all_symbols <- ms_indices[[1]]$all_symbols
+    ## usge_all <- ms_indices[[1]]$usge_all
+    ## egs <- ms_indices[[1]]$egs
 
-    ## am here
-    ## tomorrow, write algorithm to go backwards from this
-    ## determine what I need to scan up and down
-    ##
-    K <- sum(all_symbols[[1]][, 2])
-
-    
-    g_in <- 49
-    stuff <- sapply(806 + -1:1, function(v_in) {
-        out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
-        out[[2]][, 2]
-    })
-    t(stuff)
-
-    ## see if this is enough, as is. hopefully?
-    ## implement as is, test as is
-    
-    ## 805 is the one (above?) whatevs
-
-    rbind(X1C[1 + t(stuff)[, 51], ], NA, Z)
-
-    ## looks OK, can I get some real, or semi-real, stuff in here
-    rbind(X1C[20,], Z[])
-    
-    
-    cbind(stuff[[4]]$trajectory, stuff[[3]]$trajectory[, 2], stuff[[2]]$trajectory[, 2], stuff[[1]]$trajectory[, 2])
-
-
-    load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
-    all_symbols <- ms_indices[[1]]$all_symbols
-    usge_all <- ms_indices[[1]]$usge_all
-    egs <- ms_indices[[1]]$egs
-
-    ## fake one
-    Z <- hapMatcherR[100000, ]
-    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    ## ## fake one
+    ## Z <- hapMatcherR[100000, ]
+    ## f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
     
 
 })

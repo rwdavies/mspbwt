@@ -11,7 +11,8 @@ find_good_matches_without_a <- function(
     A = NULL,
     which_snps_in_hapMatcherR = NULL,
     verbose = FALSE,
-    list_of_columns_of_A = NULL
+    list_of_columns_of_A = NULL,
+    use_rcpp = FALSE
 ) {
     ##
     if (is.null(which_snps_in_hapMatcherR)) {
@@ -34,6 +35,7 @@ find_good_matches_without_a <- function(
     if (do_checks) {
         list_of_mats <- as.list(1:length(f))
     }
+    K <- as.integer(sum(all_symbols[[1]][, 2]))
     ##
     for(g in (length(f) - 1):0) {
         if (verbose) {
@@ -49,9 +51,10 @@ find_good_matches_without_a <- function(
         for(l in 0:(pbwtL - 1)) {
             v_up <- fc - l - 1
             if (v_up >= 0 && v_up <= (K - 1)) {
-                out <- go_backwards_one_step(g = g + 1, v = v_up, C = C, usge = usge, egs = egs)
-                s <- out[1]
-                k <- out[2]
+                out <- go_backwards_one_step(g = g + 1, v = v_up, C = C, usge = usge, egs = egs, K = K)
+                ## s <- out[1]
+                s <- NA
+                k <- out[1]
                 if (do_checks) {
                     a <- A[v_up + 1, g + 1 + 1]
                 }
@@ -67,9 +70,10 @@ find_good_matches_without_a <- function(
             }
             v_down <- fc + l
             if (v_down >= 0 && v_down <= (K - 1)) {
-                out <- go_backwards_one_step(g = g + 1, v = v_down, C = C, usge = usge, egs = egs)
-                s <- out[1]
-                k <- out[2]
+                out <- go_backwards_one_step(g = g + 1, v = v_down, C = C, usge = usge, egs = egs, K = K)
+                ##s <- out[1]
+                s <- NA                
+                k <- out[1]
                 if (do_checks) {
                     a <- A[v_down + 1, g + 1 + 1]
                 }
@@ -105,7 +109,13 @@ find_good_matches_without_a <- function(
                         k = mat_up_prev[ic + 1, "k"]
                         len = mat_up_prev[ic + 1, "l"]
                         ## message(paste0("Find index backward: g = ", g, ", v_in = ", k))
-                        index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, list_of_columns_of_A = list_of_columns_of_A)
+                        if (use_rcpp) {
+                            ##print(paste0("g = ", g, ", k = ", k))
+                            ##save(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, file = "~/temp.RData")
+                            index <- Rcpp_find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, K = K, list_of_columns_of_A = list_of_columns_of_A, use_list_of_columns_of_A = !is.null(list_of_columns_of_A))
+                        } else {
+                            index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, list_of_columns_of_A = list_of_columns_of_A)
+                        }
                         ## so might disagree
                         g2 <- g
                         done <- FALSE
@@ -250,7 +260,7 @@ get_k_given_matrix_u <- function(s, v2, U) {
     k <- which.max(U[, s] == (v2 + 1)) - 1 - 1
     k
 }
-get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U = NULL) {
+get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U = NULL, verbose = FALSE) {
     if (class(usge[[s]]) == "list") {
         ##
         out_mat <- usge[[s]][[1]]
@@ -268,6 +278,9 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
         down_val <- C[s, 2]
         frac <- (v2 - up_val) / (down_val - up_val)
         i_row <- min(nrow(out_mat) - 2, round(frac * K /egs))
+        if (verbose) {
+            print(paste0("in R, initial frac = ", frac, ", i_row = ", i_row))
+        }
         ## special case, at the end
         if (v2 >= out_mat[nrow(out_mat), 1]) {
             done <- TRUE
@@ -310,6 +323,9 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
                 stop("problem")
             }
         }
+        if (verbose) {
+            print(paste0("in R, i_row = ", i_row))
+        }
         ## message(paste0("c is ", c))
         ##
         ## special cases
@@ -346,7 +362,9 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
         is_plus <- TRUE
         done <- FALSE
         while(!done) {
-            ## print(paste0("before: vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
+            if (verbose) {
+                print(paste0("before: vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
+            }
             if (is_plus) {
                 u <- u + out_vec[vec_pos + 1]
             }
@@ -354,7 +372,9 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
             if (do_checks) {
                 stopifnot(U[egs * i_row + steps + 1, s] == (val + u))
             }
-            ## print(paste0("consider:vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
+            if (verbose) {
+                print(paste0("consider:vec_pos = ", vec_pos, ", u = ", u, ", steps = ", steps))
+            }
             if (u > remainder) {
                 ## something like this
                 k <- egs * i_row + steps - (u - remainder)
@@ -371,6 +391,9 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
                 k <- egs * (i_row + 1) - 1
                 done <- TRUE
             }
+        }
+        if (verbose) {
+            print(paste0("in R, steps = ", steps))
         }
         return(as.integer(k))
     } else {
@@ -424,11 +447,13 @@ go_backwards_one_step <- function(
     v,
     C,
     usge,
+    egs,
+    K,
     all_usg_check = NULL,
     do_checks = FALSE,
     use_U = FALSE,
-    egs = NULL,
-    U = NULL
+    U = NULL,
+    verbose = FALSE
 ) {
     ## get s (1-based)
     s <- 1    
@@ -456,9 +481,13 @@ go_backwards_one_step <- function(
             U <- NULL
         }
         K <- sum(C[, 2])
+        if (verbose) {
+            print(paste0("s = ", s, ", v2 = ", v2))
+        }
         k <- get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = do_checks, U = U)
     }
-    c(s, k)
+    return(k)
+    ## c(s, k) ## previou return, I don't think necessary now
 }
 
 
@@ -473,7 +502,8 @@ find_index_backward <- function(
     A = NULL,
     use_U = FALSE,
     return_trajectory = FALSE,
-    list_of_columns_of_A = NULL
+    list_of_columns_of_A = NULL,
+    verbose = FALSE
 ) {
     g <- g_in
     v <- v_in
@@ -499,6 +529,9 @@ find_index_backward <- function(
         }
         usge <- usge_all[[g + 1 + 1]]
         C <- all_symbols[[g + 1 + 1]] ## symbols at g+1
+        if (verbose) {
+            print(paste0("g = ", g, ", v = ", v))
+        }
         out <- go_backwards_one_step(
             g = g,
             v = v,
@@ -508,10 +541,12 @@ find_index_backward <- function(
             do_checks = FALSE,
             use_U = use_U,
             egs = egs,
-            U = U
+            U = U,
+            verbose = FALSE
         )
-        s <- out[1]
-        k <- out[2]
+        s <- NA
+        ## s <- out[1]
+        k <- out[1]
         if (do_checks) {
             stopifnot(A[k + 1, g + 1 + 1] == A[v + 1, g + 1 + 1 + 1])
             to_out[g_in - g, 1] <- g + 1
