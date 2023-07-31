@@ -1,3 +1,4 @@
+#' @export
 find_good_matches_without_a <- function(
     Z,
     all_symbols,
@@ -7,25 +8,37 @@ find_good_matches_without_a <- function(
     pbwtM,
     hapMatcherR,
     do_checks = FALSE,
-    A = NULL
+    A = NULL,
+    which_snps_in_hapMatcherR = NULL,
+    verbose = FALSE,
+    list_of_columns_of_A = NULL
 ) {
     ##
+    if (is.null(which_snps_in_hapMatcherR)) {
+        which_snps_in_hapMatcherR <- 1:ncol(hapMatcherR)
+    }
+    ## print(paste0("pbwtL = ", pbwtL))
     f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
+    K <- sum(all_symbols[[1]][, 2])
     ## 
-nam <- c("v", "s", "k", "l", "trueA")
+    nam <- c("v", "s", "k", "l", "trueA")
     mat_up <- matrix(-1, pbwtL, length(nam))
     colnames(mat_up) <- nam
     mat_down <- matrix(-1, pbwtL, length(nam))
     colnames(mat_down) <- nam
-    do_checks <- TRUE
     a <- -1
     to_out <- as.list(1:length(f))
     g <- length(f) - 1
     mat_up_prev <- mat_up
     mat_down_prev <- mat_down
+    if (do_checks) {
+        list_of_mats <- as.list(1:length(f))
+    }
     ##
     for(g in (length(f) - 1):0) {
-        message(paste0(g, ", ", date()))
+        if (verbose) {
+            message(paste0(g, ", ", date()))
+        }
         fc <- f[g + 1]
         Zc <- Z[g + 1]
         C <- all_symbols[[g + 1]]
@@ -74,7 +87,15 @@ nam <- c("v", "s", "k", "l", "trueA")
         ##
         ## check if need save condition
         ##
-        if (g < (length(f) - 1) & (c_up < pbwtL | c_down < pbwtL)) {            
+        if ((g < (length(f) - 1) & (c_up < pbwtL | c_down < pbwtL)) | g == 0) {
+            if (verbose) {
+                message(paste0("to check: up ", pbwtL - c_up, ", down = ", pbwtL - c_down))
+            }
+            ## force test on everything
+            if (g == 0) {
+                c_up <- 0
+                c_down <- 0
+            }
             mat_out <- matrix(0, 2 * pbwtL - c_up - c_down, 3) ## somehow, g, index, l
             c_mat <- 0
             if (c_up < pbwtL) {
@@ -83,7 +104,8 @@ nam <- c("v", "s", "k", "l", "trueA")
                         v = mat_up_prev[ic + 1, "v"]
                         k = mat_up_prev[ic + 1, "k"]
                         len = mat_up_prev[ic + 1, "l"]
-                        index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs)
+                        ## message(paste0("Find index backward: g = ", g, ", v_in = ", k))
+                        index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, list_of_columns_of_A = list_of_columns_of_A)
                         ## so might disagree
                         g2 <- g
                         done <- FALSE
@@ -139,45 +161,46 @@ nam <- c("v", "s", "k", "l", "trueA")
                 }
             }
             if (c_mat > 0) {
-                to_out[[g + 1]] <- mat_out[1:(c_mat - 1), , drop = FALSE]
+                to_out[[g + 1]] <- mat_out[1:c_mat, , drop = FALSE]
             }
             ## save these results
         }
         mat_up_prev <- mat_up
         mat_down_prev <- mat_down
+        if (do_checks) {
+            list_of_mats[[g + 1]] <- list(mat_up, mat_down)
+        }
     }
-    ## 
-    ## pretty good
-    ## note that these can be too short, i.e. could extend back further
-    ## so this will miss some of the matches, particularly at the start?
     ##
-    
-    ## 
-    ## 99999 gets chucked out at 103? not at the end? does this make sense?
-    ## 
-    ## also, not sure which part the slowest
-    ## should do quick profile?
-    ## 
-    
-    ##
-    ## at the end, merge
-    ## not sure about R, might need to update the other ones as I go?
-    ##
-
-    ## meh good enough
-    
     ## merge them together
+    ## 
     w <- sapply(to_out, length) > 1
-    n <- sum(sapply(to_out[w], nrow))
+    if (sum(w) == 0) {
+        n <- 0
+    } else {
+        n <- sum(sapply(to_out[w], nrow))
+    }
     mat_out <- matrix(0, n, 3)
+    colnames(mat_out) <- c("g", "index", "len")
+    if (sum(w) == 0) {
+        return(mat_out)
+    }
     c <- 1
     for(m in to_out[w]) {
         mat_out[c + 0:(nrow(m) - 1), ] <- m
         c <- c + nrow(m)
     }
+    if (do_checks) {
+        return(
+            list(
+                mat_out = mat_out,
+                list_of_mats = list_of_mats
+            )
+        )
+    }
     ## check it out
-    colnames(mat_out) <- c("g", "index", "len")
     mat_out
+}
 
 
 find_start <- function(v, k, len, g, all_symbols, usge_all, egs) {
@@ -236,6 +259,7 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
         ## first, need the 0-based first position lower than it in out_mat
         ## call it i_row
         ##
+        ## if right at the end, call it
         done <- FALSE
         c <- 0 ## count
         up_i <- 0
@@ -243,9 +267,14 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
         down_i <- nrow(out_mat) - 1
         down_val <- C[s, 2]
         frac <- (v2 - up_val) / (down_val - up_val)
-        i_row <- round(frac * K /egs)
+        i_row <- min(nrow(out_mat) - 2, round(frac * K /egs))
+        ## special case, at the end
+        if (v2 >= out_mat[nrow(out_mat), 1]) {
+            done <- TRUE
+            i_row <- nrow(out_mat) - 1
+        } 
         while(!done) {
-            ## message(paste0("c = ", c, ", ", "i_row = ", i_row, ", ", "frac = ", frac, ", ",
+            ##message(paste0("c = ", c, ", ", "i_row = ", i_row, ", ", "frac = ", frac, ", ",
             ##                "up_i = ", up_i, ", up_val = ", up_val, ", ",
             ##                "down_i = ", down_i, ", down_val = ", down_val
             ##                ))
@@ -253,6 +282,10 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
             ## here let's make an estimate
             ## check below then above
             ## if neither we're good
+            if ((i_row + 1) > nrow(out_mat)) {
+                save(s, v2, usge, C, K, egs, file = "~/temp.RData")
+                stop("something went wrong, see ~/temp.RData")
+            }
             if (v2 < out_mat[i_row + 1, 1]) {
                 ## OK, so we're under
                 ## so re-set the bounds
@@ -277,15 +310,18 @@ get_k_given_encoded_u <- function(s, v2, usge, C, K, egs, do_checks = FALSE, U =
                 stop("problem")
             }
         }
+        ## message(paste0("c is ", c))
         ##
         ## special cases
         ## if all 0 we can skip
         ## if all 1 (increasing) we might need to consider
         ##
-        if ((out_mat[i_row + 1 + 1, 1] - out_mat[i_row + 1, 1]) == egs) {
-            ## so it's just whatever remains really
-            k <- egs * (i_row) + v2 - out_mat[i_row + 1, 1]
-            return(k)
+        if (i_row < (nrow(out_mat) - 1)) {
+            if ((out_mat[i_row + 1 + 1, 1] - out_mat[i_row + 1, 1]) == egs) {
+                ## so it's just whatever remains really
+                k <- egs * (i_row) + v2 - out_mat[i_row + 1, 1]
+                return(k)
+            }
         }
         ##
         ##
@@ -426,7 +462,19 @@ go_backwards_one_step <- function(
 }
 
 
-find_index_backward <- function(g_in, v_in, all_symbols, usge_all = NULL, egs = NULL, all_usg_check = NULL, do_checks = FALSE, A = NULL, use_U = FALSE, return_trajectory = FALSE) {
+find_index_backward <- function(
+    g_in,
+    v_in,
+    all_symbols,
+    usge_all = NULL,
+    egs = NULL,
+    all_usg_check = NULL,
+    do_checks = FALSE,
+    A = NULL,
+    use_U = FALSE,
+    return_trajectory = FALSE,
+    list_of_columns_of_A = NULL
+) {
     g <- g_in
     v <- v_in
     if (do_checks) {
@@ -442,6 +490,13 @@ find_index_backward <- function(g_in, v_in, all_symbols, usge_all = NULL, egs = 
     ## now this g needs to be one lower
     g <- g_in - 1
     for(g in (g_in - 1):(-1)) {
+        if (!is.null(list_of_columns_of_A)) {
+            ## print(paste0("g = ", g))
+            if (length(list_of_columns_of_A[[g + 1 + 1 + 1]]) > 1) {
+                ## print(paste0("g = ", g, ", v = ", v))
+                return(list_of_columns_of_A[[g + 1 + 1 + 1]][[v + 1]])
+            }
+        }
         usge <- usge_all[[g + 1 + 1]]
         C <- all_symbols[[g + 1 + 1]] ## symbols at g+1
         out <- go_backwards_one_step(

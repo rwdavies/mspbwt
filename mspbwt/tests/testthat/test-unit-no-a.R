@@ -106,6 +106,26 @@ test_that("no a initial evaluation", {
         expect_equal(ms_indices$a[k + 1, g_in + 1 + 1], index)
     }
 
+    ## test using compressed version, with columns
+    list_of_columns_of_A <- as.list(1:ncol(ms_indices$a))
+    list_of_columns_of_A[[3]] <- ms_indices$a[, 3]
+    ##
+    g_in <- 2    
+    for(v_in in 0:7) {
+        index <- find_index_backward(
+            g_in = g_in,
+            v_in = v_in,
+            all_symbols = all_symbols,
+            usge_all = usge_all,
+            egs = egs,
+            use_U = FALSE,
+            list_of_columns_of_A = list_of_columns_of_A
+        )
+        v <- v_in
+        expect_equal(ms_indices$a[v + 1, g_in + 1 + 1], index)
+    }
+    
+
 
 
 })
@@ -181,17 +201,32 @@ test_that("no a slightly larger experiments", {
         }
     }
 
+    hapMatcherR <- matrix(as.raw(0), nrow(X1C), ncol(X1C))
+    for(icol in 1:ncol(hapMatcherR)) {
+        hapMatcherR[, icol] <- as.raw(X1C[, icol])
+    }
+    
     out_mat <-  find_good_matches_without_a(
         Z = Z,
-        all_symbols,
-        usge_all,
-        egs,
-        pbwtL,
-        pbwtM,
-        hapMatcherR,
+        all_symbols = ms_indices$all_symbols,
+        usge_all = ms_indices$usge_all,
+        egs = ms_indices$egs,
+        pbwtL = 10,
+        pbwtM = 2,
+        hapMatcherR = hapMatcherR,
         do_checks = TRUE,
-        A = NULL
-    ) 
+        A = ms_indices$a
+    )
+
+    ## check it has what we expect given construction
+    i <- which(out_mat[, "index"] == 19)
+    expect_true(length(i) > 0)
+    i <- which(out_mat[, "index"] == 9)
+    expect_true(length(i) > 0)
+    
+    
+    Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
+    
     skip("rest not checked")
     
     ##
@@ -248,8 +283,16 @@ test_that("explore", {
 
     skip("WIP")
 
+    ## so OK quite a bit better?
+    ## could drop even further if encode decode was say raw, and egs was 256
+    ## could try to make it smaller? less RAM maybe
 
     load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
+
+    ##for(i in 1:4) {
+    ##    ms_indices[[i]]$a <- NULL
+   ## }
+    ##object.size(ms_indices) / 1024 / 1024
 
     pbwtM <- 5
     pbwtL <- 10
@@ -261,77 +304,135 @@ test_that("explore", {
     ## fake one
     Z <- as.integer(hapMatcherR[100000, seq(1, ncol(hapMatcherR), 4)])
     K <- nrow(hapMatcherR)
-
     A <- ms_indices[[1]]$a
 
     which_snps_in_hapMatcherR <- seq(1, ncol(hapMatcherR), length(ms_indices))
-    
 
-    ## seems to work
-    
-    mat_out[mat_out[, 2] == 99999, ]
-    
-    ## check matches? seems good! not sure if this should necessarily be perfect always
-    t(sapply(1:nrow(mat_out), function(i_row) {
-        g <- mat_out[i_row, "g"]
-        index <- mat_out[i_row, "index"]
-        l <- mat_out[i_row, "len"]
-        a <- as.integer(hapMatcherR[index + 1, seq(1, 461, 4)])[g:(g + l) + 1] == Z[g:(g + l) + 1]
-        c(sum(a), sum(!a))
-    }))
+    ## keep first few, then rest
+    list_of_columns_of_A <- as.list(1:ncol(ms_indices[[1]]$a))
+    for(i in seq(1, ncol(ms_indices[[1]]$a), 10)) {
+        list_of_columns_of_A[[i]] <- ms_indices[[1]]$a[, i]
+    }
 
-    Z[81:116]
     
-
-    A[f[100] + 1 + -3:3, 100]
-
-    i <- 105
-    A[f[length(f) - i]+-1:3, ncol(A) - i]
-    
-    ## yup looks good
-    m <- cbind(
-        A[f[length(f) - 3]+-10:10, ncol(A) - 3],        
-        A[f[length(f) - 2]+-10:10, ncol(A) - 2],
-        A[f[length(f) - 1]+-10:10, ncol(A) - 1],
-        A[f[length(f)]+-10:10, ncol(A)]
+    out <-  find_good_matches_without_a(
+        Z = Z,
+        all_symbols = ms_indices[[1]]$all_symbols,
+        usge_all = ms_indices[[1]]$usge_all,
+        egs = ms_indices[[1]]$egs,
+        pbwtL = 20,
+        pbwtM = 5,
+        hapMatcherR = hapMatcherR,
+        which_snps_in_hapMatcherR = which_snps_in_hapMatcherR,
+        A = ms_indices[[1]]$a,
+        do_checks = TRUE,
+        verbose = TRUE,
+        list_of_columns_of_A = list_of_columns_of_A
     )
 
-    m2 <- sapply((length(f) - 50):length(f), function(i) A[f[i]+-10:10, i + 1])
+    mat_out <- out[["mat_out"]]
+    list_of_mats <- out$list_of_mats
+    
+    ## check that they work, yup, good
+    for(i_row in 1:nrow(mat_out)) {
+        g <- mat_out[i_row, 1]
+        k <- mat_out[i_row, 2]
+        len <- mat_out[i_row, 3]
+        w <- (g + 1):(g + len)
+        ## 
+        stopifnot(sum(as.integer(hapMatcherR[k + 1, which_snps_in_hapMatcherR[w]]) != Z[w]) == 0)
+    }
 
-    for(i in 51:20) {
-        stopifnot(sum(m2[, i] == m2[, i - 1]) == 21)
+    ##
+    list_of_mats[[114]][[1]]    
+    list_of_mats[[115]][[1]]    
+
+    out <- NULL
+    for(g in 80:116) {
+        out <- rbind(out, list_of_mats[[g - 1]][[1]][, "v"])
+        out <- rbind(out, list_of_mats[[g]][[1]][, "k"])        
     }
     
-    apply(hapMatcherR[m2[, 1] + 1, seq(1, 461, 4)][, -10:0 + 116], 1, function(x) paste0(as.character(as.integer(x)), collapse = "-"))
     
-    paste0(tail(Z, 10), collapse = "-")
+m1 <- sapply(list_of_mats, function(x) x[[1]][, c("v")])
+    m2 <- sapply(list_of_mats, function(x) x[[1]][, c("k")])    
     
-    tail(Z, 10)
-    ## so all perfect matches
-    ## so why is it moving, does that make sense
-    ## ALSO
+    ## check it out here
+
 
     
-    ## OK so given some pbwtL, try scanning up and down
-    ## record indices that are needed
-    ## extra, can I also get s, and determine when it ends, to keep / reject based on pbwtM?
+    ## compare the best matches?
+    ## can probably do pretty small pbwtL honestly
+    for(i in 1:5) {
+        x <- out[[i]]
+        print(head(x[order(-x[, 3]), ], 10))
+    }
+    
+    ## ## seems to work
+    
+    ## mat_out[mat_out[, 2] == 99999, ]
+    
+    ## ## check matches? seems good! not sure if this should necessarily be perfect always
+    ## t(sapply(1:nrow(mat_out), function(i_row) {
+    ##     g <- mat_out[i_row, "g"]
+    ##     index <- mat_out[i_row, "index"]
+    ##     l <- mat_out[i_row, "len"]
+    ##     a <- as.integer(hapMatcherR[index + 1, seq(1, 461, 4)])[g:(g + l) + 1] == Z[g:(g + l) + 1]
+    ##     c(sum(a), sum(!a))
+    ## }))
 
-    ## haha am at figure me out bit
+    ## Z[81:116]
+    
 
-    ## OK TRY AGAIN
-    ## SOMETHING NOT QUITE RIGH
-    ## PROMISING
-    ## AM HERE
+    ## A[f[100] + 1 + -3:3, 100]
+
+    ## i <- 105
+    ## A[f[length(f) - i]+-1:3, ncol(A) - i]
     
-    ## breaks at one point
-    A[cbind(out$trajectory[, 2] + 1, out$trajectory[, 1] + 1)]
+    ## ## yup looks good
+    ## m <- cbind(
+    ##     A[f[length(f) - 3]+-10:10, ncol(A) - 3],        
+    ##     A[f[length(f) - 2]+-10:10, ncol(A) - 2],
+    ##     A[f[length(f) - 1]+-10:10, ncol(A) - 1],
+    ##     A[f[length(f)]+-10:10, ncol(A)]
+    ## )
+
+    ## m2 <- sapply((length(f) - 50):length(f), function(i) A[f[i]+-10:10, i + 1])
+
+    ## for(i in 51:20) {
+    ##     stopifnot(sum(m2[, i] == m2[, i - 1]) == 21)
+    ## }
     
-    stuff <- sapply(-3:3, function(v_in) {
-        out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
-        out[[2]][, 2]
-    })
+    ## apply(hapMatcherR[m2[, 1] + 1, seq(1, 461, 4)][, -10:0 + 116], 1, function(x) paste0(as.character(as.integer(x)), collapse = "-"))
     
-    t(stuff)
+    ## paste0(tail(Z, 10), collapse = "-")
+    
+    ## tail(Z, 10)
+    ## ## so all perfect matches
+    ## ## so why is it moving, does that make sense
+    ## ## ALSO
+
+    
+    ## ## OK so given some pbwtL, try scanning up and down
+    ## ## record indices that are needed
+    ## ## extra, can I also get s, and determine when it ends, to keep / reject based on pbwtM?
+
+    ## ## haha am at figure me out bit
+
+    ## ## OK TRY AGAIN
+    ## ## SOMETHING NOT QUITE RIGH
+    ## ## PROMISING
+    ## ## AM HERE
+    
+    ## ## breaks at one point
+    ## A[cbind(out$trajectory[, 2] + 1, out$trajectory[, 1] + 1)]
+    
+    ## stuff <- sapply(-3:3, function(v_in) {
+    ##     out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
+    ##     out[[2]][, 2]
+    ## })
+    
+    ## t(stuff)
 
 
 })
