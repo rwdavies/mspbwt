@@ -1,6 +1,5 @@
 #' @export
 find_good_matches_without_a <- function(
-    f,
     Z,
     all_symbols,
     usge_all,
@@ -19,6 +18,7 @@ find_good_matches_without_a <- function(
     stopifnot(class(all_symbols[[1]][1, 1]) == "integer")
     ## check class, should be only ints
     stopifnot(!("numeric" %in% unlist(lapply(usge_all[[1]], function(x) sapply(x, class)))))
+    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
     ## 
     if (is.null(which_snps_in_hapMatcherR)) {
         which_snps_in_hapMatcherR <- 1:ncol(hapMatcherR)
@@ -232,12 +232,20 @@ get_f_given_Z <- function(Z, all_symbols, usge_all, egs, all_usg_check, use_U = 
     ##
     nGrids <- length(all_symbols)
     f <- rep(0L, nGrids)
-    x <- c(0, cumsum(all_symbols[[1]][, 2]))
     Z_1 <- Z[1]
     if (Z_1 == 0) {
         Z_1 <- nrow(all_symbols[[1]])
     }
-    f[1] <- x[Z_1]
+    C <- all_symbols[[1]]
+    ##x <- c(0, cumsum(C[, 2]))[Z_1]
+    x <- 0
+    if (Z_1 > 1) {
+        for(s in 1:(Z_1 - 1)) {
+            x <- x + C[s, 2]
+        }
+    }
+    f[1] <- x
+    
     ##
     ## update
     ##

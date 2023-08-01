@@ -2,6 +2,15 @@
 using namespace Rcpp;
 
 
+int Rcpp_decode_value_of_usge(
+    Rcpp::List usge,
+    int s,
+    int v,
+    int egs
+);
+
+
+
 //' @export
 // [[Rcpp::export]]
 int Rcpp_get_k_given_encoded_u(
@@ -244,12 +253,66 @@ int Rcpp_find_index_backward(
 
 
 
+
+
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::IntegerVector Rcpp_get_f_given_Z(
+    Rcpp::IntegerVector & Z,    
+    Rcpp::List & all_symbols,
+    Rcpp::List & usge_all,
+    int egs
+) { 
+  //
+  //
+  int s, k, u, c, s2;
+  //
+  //
+  int nGrids = all_symbols.length();
+  Rcpp::IntegerVector f(nGrids);
+  //
+  // init
+  //
+  Rcpp::IntegerMatrix C0 = all_symbols[0];
+  int Z_1 = Z(0);
+  if (Z_1 == 0) {
+    Z_1 = C0.nrow();
+  }
+  if (Z_1 > 1) {
+    for(s = 1; s <= (Z_1 - 1); s++) {
+      f(0) += C0(s - 1, 1);
+    }
+  }
+  //
+  // update
+  //
+  for(int g = 1; g <= (nGrids - 1); g++) {
+    Rcpp::IntegerMatrix C = all_symbols[g];
+    Rcpp::List usge = usge_all[g];    
+    s = Z(g);
+    k = f(g - 1);
+    u = Rcpp_decode_value_of_usge(usge, s, k, egs);
+    c = 0;
+    if (s > 1) {
+      for(s2 = 2; s2 <= s; s2++) {
+	c += C(s2 - 1 - 1, 1);
+      }
+    }
+    u += c;
+    f(g) = u;
+  }
+  return(f);
+}
+
+
+
 // note where f is     f <- get_f_given_Z(Z, all_symbols, usge_all, egs) in R
+
 
 //' @export
 // [[Rcpp::export]]
 Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(
-    Rcpp::IntegerVector & f,
     Rcpp::IntegerVector & Z,    
     Rcpp::List & all_symbols,
     Rcpp::List & usge_all,
@@ -265,7 +328,9 @@ Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(
 ) {
   //
   //int a = -1;
-  int k, fc, g, Zc, c_up, c_down, l, v_up, cur_v, prev_k, v_down, c_mat, ic, len, g2, index, v;
+  Rcpp::IntegerVector f = Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs);
+  //
+  int k, fc, g, c_up, c_down, l, v_up, cur_v, prev_k, v_down, c_mat, ic, len, g2, index, v, Zc;
   bool done;
   int n_c_mat = 0;
   //

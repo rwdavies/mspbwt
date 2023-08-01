@@ -153,13 +153,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Rcpp_find_good_matches_without_a
-Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(Rcpp::IntegerVector& f, Rcpp::IntegerVector& Z, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs, int pbwtL, int pbwtM, int K, Rcpp::RawMatrix& hapMatcherR, Rcpp::IntegerVector& which_snps_in_hapMatcherR, Rcpp::List& list_of_columns_of_A, bool use_list_of_columns_of_A, bool verbose);
-RcppExport SEXP _mspbwt_Rcpp_find_good_matches_without_a(SEXP fSEXP, SEXP ZSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP, SEXP pbwtLSEXP, SEXP pbwtMSEXP, SEXP KSEXP, SEXP hapMatcherRSEXP, SEXP which_snps_in_hapMatcherRSEXP, SEXP list_of_columns_of_ASEXP, SEXP use_list_of_columns_of_ASEXP, SEXP verboseSEXP) {
+// Rcpp_get_f_given_Z
+Rcpp::IntegerVector Rcpp_get_f_given_Z(Rcpp::IntegerVector& Z, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs);
+RcppExport SEXP _mspbwt_Rcpp_get_f_given_Z(SEXP ZSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type f(fSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type all_symbols(all_symbolsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List& >::type usge_all(usge_allSEXP);
+    Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Rcpp_find_good_matches_without_a
+Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(Rcpp::IntegerVector& Z, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs, int pbwtL, int pbwtM, int K, Rcpp::RawMatrix& hapMatcherR, Rcpp::IntegerVector& which_snps_in_hapMatcherR, Rcpp::List& list_of_columns_of_A, bool use_list_of_columns_of_A, bool verbose);
+RcppExport SEXP _mspbwt_Rcpp_find_good_matches_without_a(SEXP ZSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP, SEXP pbwtLSEXP, SEXP pbwtMSEXP, SEXP KSEXP, SEXP hapMatcherRSEXP, SEXP which_snps_in_hapMatcherRSEXP, SEXP list_of_columns_of_ASEXP, SEXP use_list_of_columns_of_ASEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::IntegerVector& >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< Rcpp::List& >::type all_symbols(all_symbolsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List& >::type usge_all(usge_allSEXP);
@@ -172,7 +185,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List& >::type list_of_columns_of_A(list_of_columns_of_ASEXP);
     Rcpp::traits::input_parameter< bool >::type use_list_of_columns_of_A(use_list_of_columns_of_ASEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_find_good_matches_without_a(f, Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_find_good_matches_without_a(Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -345,7 +358,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_get_k_given_encoded_u", (DL_FUNC) &_mspbwt_Rcpp_get_k_given_encoded_u, 7},
     {"_mspbwt_rcpp_go_backwards_one_step", (DL_FUNC) &_mspbwt_rcpp_go_backwards_one_step, 7},
     {"_mspbwt_Rcpp_find_index_backward", (DL_FUNC) &_mspbwt_Rcpp_find_index_backward, 9},
-    {"_mspbwt_Rcpp_find_good_matches_without_a", (DL_FUNC) &_mspbwt_Rcpp_find_good_matches_without_a, 13},
+    {"_mspbwt_Rcpp_get_f_given_Z", (DL_FUNC) &_mspbwt_Rcpp_get_f_given_Z, 4},
+    {"_mspbwt_Rcpp_find_good_matches_without_a", (DL_FUNC) &_mspbwt_Rcpp_find_good_matches_without_a, 12},
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},
     {"_mspbwt_Rcpp_ms_BuildIndices_Algorithm5", (DL_FUNC) &_mspbwt_Rcpp_ms_BuildIndices_Algorithm5, 9},

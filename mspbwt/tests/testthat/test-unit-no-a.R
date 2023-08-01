@@ -246,9 +246,12 @@ test_that("no a slightly larger experiments", {
         hapMatcherR[, icol] <- as.raw(X1C[, icol])
     }
 
+    ## check this 
     f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
+    f2 <- Rcpp_get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
+    expect_equal(f, f2)
+    
     out <-  find_good_matches_without_a(
-        f = f,
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,
@@ -268,9 +271,7 @@ test_that("no a slightly larger experiments", {
     expect_true(length(i) > 0)
 
     ## check version that uses some rcpp
-    f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
     out <-  find_good_matches_without_a(
-        f = f,
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,
@@ -286,9 +287,7 @@ test_that("no a slightly larger experiments", {
     expect_equal(mat_out, mat_out2)
 
     ## check version that uses only Rcpp
-    f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
     out <-  Rcpp_find_good_matches_without_a(
-        f = f,
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,

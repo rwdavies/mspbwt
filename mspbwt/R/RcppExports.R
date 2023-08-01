@@ -51,8 +51,13 @@ Rcpp_find_index_backward <- function(g_in, v_in, all_symbols, usge_all, egs, K, 
 }
 
 #' @export
-Rcpp_find_good_matches_without_a <- function(f, Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose = FALSE) {
-    .Call('_mspbwt_Rcpp_find_good_matches_without_a', PACKAGE = 'mspbwt', f, Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose)
+Rcpp_get_f_given_Z <- function(Z, all_symbols, usge_all, egs) {
+    .Call('_mspbwt_Rcpp_get_f_given_Z', PACKAGE = 'mspbwt', Z, all_symbols, usge_all, egs)
+}
+
+#' @export
+Rcpp_find_good_matches_without_a <- function(Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose = FALSE) {
+    .Call('_mspbwt_Rcpp_find_good_matches_without_a', PACKAGE = 'mspbwt', Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose)
 }
 
 #' @export
