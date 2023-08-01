@@ -51,8 +51,8 @@ Rcpp_find_index_backward <- function(g_in, v_in, all_symbols, usge_all, egs, K, 
 }
 
 #' @export
-Rcpp_get_f_given_Z <- function(Z, all_symbols, usge_all, egs) {
-    .Call('_mspbwt_Rcpp_get_f_given_Z', PACKAGE = 'mspbwt', Z, all_symbols, usge_all, egs)
+Rcpp_get_f_given_Z <- function(Z, all_symbols, usge_all, egs, verbose = FALSE) {
+    .Call('_mspbwt_Rcpp_get_f_given_Z', PACKAGE = 'mspbwt', Z, all_symbols, usge_all, egs, verbose)
 }
 
 #' @export

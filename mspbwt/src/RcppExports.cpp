@@ -154,8 +154,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_get_f_given_Z
-Rcpp::IntegerVector Rcpp_get_f_given_Z(Rcpp::IntegerVector& Z, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs);
-RcppExport SEXP _mspbwt_Rcpp_get_f_given_Z(SEXP ZSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP) {
+Rcpp::IntegerVector Rcpp_get_f_given_Z(Rcpp::IntegerVector& Z, Rcpp::List& all_symbols, Rcpp::List& usge_all, int egs, bool verbose);
+RcppExport SEXP _mspbwt_Rcpp_get_f_given_Z(SEXP ZSEXP, SEXP all_symbolsSEXP, SEXP usge_allSEXP, SEXP egsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -163,7 +163,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List& >::type all_symbols(all_symbolsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List& >::type usge_all(usge_allSEXP);
     Rcpp::traits::input_parameter< int >::type egs(egsSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -358,7 +359,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mspbwt_Rcpp_get_k_given_encoded_u", (DL_FUNC) &_mspbwt_Rcpp_get_k_given_encoded_u, 7},
     {"_mspbwt_rcpp_go_backwards_one_step", (DL_FUNC) &_mspbwt_rcpp_go_backwards_one_step, 7},
     {"_mspbwt_Rcpp_find_index_backward", (DL_FUNC) &_mspbwt_Rcpp_find_index_backward, 9},
-    {"_mspbwt_Rcpp_get_f_given_Z", (DL_FUNC) &_mspbwt_Rcpp_get_f_given_Z, 4},
+    {"_mspbwt_Rcpp_get_f_given_Z", (DL_FUNC) &_mspbwt_Rcpp_get_f_given_Z, 5},
     {"_mspbwt_Rcpp_find_good_matches_without_a", (DL_FUNC) &_mspbwt_Rcpp_find_good_matches_without_a, 12},
     {"_mspbwt_Rcpp_one_move_forward_buildindices", (DL_FUNC) &_mspbwt_Rcpp_one_move_forward_buildindices, 12},
     {"_mspbwt_order_", (DL_FUNC) &_mspbwt_order_, 1},

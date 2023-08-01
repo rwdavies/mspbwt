@@ -262,7 +262,8 @@ Rcpp::IntegerVector Rcpp_get_f_given_Z(
     Rcpp::IntegerVector & Z,    
     Rcpp::List & all_symbols,
     Rcpp::List & usge_all,
-    int egs
+    int egs,
+    bool verbose = false
 ) { 
   //
   //
@@ -274,6 +275,9 @@ Rcpp::IntegerVector Rcpp_get_f_given_Z(
   //
   // init
   //
+  if (verbose) {
+    std::cout << "init get f" << std::endl;
+  }
   Rcpp::IntegerMatrix C0 = all_symbols[0];
   int Z_1 = Z(0);
   if (Z_1 == 0) {
@@ -291,7 +295,13 @@ Rcpp::IntegerVector Rcpp_get_f_given_Z(
     Rcpp::IntegerMatrix C = all_symbols[g];
     Rcpp::List usge = usge_all[g];    
     s = Z(g);
+    if (s == 0) {
+      s = C.nrow();
+    }
     k = f(g - 1);
+    if (verbose) {
+      std::cout << "g = " << g << ", s = " << s << ", k = " << k << std::endl;
+    }
     u = Rcpp_decode_value_of_usge(usge, s, k, egs);
     c = 0;
     if (s > 1) {
@@ -301,6 +311,9 @@ Rcpp::IntegerVector Rcpp_get_f_given_Z(
     }
     u += c;
     f(g) = u;
+  }
+  if (verbose) {
+    std::cout << "init done f" << std::endl;
   }
   return(f);
 }
@@ -328,7 +341,13 @@ Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(
 ) {
   //
   //int a = -1;
-  Rcpp::IntegerVector f = Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs);
+  if (verbose) {
+    std::cout << "get f" << std::endl;
+  }
+  Rcpp::IntegerVector f = Rcpp_get_f_given_Z(Z, all_symbols, usge_all, egs, false);
+  if (verbose) {
+    std::cout << "initialize" << std::endl;
+  }
   //
   int k, fc, g, c_up, c_down, l, v_up, cur_v, prev_k, v_down, c_mat, ic, len, g2, index, v, Zc;
   bool done;
