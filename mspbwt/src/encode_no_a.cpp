@@ -42,7 +42,7 @@ int Rcpp_get_k_given_encoded_u(
 	std::cout << "C" << std::endl;
 	std::cout << C << std::endl;
 	std::cout << "C(s - 1, 1) = " << C(s - 1, 1) << std::endl;            
-	std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;
+	//std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;
 	std::cout << "out_mat_nrow = " << out_mat_nrow << std::endl;
 	Rcpp::stop("Something went wrong, with the choice of frac");
       }
@@ -58,7 +58,7 @@ int Rcpp_get_k_given_encoded_u(
 	std::cout << C << std::endl;
 	std::cout << "s=" << s <<  std::endl;	
 	std::cout << "C(s - 1, 1) = " << C(s - 1, 1) << std::endl;            
-	std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;      
+	//std::cout << "C[s - 1, 1] = " << C[s - 1, 1] << std::endl;      
 	std::cout << "frac = " << frac << std::endl;
 	std::cout << "at start, initial i_row=" << i_row << std::endl;
       }
@@ -172,7 +172,8 @@ int rcpp_go_backwards_one_step(
     s++;
     count += C(s - 1, 1);
     if (verbose) {
-      std::cout << "s = " << s << ", C[s - 1, 1] = " << C[s - 1, 1] << ", C(s - 1, 1) = " << C(s - 1, 1) << ", v = " << v << ", count = " << count << std::endl;
+      //std::cout << "s = " << s << ", C[s - 1, 1] = " << C[s - 1, 1] << ", C(s - 1, 1) = " << C(s - 1, 1) << ", v = " << v << ", count = " << count << std::endl;
+      std::cout << "s = " << s << ", C(s - 1, 1) = " << C(s - 1, 1) << ", v = " << v << ", count = " << count << std::endl;
     }
   }
   // remember s is always 1-based
@@ -215,7 +216,7 @@ int Rcpp_find_index_backward(
       if (verbose) {
 	std::cout << "check list_of_columns_of_A" << std::endl;
       }
-      Rcpp::List l = list_of_columns_of_A[g + 1 + 1];
+      IntegerVector l = list_of_columns_of_A[g + 1 + 1];
       if (l.length() > 1) {
 	if (verbose) {
 	  std::cout << "return l[v]" << std::endl;
@@ -236,4 +237,204 @@ int Rcpp_find_index_backward(
   }
   // first col is 0:(K - 1) so this is OK!
   return(k);
+}
+
+
+
+
+
+
+// note where f is     f <- get_f_given_Z(Z, all_symbols, usge_all, egs) in R
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::IntegerMatrix Rcpp_find_good_matches_without_a(
+    Rcpp::IntegerVector & f,
+    Rcpp::IntegerVector & Z,    
+    Rcpp::List & all_symbols,
+    Rcpp::List & usge_all,
+    int egs,
+    int pbwtL,
+    int pbwtM,
+    int K,
+    Rcpp::RawMatrix & hapMatcherR,
+    Rcpp::IntegerVector & which_snps_in_hapMatcherR,
+    Rcpp::List &list_of_columns_of_A,
+    bool use_list_of_columns_of_A,
+    bool verbose = false
+) {
+  //
+  //int a = -1;
+  int k, fc, g, Zc, c_up, c_down, l, v_up, cur_v, prev_k, v_down, c_mat, ic, len, g2, index, v;
+  bool done;
+  int n_c_mat = 0;
+  //
+  Rcpp::IntegerMatrix mat_up(pbwtL, 3); // v, k, l
+  Rcpp::IntegerMatrix mat_down(pbwtL, 3);
+  Rcpp::IntegerMatrix mat_up_prev(pbwtL, 3);
+  Rcpp::IntegerMatrix mat_down_prev(pbwtL, 3);
+  //  nam <- c("v", "s", "k", "l", "trueA")
+  Rcpp::List to_out(f.length());
+  Rcpp::LogicalVector to_out_used(f.length());
+  for(g = f.length() - 1; g >= 0; g--) {
+    if (verbose) {
+      std::cout << "main loop, g = " << g << std::endl;
+    }
+    fc = f(g);
+    Zc = Z(g);
+    Rcpp::IntegerMatrix C = all_symbols[g];    
+    Rcpp::List usge = usge_all[g];
+    c_up = 0;
+    c_down = 0;
+    for(l = 0; l <= (pbwtL - 1); l++) {
+        v_up = fc - l - 1;
+	if (v_up >= 0 && v_up <= (K - 1)) {
+	    k = rcpp_go_backwards_one_step(g + 1, v_up, C, usge, egs, K, false);
+	    mat_up(l, 0) = v_up; // v
+	    mat_up(l, 1) = k; // k
+	    mat_up(l, 2) = 0; // l
+	    cur_v = v_up;
+	    prev_k = mat_up_prev(c_up, 1);
+	    if (cur_v == prev_k) {
+	      mat_up(l, 2) = mat_up_prev(c_up, 2) + 1; // l
+	      c_up++;
+	    }
+	} else {
+	  mat_up(l, 0) = -1;
+	  mat_up(l, 1) = -1;
+	  mat_up(l, 2) = -1;
+	}
+	v_down = fc + l;
+	if (v_down >= 0 && v_down <= (K - 1)) {
+	    k = rcpp_go_backwards_one_step(g + 1, v_down, C, usge, egs, K, false);
+	    mat_down(l, 0) = v_down;
+	    mat_down(l, 1) = k;
+	    mat_down(l, 2) = 0;
+	    cur_v = v_down;
+	    prev_k = mat_down_prev(c_down, 1);
+	    if (cur_v == prev_k) {
+	      mat_down(l, 2) = mat_down_prev(c_down, 2) + 1;
+	      c_down++;
+	    }
+	} else {
+	  mat_down(l, 0) = -1;
+	  mat_down(l, 1) = -1;
+	  mat_down(l, 2) = -1;
+	}
+    }
+    //
+    // check re save condition
+    //
+    if ((g < (f.length() - 1) && (c_up < pbwtL || c_down < pbwtL)) || g == 0) {
+      if (g == 0) {
+	c_up = 0;
+	c_down = 0;
+      }
+      Rcpp::IntegerMatrix mat_out(2 * pbwtL - c_up - c_down, 3);
+      c_mat = 0;
+      // up
+      if (c_up < pbwtL) {
+	for(ic = c_up; ic <= pbwtL - 1; ic++) {
+	  if (mat_up_prev(ic, 0) >= 0) {
+	    v = mat_up_prev(ic, 0);  // v ie 0-based col 0
+	    k = mat_up_prev(ic, 1); // k ie 0-based col 1
+	    len = mat_up_prev(ic, 2); // l i.e. 0-based col 2
+	    // if (verbose) {
+	    //   std::cout << "Up, Find index backward: g = " << g << " v_in = " << k << std::endl;
+	    // }
+	    index = Rcpp_find_index_backward(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, false, use_list_of_columns_of_A);
+	    g2 = g;
+	    done = false;
+	    while(!done & (g2 >= 0)) {
+	      if (hapMatcherR(index, which_snps_in_hapMatcherR(g2) - 1) == Z[g2]) {
+		len++;
+		g2--;
+	      } else {
+		done = true;
+	      }
+	    }
+	    if (len > pbwtM) {
+	      mat_out(c_mat, 0) = g2 + 1;
+	      mat_out(c_mat, 1) = index;
+	      mat_out(c_mat, 2) = len;
+	      c_mat++;
+	    }
+	  }
+	}
+      }
+      // down
+      if (c_down < pbwtL) {
+	for(ic = c_down; ic <= pbwtL - 1; ic++) {
+	  if (mat_down_prev(ic, 0) >= 0) {
+	    v = mat_down_prev(ic, 0);  // v ie 0-based col 0
+	    k = mat_down_prev(ic, 1); // k ie 0-based col 1
+	    len = mat_down_prev(ic, 2); // l i.e. 0-based col 2
+	    // if (verbose) {
+	    //   std::cout << "Down, Find index backward: g = " << g << " v_in = " << k << std::endl;
+	    // }
+	    index = Rcpp_find_index_backward(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, false, use_list_of_columns_of_A);
+	    g2 = g;
+	    done = false;
+	    while(!done & (g2 >= 0)) {
+	      if (hapMatcherR(index, which_snps_in_hapMatcherR(g2) - 1) == Z[g2]) {
+		len++;
+		g2--;
+	      } else {
+		done = true;
+	      }
+	    }
+	    if (len > pbwtM) {
+	      mat_out(c_mat, 0) = g2 + 1;
+	      mat_out(c_mat, 1) = index;
+	      mat_out(c_mat, 2) = len;
+	      c_mat++;
+	    }
+	  }
+	}
+      }
+      if (c_mat > 0) {
+	n_c_mat = n_c_mat + c_mat;	
+	Rcpp::IntegerMatrix mat_out2(c_mat, 3);
+	for(ic = 0; ic < c_mat; ic++) {
+	  mat_out2(ic, 0) = mat_out(ic, 0);
+	  mat_out2(ic, 1) = mat_out(ic, 1);
+	  mat_out2(ic, 2) = mat_out(ic, 2);	  
+	}
+	to_out[g] = mat_out2;
+	to_out_used[g] = true;
+      }
+    }
+    for(ic = 0; ic < pbwtL; ic++) {
+      mat_up_prev(ic, 0) = mat_up(ic, 0);
+      mat_up_prev(ic, 1) = mat_up(ic, 1);
+      mat_up_prev(ic, 2) = mat_up(ic, 2);
+      mat_down_prev(ic, 0) = mat_down(ic, 0);
+      mat_down_prev(ic, 1) = mat_down(ic, 1);
+      mat_down_prev(ic, 2) = mat_down(ic, 2);      
+    }
+  }
+  //
+  // merge at the end
+  //
+  if (verbose) {
+    std::cout << "Merge at the end" << std::endl;
+  }
+  Rcpp::IntegerMatrix final_mat_out(n_c_mat, 3);
+  colnames(final_mat_out) = Rcpp::CharacterVector({"g", "index", "len"});
+  if (n_c_mat == 0) {
+    return(final_mat_out);
+  }
+  c_mat = 0;
+  for(g = 0; g < f.length(); g++) {
+    if (to_out_used[g]) {
+      Rcpp::IntegerMatrix m = to_out[g];
+      for(ic = 0; ic < m.nrow(); ic++) {
+	final_mat_out(c_mat + ic, 0) = m(ic, 0);
+	final_mat_out(c_mat + ic, 1) = m(ic, 1);
+	final_mat_out(c_mat + ic, 2) = m(ic, 2);	
+      }
+      c_mat += m.nrow();
+    }
+  }
+  return(final_mat_out);
 }

@@ -51,6 +51,11 @@ Rcpp_find_index_backward <- function(g_in, v_in, all_symbols, usge_all, egs, K, 
 }
 
 #' @export
+Rcpp_find_good_matches_without_a <- function(f, Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose = FALSE) {
+    .Call('_mspbwt_Rcpp_find_good_matches_without_a', PACKAGE = 'mspbwt', f, Z, all_symbols, usge_all, egs, pbwtL, pbwtM, K, hapMatcherR, which_snps_in_hapMatcherR, list_of_columns_of_A, use_list_of_columns_of_A, verbose)
+}
+
+#' @export
 Rcpp_one_move_forward_buildindices <- function(X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks) {
     .Call('_mspbwt_Rcpp_one_move_forward_buildindices', PACKAGE = 'mspbwt', X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks)
 }

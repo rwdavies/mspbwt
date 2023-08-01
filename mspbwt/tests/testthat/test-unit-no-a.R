@@ -245,8 +245,10 @@ test_that("no a slightly larger experiments", {
     for(icol in 1:ncol(hapMatcherR)) {
         hapMatcherR[, icol] <- as.raw(X1C[, icol])
     }
-    
+
+    f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
     out <-  find_good_matches_without_a(
+        f = f,
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,
@@ -265,8 +267,10 @@ test_that("no a slightly larger experiments", {
     i <- which(mat_out[, "index"] == 9)
     expect_true(length(i) > 0)
 
-    ## check rcpp version
+    ## check version that uses some rcpp
+    f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
     out <-  find_good_matches_without_a(
+        f = f,
         Z = Z,
         all_symbols = ms_indices$all_symbols,
         usge_all = ms_indices$usge_all,
@@ -281,58 +285,25 @@ test_that("no a slightly larger experiments", {
     ## check it is the same
     expect_equal(mat_out, mat_out2)
 
-    ## }
-        
-    ## skip("rest not checked")
-
-    ## Z <- c(X1C[10, 1:10], X1C[20, -(1:10)])
-    
-    ## ##
-    ## ## now try to find f, see what it looks like
-    ## ##
-    ## usge_all <- ms_indices$usge_all
-
-
-    ## f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
-    ## m <- cbind(0:(length(all_symbols) - 1), f)
-
-    ## ## am here
-    ## ## tomorrow, write algorithm to go backwards from this
-    ## ## determine what I need to scan up and down
-    ## ##
-    ## K <- sum(all_symbols[[1]][, 2])
-
-    
-    ## g_in <- 49
-    ## stuff <- sapply(806 + -1:1, function(v_in) {
-    ##     out <- find_index_backward(g_in, v_in, all_symbols, usge_all, egs = egs, K, return_trajectory = TRUE)
-    ##     out[[2]][, 2]
-    ## })
-    ## t(stuff)
-
-    ## ## see if this is enough, as is. hopefully?
-    ## ## implement as is, test as is
-    
-    ## ## 805 is the one (above?) whatevs
-
-    ## rbind(X1C[1 + t(stuff)[, 51], ], NA, Z)
-
-    ## ## looks OK, can I get some real, or semi-real, stuff in here
-    ## rbind(X1C[20,], Z[])
-    
-    
-    ## cbind(stuff[[4]]$trajectory, stuff[[3]]$trajectory[, 2], stuff[[2]]$trajectory[, 2], stuff[[1]]$trajectory[, 2])
-
-
-    ## load("/data/smew1/rdavies/tempAtempAtempAaA.RData")
-    ## all_symbols <- ms_indices[[1]]$all_symbols
-    ## usge_all <- ms_indices[[1]]$usge_all
-    ## egs <- ms_indices[[1]]$egs
-
-    ## ## fake one
-    ## Z <- hapMatcherR[100000, ]
-    ## f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
-    
+    ## check version that uses only Rcpp
+    f <- get_f_given_Z(Z, ms_indices$all_symbols, ms_indices$usge_all, ms_indices$egs)
+    out <-  Rcpp_find_good_matches_without_a(
+        f = f,
+        Z = Z,
+        all_symbols = ms_indices$all_symbols,
+        usge_all = ms_indices$usge_all,
+        egs = ms_indices$egs,
+        pbwtL = 10L,
+        pbwtM = 2L,
+        K = as.integer(sum(ms_indices$all_symbols[[1]][, 2])),
+        hapMatcherR = hapMatcherR,
+        which_snps_in_hapMatcherR = 1L:ncol(hapMatcherR),
+        list_of_columns_of_A = list(),
+        use_list_of_columns_of_A = FALSE,
+        verbose = FALSE
+    )
+    mat_out3 <- out
+    expect_equal(mat_out, mat_out3)
 
 })
 

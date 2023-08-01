@@ -1,5 +1,6 @@
 #' @export
 find_good_matches_without_a <- function(
+    f,
     Z,
     all_symbols,
     usge_all,
@@ -23,7 +24,6 @@ find_good_matches_without_a <- function(
         which_snps_in_hapMatcherR <- 1:ncol(hapMatcherR)
     }
     ## print(paste0("pbwtL = ", pbwtL))
-    f <- get_f_given_Z(Z, all_symbols, usge_all, egs)
     K <- sum(all_symbols[[1]][, 2])
     ## 
     nam <- c("v", "s", "k", "l", "trueA")
@@ -116,9 +116,11 @@ find_good_matches_without_a <- function(
                             print(paste0("Find index backward: g = ", g, ", v_in = ", k))
                         }
                         if (use_rcpp) {
+                            ## print("yup using Rcpp")
                             ##print(paste0("g = ", g, ", k = ", k))
                             ##print("saving")
                             ##save(g, k, all_symbols, usge_all, egs, K, list_of_columns_of_A, file = "/dev/shm/rwdavies/temp.RData", compress = FALSE)
+                            ## stop("WER")
                             index <- Rcpp_find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, K = K, list_of_columns_of_A = list_of_columns_of_A, use_list_of_columns_of_A = !is.null(list_of_columns_of_A))
                         } else {
                             index <- find_index_backward(g_in = g, v_in = k, all_symbols = all_symbols, usge_all = usge_all, egs = egs, list_of_columns_of_A = list_of_columns_of_A)
@@ -258,7 +260,7 @@ get_f_given_Z <- function(Z, all_symbols, usge_all, egs, all_usg_check, use_U = 
         u <- u + c
         f[g + 1] <- u
     }
-    f
+    as.integer(f)
 }
 
 
