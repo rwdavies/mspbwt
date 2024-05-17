@@ -4,24 +4,24 @@ using namespace Rcpp;
 
 
 Rcpp::List Rcpp_encode_maximal_column_of_u(
-    Rcpp::IntegerVector u,
-    int egs,
-    bool efficient = true
-);
+                                           Rcpp::IntegerVector u,
+                                           int egs,
+                                           bool efficient = true
+                                           );
 
 int Rcpp_decode_value_of_usge(
-    Rcpp::List usge,
-    int s,
-    int v,
-    int egs
-);
+                              Rcpp::List usge,
+                              int s,
+                              int v,
+                              int egs
+                              );
 
 int Rcpp_decode_value_of_usge_v2(
-    Rcpp::List & usge,
-    int s,
-    int v,
-    int egs
-);
+                                 Rcpp::List & usge,
+                                 int s,
+                                 int v,
+                                 int egs
+                                 );
 
 
 // likely to change this function substantially!
@@ -29,19 +29,19 @@ int Rcpp_decode_value_of_usge_v2(
 //' @export
 // [[Rcpp::export]]
 Rcpp::List Rcpp_one_move_forward_buildindices(
-    Rcpp::IntegerMatrix X1C,
-    Rcpp::IntegerMatrix a,
-    Rcpp::IntegerMatrix d,    
-    Rcpp::IntegerMatrix usg,
-    Rcpp::IntegerMatrix usg_check,    
-    int t,
-    int K,
-    Rcpp::IntegerVector symbol_count,
-    int egs,
-    int St,
-    int n_min_symbols,
-    bool do_checks
-) {
+                                              Rcpp::IntegerMatrix X1C,
+                                              Rcpp::IntegerMatrix a,
+                                              Rcpp::IntegerMatrix d,    
+                                              Rcpp::IntegerMatrix usg,
+                                              Rcpp::IntegerMatrix usg_check,    
+                                              int t,
+                                              int K,
+                                              Rcpp::IntegerVector symbol_count,
+                                              int egs,
+                                              int St,
+                                              int n_min_symbols,
+                                              bool do_checks
+                                              ) {
   //
   int t0 = t - 1;
   int i;
@@ -94,7 +94,7 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
     int match_start = d(k0, t0);
     for(i = 0; i < St; i++) {
       if (match_start > pqs(i)) {
-	pqs(i) = match_start;
+        pqs(i) = match_start;
       }
     }
     // now - where it goes - 0 based
@@ -133,9 +133,7 @@ Rcpp::List Rcpp_one_move_forward_buildindices(
   // for(int q = 100; q < 110; q++) {
   //   std::cout << d_vec(q) << ", ";
   // }
-  Rcpp::List to_return = Rcpp::List::create(
-	Rcpp::Named("usge") = usge
-    );
+  Rcpp::List to_return = Rcpp::List::create(Rcpp::Named("usge") = usge);
   return(to_return);
 }
 
@@ -157,78 +155,78 @@ IntegerVector order_(IntegerVector x) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
-    Rcpp::IntegerMatrix X1C,
-    Rcpp::List all_symbols,
-    Rcpp::List indices,
-    bool verbose = false,
-    bool do_checks = false,
-    bool check_vs_indices = false,
-    int egs = 100,
-    int n_min_symbols = 100,
-    bool with_Rcpp = true
-) {    
-    //
-    if (verbose) {
-        std::cout << "initialize" << std::endl;
+                                           Rcpp::IntegerMatrix X1C,
+                                           Rcpp::List all_symbols,
+                                           Rcpp::List indices,
+                                           bool verbose = false,
+                                           bool do_checks = false,
+                                           bool check_vs_indices = false,
+                                           int egs = 100,
+                                           int n_min_symbols = 100,
+                                           bool with_Rcpp = true
+                                           ) {    
+  //
+  if (verbose) {
+    std::cout << "initialize" << std::endl;
+  }
+  const int K = X1C.nrow();
+  const int T = X1C.ncol();
+  //
+  // don't use this, but need to pass through
+  //
+  Rcpp::IntegerMatrix usg_check(1, 1);
+  //
+  //
+  Rcpp::IntegerVector n_symbols_per_grid(all_symbols.length());
+  int Smax = 0;
+  int i, k, t;
+  for(i = 0; i < all_symbols.length(); i++) {
+    Rcpp::NumericMatrix temp = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[i]);
+    n_symbols_per_grid[i] = temp.nrow();
+    if (n_symbols_per_grid[i] > Smax) {
+      Smax = n_symbols_per_grid[i];
     }
-    const int K = X1C.nrow();
-    const int T = X1C.ncol();
-    //
-    // don't use this, but need to pass through
-    //
-    Rcpp::IntegerMatrix usg_check(1, 1);
-    //
-    //
-    Rcpp::IntegerVector n_symbols_per_grid(all_symbols.length());
-    int Smax = 0;
-    int i, k, t;
-    for(i = 0; i < all_symbols.length(); i++) {
-      Rcpp::NumericMatrix temp = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[i]);
-      n_symbols_per_grid[i] = temp.nrow();
-      if (n_symbols_per_grid[i] > Smax) {
-	Smax = n_symbols_per_grid[i];
-      }
+  }
+  //
+  // extract this to change 0 to max val
+  //
+  Rcpp::IntegerVector X1C_col = X1C(_, 0);
+  for(k = 0; k < K; k++) {
+    if (X1C_col(k) == 0) {
+      X1C_col(k)=n_symbols_per_grid(0);
     }
-    //
-    // extract this to change 0 to max val
-    //
-    Rcpp::IntegerVector X1C_col = X1C(_, 0);
-    for(k = 0; k < K; k++) {
-      if (X1C_col(k) == 0) {
-	X1C_col(k)=n_symbols_per_grid(0);
-      }
+  }
+  // build arrays including a, d and now u, v, c
+  Rcpp::IntegerMatrix a(K, T + 1);
+  Rcpp::IntegerMatrix c(T + 1);
+  Rcpp::IntegerVector b(K);
+  for(k = 0; k < K; k++) {
+    a(k, 0) = k;
+  }
+  a(_, 1) = order_(X1C_col) - 1;
+  //
+  // d
+  //
+  Rcpp::IntegerMatrix d(K + 1, T + 1);
+  d.fill(0); // unnecessary?
+  for(k = 0; k <= (K - 1 - 1); k++) {
+    if (X1C_col(a(k, 1)) != X1C_col(a(k + 1, 1))) {
+      d(k + 1, 1) = 1;
     }
-    // build arrays including a, d and now u, v, c
-    Rcpp::IntegerMatrix a(K, T + 1);
-    Rcpp::IntegerMatrix c(T + 1);
-    Rcpp::IntegerVector b(K);
-    for(k = 0; k < K; k++) {
-      a(k, 0) = k;
-    }
-    a(_, 1) = order_(X1C_col) - 1;
-    //
-    // d
-    //
-    Rcpp::IntegerMatrix d(K + 1, T + 1);
-    d.fill(0); // unnecessary?
-    for(k = 0; k <= (K - 1 - 1); k++) {
-      if (X1C_col(a(k, 1)) != X1C_col(a(k + 1, 1))) {
-	d(k + 1, 1) = 1;
-      }
-    }
-    for(i = 0; i <= T; i++) {
-      d(0, i) = i + 1;
-      d(K, i) = i + 1;
-    }
-    //
-    //
-    //
-    Rcpp::IntegerVector ns_obs(Smax);
-    //
-    Rcpp::List usge_all(T);
-    int Smax_for_usl = 0;
-    for(t = 0; t < T; t++) {
-        Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t]);
+  }
+  for(i = 0; i <= T; i++) {
+    d(0, i) = i + 1;
+    d(K, i) = i + 1;
+  }
+  //
+  //
+  //
+  Rcpp::IntegerVector ns_obs(Smax);
+  //
+  Rcpp::List usge_all(T);
+  int Smax_for_usl = 0;
+  for(t = 0; t < T; t++) {
+    Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t]);
 	// int x = 0;
 	// for(i = 0; i < temp2.nrow(); i++) {
 	//     if (temp2(i, 1) > n_min_symbols) {
@@ -237,43 +235,43 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
 	// }
 	int x = temp2.nrow();
 	if (x > Smax_for_usl) {
-	    Smax_for_usl = x;
+      Smax_for_usl = x;
 	}
+  }
+  Rcpp::IntegerMatrix usg(K + 1, Smax_for_usl);
+  //
+  //
+  //
+  for(t = 1; t <= T; t++) {
+    //
+    if (verbose) {
+      std::cout << "iterate, t = " << t << std::endl;
     }
-    Rcpp::IntegerMatrix usg(K + 1, Smax_for_usl);
     //
-    //
-    //
-    for(t = 1; t <= T; t++) {
-      //
-      if (verbose) {
-	std::cout << "iterate, t = " << t << std::endl;
-      }
-      //
-      int St = n_symbols_per_grid(t - 1);
-      Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);
-      // argh
-      Rcpp::IntegerVector symbol_count(temp2.nrow());
-      for(i = 0; i < temp2.nrow(); i++) {
-	symbol_count(i) = temp2(i, 1);
-      }
-      Rcpp::List usge = Rcpp_one_move_forward_buildindices(
-          X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks
-      );
-      usge_all(t - 1) = usge("usge");
-      if (t == 1) {
-	d(0, t) = t + 1;
-      }
+    int St = n_symbols_per_grid(t - 1);
+    Rcpp::NumericMatrix temp2 = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);
+    // argh
+    Rcpp::IntegerVector symbol_count(temp2.nrow());
+    for(i = 0; i < temp2.nrow(); i++) {
+      symbol_count(i) = temp2(i, 1);
     }
-    Rcpp::List to_return = Rcpp::List::create(
-        Rcpp::Named("a") = a,
-        Rcpp::Named("d") = d,
-        Rcpp::Named("usge_all") = usge_all,
-	Rcpp::Named("egs") = egs,
-	Rcpp::Named("n_min_symbols") = n_min_symbols,
-	Rcpp::Named("all_symbols") = all_symbols
-    );
-    return(to_return);
+    Rcpp::List usge = Rcpp_one_move_forward_buildindices(
+                                                         X1C, a, d, usg, usg_check, t, K, symbol_count, egs, St, n_min_symbols, do_checks
+                                                         );
+    usge_all(t - 1) = usge("usge");
+    if (t == 1) {
+      d(0, t) = t + 1;
+    }
+  }
+  Rcpp::List to_return = Rcpp::List::create(
+                                            Rcpp::Named("a") = a,
+                                            Rcpp::Named("d") = d,
+                                            Rcpp::Named("usge_all") = usge_all,
+                                            Rcpp::Named("egs") = egs,
+                                            Rcpp::Named("n_min_symbols") = n_min_symbols,
+                                            Rcpp::Named("all_symbols") = all_symbols
+                                            );
+  return(to_return);
 }
 
 
@@ -284,28 +282,28 @@ Rcpp::List Rcpp_ms_BuildIndices_Algorithm5(
 //' @export
 // [[Rcpp::export]]
 int rcpp_wf(
-    int k,
-    int t,
-    int s,
-    Rcpp::List & usge_all,
-    Rcpp::List & all_symbols,
-    int egs
-) {
-    Rcpp::NumericMatrix temp_mat = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);      
-    // recall t is 1-based here
-    if (s == 0) {
-      s = temp_mat.nrow();
+            int k,
+            int t,
+            int s,
+            Rcpp::List & usge_all,
+            Rcpp::List & all_symbols,
+            int egs
+            ) {
+  Rcpp::NumericMatrix temp_mat = Rcpp::as<Rcpp::NumericMatrix>(all_symbols[t - 1]);      
+  // recall t is 1-based here
+  if (s == 0) {
+    s = temp_mat.nrow();
+  }
+  int u = Rcpp_decode_value_of_usge(usge_all[t - 1], s, k, egs);
+  int c = 0;
+  // if s is 1, we are good. everything else we add
+  if (s > 1) {
+    for(int s2 = 1; s2 < s; s2++) {
+      c += temp_mat(s2 - 1, 1);
     }
-    int u = Rcpp_decode_value_of_usge(usge_all[t - 1], s, k, egs);
-    int c = 0;
-    // if s is 1, we are good. everything else we add
-    if (s > 1) {
-      for(int s2 = 1; s2 < s; s2++) {
-	c += temp_mat(s2 - 1, 1);
-      }
-    }
-    u += c;
-    return(u);
+  }
+  u += c;
+  return(u);
 }
 
 
@@ -316,28 +314,28 @@ int rcpp_wf(
 //' @export
 // [[Rcpp::export]]
 void rcpp_find_restart(
-    int & e1,
-    int & f1,
-    int & g1,
-    int & ec,
-    int & fc,
-    int & gc,
-    Rcpp::IntegerMatrix & X,
-    Rcpp::RawMatrix & XR,
-    bool use_XR,    
-    Rcpp::IntegerMatrix & a,
-    Rcpp::IntegerVector & Z,
-    int & t,
-    Rcpp::IntegerMatrix & d,
-    Rcpp::IntegerVector & cols_to_use0,    
-    Rcpp::List & top_matches_list,
-    int K,
-    bool verbose,
-    bool use_cols_to_use0,
-    bool test_d,
-    bool use_d,
-    int cap_scan_count
-) {
+                       int & e1,
+                       int & f1,
+                       int & g1,
+                       int & ec,
+                       int & fc,
+                       int & gc,
+                       Rcpp::IntegerMatrix & X,
+                       Rcpp::RawMatrix & XR,
+                       bool use_XR,    
+                       Rcpp::IntegerMatrix & a,
+                       Rcpp::IntegerVector & Z,
+                       int & t,
+                       Rcpp::IntegerMatrix & d,
+                       Rcpp::IntegerVector & cols_to_use0,    
+                       Rcpp::List & top_matches_list,
+                       int K,
+                       bool verbose,
+                       bool use_cols_to_use0,
+                       bool test_d,
+                       bool use_d,
+                       int cap_scan_count
+                       ) {
   //
   bool matches_lower, matches_upper, cond;
   int e1_local, index, f1_with_d, f1_init, next_index, tt0, g1_init, g1_with_d, count;
@@ -372,28 +370,28 @@ void rcpp_find_restart(
   while((!matches_lower) && (!matches_upper)) {
     if (f1 > 0) {
       if (!use_cols_to_use0) {
-	e1_local = e1;
+        e1_local = e1;
       } else {
-	e1_local=cols_to_use0(e1);
+        e1_local=cols_to_use0(e1);
       }
       if (use_XR) {
-	matches_upper = Z(e1) == XR(a(f1 - 1, t), e1_local);
+        matches_upper = Z(e1) == XR(a(f1 - 1, t), e1_local);
       } else {
-	matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
+        matches_upper = Z(e1) == X(a(f1 - 1, t), e1_local);
       }
     } else {
       matches_upper = false;
     }
     if (f1 < K) {
       if (!use_cols_to_use0) {
-	e1_local = e1;
+        e1_local = e1;
       } else {
-	e1_local=cols_to_use0(e1);
+        e1_local=cols_to_use0(e1);
       }
       if (use_XR) {
-	matches_lower = Z(e1) == XR(a(f1, t), e1_local);
+        matches_lower = Z(e1) == XR(a(f1, t), e1_local);
       } else {
-	matches_lower = Z(e1) == X(a(f1, t), e1_local);
+        matches_lower = Z(e1) == X(a(f1, t), e1_local);
       }
     } else {
       matches_lower = false;
@@ -414,29 +412,29 @@ void rcpp_find_restart(
     index=a(f1, t);
     if (!use_cols_to_use0) {
       if (use_XR) {
-	while (Z(e1 - 1) == XR(index, e1 - 1)) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == XR(index, e1 - 1)) {
+          e1--;
+        }
       } else {
-	while (Z(e1 - 1) == X(index, e1 - 1)) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == X(index, e1 - 1)) {
+          e1--;
+        }
       }
     } else {
       if (use_XR) {
-	while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+          e1--;
+        }
       } else {
-	while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+          e1--;
+        }
       }
     }
     if (use_d | test_d) {
       f1 = f1_init;
       while (d(f1, t) <= e1) {
-	f1--;
+        f1--;
       }
       f1_with_d = f1;
     }
@@ -444,33 +442,33 @@ void rcpp_find_restart(
       f1 = f1_init;
       cond = true;
       if (verbose) {
-	std::cout << "before while, f1_init = " << f1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
+        std::cout << "before while, f1_init = " << f1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
       }
       count = 0;
       while(0 <= (f1 - 1) && cond) {
-	next_index = a(f1 - 1, t);
-	cond = true;
-	if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
-	if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
-	if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
-	if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
-	if (cond) {
-	  f1--;
-	}
-	if (cap_scan_count > 0) {
-	  if (count > cap_scan_count) {
-	    cond = false;
-	  }
-	}
-	count++;
+        next_index = a(f1 - 1, t);
+        cond = true;
+        if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+        if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
+        if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+        if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
+        if (cond) {
+          f1--;
+        }
+        if (cap_scan_count > 0) {
+          if (count > cap_scan_count) {
+            cond = false;
+          }
+        }
+        count++;
       }
       if (verbose) {
-	std::cout << "after while, f1 = " << f1 << std::endl;
+        std::cout << "after while, f1 = " << f1 << std::endl;
       }
       if (test_d) {
-	if (f1_with_d != f1) {
-	  stop("Problem:f1_with_d = %i and f1 = %i", f1_with_d, f1);
-	}
+        if (f1_with_d != f1) {
+          stop("Problem:f1_with_d = %i and f1 = %i", f1_with_d, f1);
+        }
       }
     }
   }
@@ -483,29 +481,29 @@ void rcpp_find_restart(
     index=a(f1, t);
     if (!use_cols_to_use0) {
       if (use_XR) {
-	while (Z(e1 - 1) == XR(index, e1 - 1)) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == XR(index, e1 - 1)) {
+          e1--;
+        }
       } else {
-	while (Z(e1 - 1) == X(index, e1 - 1)) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == X(index, e1 - 1)) {
+          e1--;
+        }
       }
     } else {
       if (use_XR) {
-	while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == XR(index, cols_to_use0(e1 - 1))) {
+          e1--;
+        }
       } else {
-	while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
-	  e1--;
-	}
+        while (Z(e1 - 1) == X(index, cols_to_use0(e1 - 1))) {
+          e1--;
+        }
       }
     }
     if (use_d | test_d) {
       g1 = g1_init;
       while ((g1 < K) && (d(g1, t) <= e1)) {
-	g1++;
+        g1++;
       }
       g1_with_d = g1;
     }
@@ -514,32 +512,32 @@ void rcpp_find_restart(
       cond = true;
       count = 0;
       if (verbose) {
-	std::cout << "before while, g1_init = " << g1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
+        std::cout << "before while, g1_init = " << g1_init << ", e1 = " << e1 << ", t - 1 = " << t - 1 << std::endl;
       }
       while((g1 < K) && cond) {
-	next_index = a(f1 + 1, t);
-	cond = true;
-	if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
-	if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
-	if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
-	if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
-	if (cond) {
-	  g1++;
-	}
-	if (cap_scan_count > 0) {
-	  if (count > cap_scan_count) {
-	    cond = false;
-	  }
-	}
-	count++;
+        next_index = a(f1 + 1, t);
+        cond = true;
+        if (use_XR && use_cols_to_use0) {   for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, cols_to_use0(tt0)) != XR(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+        if (use_XR && !use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (XR(index, tt0) != XR(next_index, tt0)) {  cond = false;}}}
+        if (!use_XR && use_cols_to_use0) {  for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, cols_to_use0(tt0)) != X(next_index, cols_to_use0(tt0))) {  cond = false;}}}
+        if (!use_XR && !use_cols_to_use0) { for(tt0 = e1; tt0 <= (t - 1); tt0++) { if (X(index, tt0) != X(next_index, tt0)) {  cond = false;}}}	
+        if (cond) {
+          g1++;
+        }
+        if (cap_scan_count > 0) {
+          if (count > cap_scan_count) {
+            cond = false;
+          }
+        }
+        count++;
       }
       if (verbose) {
-	std::cout << "after while, g1 = " << g1 << std::endl;
+        std::cout << "after while, g1 = " << g1 << std::endl;
       }
       if (test_d) {
-	if (g1_with_d != g1) {
-	  stop("Problem:g1_with_d = %i and g1 = %i", g1_with_d, g1);	  
-	}
+        if (g1_with_d != g1) {
+          stop("Problem:g1_with_d = %i and g1 = %i", g1_with_d, g1);	  
+        }
       }
     }
   }
@@ -553,118 +551,118 @@ void rcpp_find_restart(
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
-    Rcpp::IntegerMatrix & X,
-    Rcpp::RawMatrix & XR,    
-    Rcpp::List & ms_indices,
-    Rcpp::IntegerVector & Z,
-    Rcpp::IntegerVector & cols_to_use0,
-    bool use_XR = false,
-    bool verbose = false,
-    bool do_checks  = false,
-    bool check_vs_indices = false,
-    bool indices = false,
-    bool use_cols_to_use0 = false,
-    int min_length = -1,
-    bool do_up_and_down_scan = false,
-    int mspbwtL = 3,
-    int mspbwtM = 3,
-    bool test_d = false,
-    bool have_d = true,
-    int cap_scan_count = -1
-) {
-    if (verbose) {
-      std::cout << "Inside Rcpp ms algorithm" << std::endl;
-    }
-    int K;
-    int T;
-    if (use_XR) {
-      K = XR.nrow();
-      T = XR.ncol();            
-    } else {
-      K = X.nrow();
-      T = X.ncol();      
-    }
-    if (use_cols_to_use0) {
-      T = cols_to_use0.length();
-    }    
-    int k, t;
-    int f1, g1;
-    //
-    // get things out of lists so we can use them
-    //
-    Rcpp::IntegerMatrix a = ms_indices["a"];
-    Rcpp::List usge_all = ms_indices["usge_all"];
-    int egs = ms_indices["egs"];
-    Rcpp::List all_symbols = ms_indices["all_symbols"];
-    //
-    // special optional setup for d
-    bool use_d;
-    // so always extract it, it just might be small!
-    Rcpp::IntegerMatrix d = ms_indices["d"];
-    if (test_d) {
+                                              Rcpp::IntegerMatrix & X,
+                                              Rcpp::RawMatrix & XR,    
+                                              Rcpp::List & ms_indices,
+                                              Rcpp::IntegerVector & Z,
+                                              Rcpp::IntegerVector & cols_to_use0,
+                                              bool use_XR = false,
+                                              bool verbose = false,
+                                              bool do_checks  = false,
+                                              bool check_vs_indices = false,
+                                              bool indices = false,
+                                              bool use_cols_to_use0 = false,
+                                              int min_length = -1,
+                                              bool do_up_and_down_scan = false,
+                                              int mspbwtL = 3,
+                                              int mspbwtM = 3,
+                                              bool test_d = false,
+                                              bool have_d = true,
+                                              int cap_scan_count = -1
+                                              ) {
+  if (verbose) {
+    std::cout << "Inside Rcpp ms algorithm" << std::endl;
+  }
+  int K;
+  int T;
+  if (use_XR) {
+    K = XR.nrow();
+    T = XR.ncol();            
+  } else {
+    K = X.nrow();
+    T = X.ncol();      
+  }
+  if (use_cols_to_use0) {
+    T = cols_to_use0.length();
+  }    
+  int k, t;
+  int f1, g1;
+  //
+  // get things out of lists so we can use them
+  //
+  Rcpp::IntegerMatrix a = ms_indices["a"];
+  Rcpp::List usge_all = ms_indices["usge_all"];
+  int egs = ms_indices["egs"];
+  Rcpp::List all_symbols = ms_indices["all_symbols"];
+  //
+  // special optional setup for d
+  bool use_d;
+  // so always extract it, it just might be small!
+  Rcpp::IntegerMatrix d = ms_indices["d"];
+  if (test_d) {
+    use_d = true;
+  } else {
+    if (have_d) {
       use_d = true;
     } else {
-      if (have_d) {
-	use_d = true;
-      } else {
-	use_d = false;
-      }
+      use_d = false;
     }
-    //
-    // initialize
-    //
-    Rcpp::IntegerVector e(T);
-    Rcpp::IntegerVector f(T);
-    Rcpp::IntegerVector g(T);    
-    e(0) = 0;
-    Rcpp::NumericMatrix temp_mat = all_symbols[0];
-    Rcpp::NumericVector x(temp_mat.nrow() + 1);
-    x(0) = 0;
-    for(int i = 1; i < x.length(); i++) {
-      x(i) = x(i - 1) + temp_mat(i - 1, 1);
-    }
-    int Z_1 = Z(0);
-    if (Z_1 == 0) {
-      Z_1 = temp_mat.nrow();
-    }
-    f(0) = x(Z_1 - 1);
-    g(0) = x(Z_1);
-    //
-    // just do easy bit for now
-    //
-    int fc = f(0);
-    int gc = g(0);
-    int ec = e(0);
-    int e1 = -1;
-    Rcpp::List top_matches_list; // probably fine unless this becomes massive!
-    //
-    // initialize up and down scan, potentially
-    //
-    // uppy downy = ud
-    // a = above, b = below
-    Rcpp::IntegerVector ud_up_prev(mspbwtL);
-    Rcpp::IntegerVector ud_up_cur(mspbwtL);
-    Rcpp::IntegerVector ud_up_length_prev(mspbwtL);
-    Rcpp::IntegerVector ud_up_length_cur(mspbwtL);
-    //
-    Rcpp::IntegerVector ud_down_prev(mspbwtL);
-    Rcpp::IntegerVector ud_down_cur(mspbwtL);
-    Rcpp::IntegerVector ud_down_length_prev(mspbwtL);
-    Rcpp::IntegerVector ud_down_length_cur(mspbwtL);
-    int fg;
-    int i0 = 1;
-    int i0_cur, i0_prev, prev, cur, len;
-    Rcpp::IntegerVector temp_vector(3);
-    Rcpp::List uppy_downy_reporter;
-    int uppy_downy_count = 0;
-    // make
-    Rcpp::IntegerMatrix uppy_downy_matrix(100, 4);    
-    if (do_up_and_down_scan) {
-        if (verbose) {
-          std::cout << "Initialize up and down scan" << std::endl;
+  }
+  //
+  // initialize
+  //
+  Rcpp::IntegerVector e(T);
+  Rcpp::IntegerVector f(T);
+  Rcpp::IntegerVector g(T);    
+  e(0) = 0;
+  Rcpp::NumericMatrix temp_mat = all_symbols[0];
+  Rcpp::NumericVector x(temp_mat.nrow() + 1);
+  x(0) = 0;
+  for(int i = 1; i < x.length(); i++) {
+    x(i) = x(i - 1) + temp_mat(i - 1, 1);
+  }
+  int Z_1 = Z(0);
+  if (Z_1 == 0) {
+    Z_1 = temp_mat.nrow();
+  }
+  f(0) = x(Z_1 - 1);
+  g(0) = x(Z_1);
+  //
+  // just do easy bit for now
+  //
+  int fc = f(0);
+  int gc = g(0);
+  int ec = e(0);
+  int e1 = -1;
+  Rcpp::List top_matches_list; // probably fine unless this becomes massive!
+  //
+  // initialize up and down scan, potentially
+  //
+  // uppy downy = ud
+  // a = above, b = below
+  Rcpp::IntegerVector ud_up_prev(mspbwtL);
+  Rcpp::IntegerVector ud_up_cur(mspbwtL);
+  Rcpp::IntegerVector ud_up_length_prev(mspbwtL);
+  Rcpp::IntegerVector ud_up_length_cur(mspbwtL);
+  //
+  Rcpp::IntegerVector ud_down_prev(mspbwtL);
+  Rcpp::IntegerVector ud_down_cur(mspbwtL);
+  Rcpp::IntegerVector ud_down_length_prev(mspbwtL);
+  Rcpp::IntegerVector ud_down_length_cur(mspbwtL);
+  int fg;
+  int i0 = 1;
+  int i0_cur, i0_prev, prev, cur, len;
+  Rcpp::IntegerVector temp_vector(3);
+  Rcpp::List uppy_downy_reporter;
+  int uppy_downy_count = 0;
+  // make
+  Rcpp::IntegerMatrix uppy_downy_matrix(100, 4);    
+  if (do_up_and_down_scan) {
+    if (verbose) {
+      std::cout << "Initialize up and down scan" << std::endl;
 	}
-        // 
-        ud_up_prev.fill(-1);
+    // 
+    ud_up_prev.fill(-1);
 	ud_down_prev.fill(-1);
 	// initialize up
 	// should automatically floor? as an integer
@@ -694,40 +692,40 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	  }
 	  i0++;
 	}
-        if (verbose) {
-          std::cout << "Done initialize up and down scan" << std::endl;
+    if (verbose) {
+      std::cout << "Done initialize up and down scan" << std::endl;
 	}
+  }
+  i0 = -100; // should prevent problems?
+  //
+  // loop city
+  //
+  // t stays 1-BASED
+  for(t = 2; t <= T; t++) {
+    f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
+    g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
+    if (verbose) {
+      std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
     }
-    i0 = -100; // should prevent problems?
     //
-    // loop city
+    // up and down scan bit
     //
-    // t stays 1-BASED
-    for(t = 2; t <= T; t++) {
-      f1 = rcpp_wf(fc, t, Z(t - 1), usge_all, all_symbols, egs);
-      g1 = rcpp_wf(gc, t, Z(t - 1), usge_all, all_symbols, egs);
-      if (verbose) {
-	std::cout << "Start of loop t=" <<  t << ", fc = " << fc << ",  gc = " << gc << ",  ec = " << ec << ",  Z[t - 1] = " << Z(t - 1) << ",  f1=" << f1 << ",  g1=" <<  g1 << ",  e1 = " << e1 << std::endl;
+    if (do_up_and_down_scan) {
+      //fg = ((f1 + g1 - 1) / 2); // 0-based, include in "up"
+      // not ideal but OK
+      fg = f1;
+      // I do not think this can happen, but if it can
+      if (fg == K) {
+        fg = K - 1;
       }
       //
-      // up and down scan bit
-      //
-      if (do_up_and_down_scan) {
-	//fg = ((f1 + g1 - 1) / 2); // 0-based, include in "up"
-	// not ideal but OK
-	fg = f1;
-	// I do not think this can happen, but if it can
-	if (fg == K) {
-	  fg = K - 1;
-	}
-	//
-	if (verbose) {
-	  std::cout << "scan up" << std::endl;	// go "up" i.e. above i.e. up in the matrix
-	}
-	i0_cur =0; // 0-based, through local
-	i0_prev = 0;
-	// go through previous values
-        while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_up_prev(i0_cur)) && (0 <= (fg - i0_cur))) {
+      if (verbose) {
+        std::cout << "scan up" << std::endl;	// go "up" i.e. above i.e. up in the matrix
+      }
+      i0_cur =0; // 0-based, through local
+      i0_prev = 0;
+      // go through previous values
+      while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_up_prev(i0_cur)) && (0 <= (fg - i0_cur))) {
 	    // focus on going through past list
 	    prev = ud_up_prev(i0_prev);
 	    // now what is the current, does that work
@@ -744,350 +742,350 @@ Rcpp::NumericMatrix Rcpp_ms_MatchZ_Algorithm5(
 	      //## do not increment cur
 	      len = ud_up_length_prev(i0_prev);// ## 0-based
 	      if (mspbwtM <= len) {
-		// Rcpp::IntegerVector temp_vector(3);			  
-		// temp_vector(0) = prev;
-		// temp_vector(1) = t - 1;
-		// temp_vector(2) = len;
-		if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
-		  // double the size!
-		  Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
-		  for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
-		    new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
-		  }
-		  uppy_downy_matrix=new_uppy_downy_matrix;
-		}
-		// if (prev == 542061 && len == (t - 1)) {
-		//   std::cout << "Ahere I am, t = " << t << std::endl;
-		//   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
-		//   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
-		//   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
-		// }
-		uppy_downy_matrix(uppy_downy_count, 0) = prev;
-		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
-		uppy_downy_matrix(uppy_downy_count, 2) = len;
-		uppy_downy_count++;
-		//uppy_downy_reporter.push_back(temp_vector);
+            // Rcpp::IntegerVector temp_vector(3);			  
+            // temp_vector(0) = prev;
+            // temp_vector(1) = t - 1;
+            // temp_vector(2) = len;
+            if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+              // double the size!
+              Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+              for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+                new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+              }
+              uppy_downy_matrix=new_uppy_downy_matrix;
+            }
+            // if (prev == 542061 && len == (t - 1)) {
+            //   std::cout << "Ahere I am, t = " << t << std::endl;
+            //   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
+            //   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
+            //   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
+            // }
+            uppy_downy_matrix(uppy_downy_count, 0) = prev;
+            uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+            uppy_downy_matrix(uppy_downy_count, 2) = len;
+            uppy_downy_count++;
+            //uppy_downy_reporter.push_back(temp_vector);
 	      }
 	    }
 	    i0_prev++;
-	}
-	if (verbose) {
-	  std::cout << "fill in" << std::endl;	//## now fill in what was not set
-	}
-	while((i0_cur <= (mspbwtL - 1))) {
+      }
+      if (verbose) {
+        std::cout << "fill in" << std::endl;	//## now fill in what was not set
+      }
+      while((i0_cur <= (mspbwtL - 1))) {
 	    if (0 <= (fg - i0_cur)) {
-	        cur = a(fg - i0_cur, t); // ## go up, so subtract
-		ud_up_cur(i0_cur) = cur;
-		// go backward, find start
-		e1 = t; // recall t is 1-based
-		if (!use_cols_to_use0) {
-		  if (!use_XR) {
+          cur = a(fg - i0_cur, t); // ## go up, so subtract
+          ud_up_cur(i0_cur) = cur;
+          // go backward, find start
+          e1 = t; // recall t is 1-based
+          if (!use_cols_to_use0) {
+            if (!use_XR) {
 		      while((1 <= e1) && (X(cur, e1 - 1) == Z(e1 - 1))) {
-			e1--;
+                e1--;
 		      }
 		    } else {
 		      while((1 <= e1) && (XR(cur, e1 - 1) == Z(e1 - 1))) {
-			e1--;
+                e1--;
 		      }
 		    }
-		} else {
-		  e1 = t;
-		  if (!use_XR) {
-		    while((1 <= e1) && (X(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
-		      e1--;
-		    }
-		  } else {
-		    while((1 <= e1) && (XR(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
-		      e1--;
-		    }
-		  }
-		}
-		// go backwards, sort out start, how many before
-		ud_up_length_cur(i0_cur) = t - e1;
+          } else {
+            e1 = t;
+            if (!use_XR) {
+              while((1 <= e1) && (X(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
+                e1--;
+              }
+            } else {
+              while((1 <= e1) && (XR(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
+                e1--;
+              }
+            }
+          }
+          // go backwards, sort out start, how many before
+          ud_up_length_cur(i0_cur) = t - e1;
 	    } else {
 	      ud_up_cur(i0_cur) = -1;
 	      ud_up_length_cur(i0_cur) = -1;
 	    }
 	    i0_cur++;
-	}
-	// if (t <= 3) {
-	//   std::cout << "----------------- t = " << t << " ------ RCPP" << std::endl;
-	//   std::cout << "fg = " << fg << std::endl;
-	//   std::cout << "ud_up_prev";
-	//   std::cout << ud_up_prev;
-	//   std::cout << std::endl;
-	//   std::cout << "ud_up_length_prev";
-	//   std::cout << ud_up_length_prev;
-	//   std::cout << std::endl;
-	//   std::cout << "ud_up_cur";
-	//   std::cout << ud_up_cur;
-	//   std::cout << std::endl;
-	//   std::cout << "ud_up_length_cur";
-	//   std::cout << ud_up_length_cur;
-	//   std::cout << std::endl;
-	// }
-	ud_up_prev = ud_up_cur;
-	ud_up_length_prev = ud_up_length_cur;
-	if (verbose) {
-	  std::cout << "scan down" << std::endl;	// go "down i.e. below in the matrix
-	}
-	i0_cur = 0; // ## 0-based, through local
-	i0_prev = 0;
-	//## go through previous values
-	while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev(i0_cur)) && ((fg + i0_cur + 1) <= (K - 1))) {
-	  //## focus on going through past list
-	  prev = ud_down_prev(i0_prev);
-	  //## now what is the current, does that work
-	  cur = a(fg + i0_cur + 1, t);
-	  if (cur == prev) {
-	    //## it is a match. save and increment match
-	    ud_down_cur(i0_cur) = cur;
-	    //## do the same for length. use previous length
-	    ud_down_length_cur(i0_cur) = ud_down_length_prev(i0_prev) + 1;
-	    //## increment up one
-	    i0_cur++;
-	  } else {
-	    //## it is not a match, report it
-	    //## do not increment cur
-	    len = ud_down_length_prev(i0_prev); // ## 0-based
-	    if (mspbwtM <= len) {
-		// Rcpp::IntegerVector temp_vector(3);			  
-		// temp_vector(0) = prev;
-		// temp_vector(1) = t - 1;
-		// temp_vector(2) = len;
-		if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
-		  // double the size!
-		  Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
-		  for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
-		    new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
-		  }
-		  uppy_downy_matrix=new_uppy_downy_matrix;
-		}
-		// if (prev == 542061 && len == (t - 1)) {
-		//   std::cout << "Bhere I am, t = " << t << std::endl;
-		//   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
-		//   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
-		//   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
-		// }
-		uppy_downy_matrix(uppy_downy_count, 0) = prev;
-		uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
-		uppy_downy_matrix(uppy_downy_count, 2) = len;
-		uppy_downy_count++;
-	    }
-	  }
-	  i0_prev++;
-	}
-	if (verbose) {
-	  std::cout << "fill in" << std::endl;	//## now fill in what was not set
-	}
-	while((i0_cur <= (mspbwtL - 1))) {
-	  if ((fg + i0_cur + 1) <= (K - 1)) {
-	    cur = a(fg + i0_cur + 1, t); // ## go up, so subtract
-	    ud_down_cur(i0_cur) = cur;
-	    e1 = t;
-	    if (!use_cols_to_use0) {
-	      if (!use_XR) {
-		while((1 <= e1) && (X(cur, e1 - 1) == Z(e1 - 1))) {
-		  e1--;
-		}
-	      } else {
-		while((1 <= e1) && (XR(cur, e1 - 1) == Z(e1 - 1))) {
-		  e1--;
-		}
-	      }
-	    } else {
-	      if (!use_XR) {
-		while((1 <= e1) && (X(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
-		  e1--;
-		}
-	      } else {
-		while((1 <= e1) && (XR(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
-		  e1--;
-		}
-	      }
-	    }
-	    //## go backwards, sort out start, how many before
-	    ud_down_length_cur(i0_cur) = t - e1;
-	  } else {
-	    ud_down_cur(i0_cur) = -1;
-	    ud_down_length_cur(i0_cur) = -1;
-	  }
-	  i0_cur++;
-	}
-	ud_down_prev = ud_down_cur;
-	ud_down_length_prev = ud_down_length_cur;
-	// if (t >= 20 && t <= 25) {
-	//   std::cout << "first 5 going up at this location" << std::endl;
-	//   std::cout << ud_up_cur(0) << ", " << ud_up_cur(1) << ", " << ud_up_cur(2) << ", " << ud_up_cur(3) << ", " << ud_up_cur(4) << std::endl;
-	//   std::cout << "and their lengths" << std::endl;
-	//   std::cout << ud_up_length_cur(0) << ", " << ud_up_length_cur(1) << ", " << ud_up_length_cur(2) << ", " << ud_up_length_cur(3) << ", " << ud_up_length_cur(4) << std::endl;
-	//   std::cout << "first 5 going down at this location" << std::endl;
-	//   std::cout << ud_down_cur(0) << ", " << ud_down_cur(1) << ", " << ud_down_cur(2) << ", " << ud_down_cur(3) << ", " << ud_down_cur(4) << std::endl;
-	//   std::cout << "and their lengths" << std::endl;
-	//   std::cout << ud_down_length_cur(0) << ", " << ud_down_length_cur(1) << ", " << ud_down_length_cur(2) << ", " << ud_down_length_cur(3) << ", " << ud_down_length_cur(4) << std::endl;
-	// }
-	if (verbose) {
-	  std::cout << "end of up and down scna" << std::endl;
-	}
-      } // end of do up and down scan
-      //
-      //
-      //
-      if (!(g1 > f1)) {
-	if (verbose) {
-	  std::cout << "save and restart" << std::endl;
-	}
-	//
-	// save and re-start! first, save
-	//
-	if (verbose) {
-	  std::cout << "save first, fc = " << fc << ", gc = " << gc << std::endl;
-	}
-	if (!do_up_and_down_scan) {	
-	  for(k = fc; k <= (gc - 1); k++) {
-	    if ((t - ec) > min_length) {
-	      Rcpp::IntegerVector temp_vector(4);
-	      temp_vector(0) = k;
-	      temp_vector(1) = a(k, t - 1);
-	      temp_vector(2) = ec + 1;
-	      temp_vector(3) = t - 1;
-	      top_matches_list.push_back(temp_vector);
-	    }
-	  }
-	}
-	//
-	if (verbose) {
-	  std::cout << "restart" << std::endl;
-	}
-	//
-	// now, re-start
-	//
-	rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d, cap_scan_count);
-	ec = e1;
-	if (verbose) {
-	  std::cout << "end of save and restart" << std::endl;
-	}
       }
-      fc = f1;
-      gc = g1;
-      e(t - 1) = ec;
-      f(t - 1) = fc;
-      g(t - 1) = gc;
+      // if (t <= 3) {
+      //   std::cout << "----------------- t = " << t << " ------ RCPP" << std::endl;
+      //   std::cout << "fg = " << fg << std::endl;
+      //   std::cout << "ud_up_prev";
+      //   std::cout << ud_up_prev;
+      //   std::cout << std::endl;
+      //   std::cout << "ud_up_length_prev";
+      //   std::cout << ud_up_length_prev;
+      //   std::cout << std::endl;
+      //   std::cout << "ud_up_cur";
+      //   std::cout << ud_up_cur;
+      //   std::cout << std::endl;
+      //   std::cout << "ud_up_length_cur";
+      //   std::cout << ud_up_length_cur;
+      //   std::cout << std::endl;
+      // }
+      ud_up_prev = ud_up_cur;
+      ud_up_length_prev = ud_up_length_cur;
+      if (verbose) {
+        std::cout << "scan down" << std::endl;	// go "down i.e. below in the matrix
+      }
+      i0_cur = 0; // ## 0-based, through local
+      i0_prev = 0;
+      //## go through previous values
+      while((i0_prev <= (mspbwtL - 1)) && (-1 < ud_down_prev(i0_cur)) && ((fg + i0_cur + 1) <= (K - 1))) {
+        //## focus on going through past list
+        prev = ud_down_prev(i0_prev);
+        //## now what is the current, does that work
+        cur = a(fg + i0_cur + 1, t);
+        if (cur == prev) {
+          //## it is a match. save and increment match
+          ud_down_cur(i0_cur) = cur;
+          //## do the same for length. use previous length
+          ud_down_length_cur(i0_cur) = ud_down_length_prev(i0_prev) + 1;
+          //## increment up one
+          i0_cur++;
+        } else {
+          //## it is not a match, report it
+          //## do not increment cur
+          len = ud_down_length_prev(i0_prev); // ## 0-based
+          if (mspbwtM <= len) {
+            // Rcpp::IntegerVector temp_vector(3);			  
+            // temp_vector(0) = prev;
+            // temp_vector(1) = t - 1;
+            // temp_vector(2) = len;
+            if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+              // double the size!
+              Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+              for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+                new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+              }
+              uppy_downy_matrix=new_uppy_downy_matrix;
+            }
+            // if (prev == 542061 && len == (t - 1)) {
+            //   std::cout << "Bhere I am, t = " << t << std::endl;
+            //   std::cout << "uppy_downy_count = " << uppy_downy_count << std::endl;
+            //   std::cout << "i0_cur = " << i0_cur << ", cur = " << cur << std::endl;
+            //   std::cout << "i0_prev = " << i0_prev << ", prev = " << prev << std::endl;
+            // }
+            uppy_downy_matrix(uppy_downy_count, 0) = prev;
+            uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+            uppy_downy_matrix(uppy_downy_count, 2) = len;
+            uppy_downy_count++;
+          }
+        }
+        i0_prev++;
+      }
+      if (verbose) {
+        std::cout << "fill in" << std::endl;	//## now fill in what was not set
+      }
+      while((i0_cur <= (mspbwtL - 1))) {
+        if ((fg + i0_cur + 1) <= (K - 1)) {
+          cur = a(fg + i0_cur + 1, t); // ## go up, so subtract
+          ud_down_cur(i0_cur) = cur;
+          e1 = t;
+          if (!use_cols_to_use0) {
+            if (!use_XR) {
+              while((1 <= e1) && (X(cur, e1 - 1) == Z(e1 - 1))) {
+                e1--;
+              }
+            } else {
+              while((1 <= e1) && (XR(cur, e1 - 1) == Z(e1 - 1))) {
+                e1--;
+              }
+            }
+          } else {
+            if (!use_XR) {
+              while((1 <= e1) && (X(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
+                e1--;
+              }
+            } else {
+              while((1 <= e1) && (XR(cur, cols_to_use0(e1 - 1)) == Z(e1 - 1))) {
+                e1--;
+              }
+            }
+          }
+          //## go backwards, sort out start, how many before
+          ud_down_length_cur(i0_cur) = t - e1;
+        } else {
+          ud_down_cur(i0_cur) = -1;
+          ud_down_length_cur(i0_cur) = -1;
+        }
+        i0_cur++;
+      }
+      ud_down_prev = ud_down_cur;
+      ud_down_length_prev = ud_down_length_cur;
+      // if (t >= 20 && t <= 25) {
+      //   std::cout << "first 5 going up at this location" << std::endl;
+      //   std::cout << ud_up_cur(0) << ", " << ud_up_cur(1) << ", " << ud_up_cur(2) << ", " << ud_up_cur(3) << ", " << ud_up_cur(4) << std::endl;
+      //   std::cout << "and their lengths" << std::endl;
+      //   std::cout << ud_up_length_cur(0) << ", " << ud_up_length_cur(1) << ", " << ud_up_length_cur(2) << ", " << ud_up_length_cur(3) << ", " << ud_up_length_cur(4) << std::endl;
+      //   std::cout << "first 5 going down at this location" << std::endl;
+      //   std::cout << ud_down_cur(0) << ", " << ud_down_cur(1) << ", " << ud_down_cur(2) << ", " << ud_down_cur(3) << ", " << ud_down_cur(4) << std::endl;
+      //   std::cout << "and their lengths" << std::endl;
+      //   std::cout << ud_down_length_cur(0) << ", " << ud_down_length_cur(1) << ", " << ud_down_length_cur(2) << ", " << ud_down_length_cur(3) << ", " << ud_down_length_cur(4) << std::endl;
+      // }
+      if (verbose) {
+        std::cout << "end of up and down scna" << std::endl;
+      }
+    } // end of do up and down scan
+      //
+      //
+      //
+    if (!(g1 > f1)) {
+      if (verbose) {
+        std::cout << "save and restart" << std::endl;
+      }
+      //
+      // save and re-start! first, save
+      //
+      if (verbose) {
+        std::cout << "save first, fc = " << fc << ", gc = " << gc << std::endl;
+      }
+      if (!do_up_and_down_scan) {	
+        for(k = fc; k <= (gc - 1); k++) {
+          if ((t - ec) > min_length) {
+            Rcpp::IntegerVector temp_vector(4);
+            temp_vector(0) = k;
+            temp_vector(1) = a(k, t - 1);
+            temp_vector(2) = ec + 1;
+            temp_vector(3) = t - 1;
+            top_matches_list.push_back(temp_vector);
+          }
+        }
+      }
+      //
+      if (verbose) {
+        std::cout << "restart" << std::endl;
+      }
+      //
+      // now, re-start
+      //
+      rcpp_find_restart(e1, f1, g1, ec, fc, gc, X, XR, use_XR, a, Z, t, d, cols_to_use0, top_matches_list, K, verbose, use_cols_to_use0, test_d, use_d, cap_scan_count);
+      ec = e1;
+      if (verbose) {
+        std::cout << "end of save and restart" << std::endl;
+      }
+    }
+    fc = f1;
+    gc = g1;
+    e(t - 1) = ec;
+    f(t - 1) = fc;
+    g(t - 1) = gc;
+  }
+  //
+  // done normal now wrap up
+  //
+  if (verbose) {
+    std::cout << "done normal now wrap up" << std::endl;
+  }
+  //t++; // no need to increment, for loop does that already
+  if (!do_up_and_down_scan) {
+    if (fc < gc) {
+      if (verbose) {
+        std::cout << "fc = " << fc << ", gc = " << gc << std::endl;
+      }
+      for(k = fc; k <= (gc - 1); k++) {
+        if ((t - ec) > min_length) {	  
+          Rcpp::IntegerVector temp_vector(4);
+          temp_vector(0) = k;
+          temp_vector(1) = a(k, t - 1);
+          temp_vector(2) = ec + 1;
+          temp_vector(3) = t - 1;
+          top_matches_list.push_back(temp_vector);
+        }
+      }
     }
     //
-    // done normal now wrap up
+    // build final matrix
     //
     if (verbose) {
-      std::cout << "done normal now wrap up" << std::endl;
+      std::cout << "build final matrix" << std::endl;
     }
-    //t++; // no need to increment, for loop does that already
-    if (!do_up_and_down_scan) {
-      if (fc < gc) {
-	if (verbose) {
-	  std::cout << "fc = " << fc << ", gc = " << gc << std::endl;
-	}
-	for(k = fc; k <= (gc - 1); k++) {
-	  if ((t - ec) > min_length) {	  
-	    Rcpp::IntegerVector temp_vector(4);
-	    temp_vector(0) = k;
-	    temp_vector(1) = a(k, t - 1);
-	    temp_vector(2) = ec + 1;
-	    temp_vector(3) = t - 1;
-	    top_matches_list.push_back(temp_vector);
-	  }
-	}
+    Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
+    for(k = 0; k < top_matches_list.length(); k++) {
+      Rcpp::IntegerVector temp_vector = top_matches_list(k);
+      for(int j = 0; j < 4; j++) {
+        top_matches(k, j) = temp_vector(j);
       }
-      //
-      // build final matrix
-      //
-      if (verbose) {
-	std::cout << "build final matrix" << std::endl;
+    }
+    colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
+    return(top_matches);
+  } else {
+    //
+    // report everything
+    // up
+    if (verbose) {
+      std::cout << "start final summary of up and down scan" << std::endl;
+    }
+    i0_cur = 0;
+    while((i0_cur <= (mspbwtL - 1))) {
+      prev = ud_up_cur(i0_cur);
+      len = ud_up_length_cur(i0_cur); 
+      if (mspbwtM <= len) {
+        // Rcpp::IntegerVector temp_vector(3);			  
+        // temp_vector(0) = prev;
+        // temp_vector(1) = t - 1;
+        // temp_vector(2) = len;
+        if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+          // double the size!
+          Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+          for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+            new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+          }
+          uppy_downy_matrix=new_uppy_downy_matrix;
+        }
+        uppy_downy_matrix(uppy_downy_count, 0) = prev;
+        uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+        uppy_downy_matrix(uppy_downy_count, 2) = len;
+        uppy_downy_count++;
+        //uppy_downy_reporter.push_back(temp_vector);
       }
-      Rcpp::NumericMatrix top_matches(top_matches_list.length(), 4);
-      for(k = 0; k < top_matches_list.length(); k++) {
-	Rcpp::IntegerVector temp_vector = top_matches_list(k);
-	for(int j = 0; j < 4; j++) {
-	  top_matches(k, j) = temp_vector(j);
-	}
-      }
-      colnames(top_matches) = Rcpp::CharacterVector({"k0", "indexB0", "start1", "end1"});
-      return(top_matches);
-    } else {
-      //
-      // report everything
+      i0_cur++;
+    }
+    // down
+    i0_cur = 0;
+    while((i0_cur <= (mspbwtL - 1))) {
       // up
-      if (verbose) {
-	std::cout << "start final summary of up and down scan" << std::endl;
+      prev = ud_down_cur(i0_cur);
+      len = ud_down_length_cur(i0_cur);
+      if (mspbwtM <= len) {
+        // Rcpp::IntegerVector temp_vector(3);			  
+        // temp_vector(0) = prev;
+        // temp_vector(1) = t - 1;
+        // temp_vector(2) = len;
+        if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
+          // double the size!
+          Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
+          for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
+            new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
+          }
+          uppy_downy_matrix=new_uppy_downy_matrix;
+        }
+        uppy_downy_matrix(uppy_downy_count, 0) = prev;
+        uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
+        uppy_downy_matrix(uppy_downy_count, 2) = len;
+        uppy_downy_count++;
+        //uppy_downy_reporter.push_back(temp_vector);
       }
-      i0_cur = 0;
-      while((i0_cur <= (mspbwtL - 1))) {
-	prev = ud_up_cur(i0_cur);
-	len = ud_up_length_cur(i0_cur); 
-	if (mspbwtM <= len) {
-	  // Rcpp::IntegerVector temp_vector(3);			  
-	  // temp_vector(0) = prev;
-	  // temp_vector(1) = t - 1;
-	  // temp_vector(2) = len;
-	  if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
-	    // double the size!
-	    Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
-	    for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
-	      new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
-	    }
-	    uppy_downy_matrix=new_uppy_downy_matrix;
-	  }
-	  uppy_downy_matrix(uppy_downy_count, 0) = prev;
-	  uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
-	  uppy_downy_matrix(uppy_downy_count, 2) = len;
-	  uppy_downy_count++;
-	  //uppy_downy_reporter.push_back(temp_vector);
-	}
-	i0_cur++;
-      }
-      // down
-      i0_cur = 0;
-      while((i0_cur <= (mspbwtL - 1))) {
-	// up
-	prev = ud_down_cur(i0_cur);
-	len = ud_down_length_cur(i0_cur);
-	if (mspbwtM <= len) {
-	  // Rcpp::IntegerVector temp_vector(3);			  
-	  // temp_vector(0) = prev;
-	  // temp_vector(1) = t - 1;
-	  // temp_vector(2) = len;
-	  if (uppy_downy_count >= uppy_downy_matrix.nrow()) {
-	    // double the size!
-	    Rcpp::IntegerMatrix new_uppy_downy_matrix(uppy_downy_matrix.nrow() * 2, 3);
-	    for(int i = 0; i < uppy_downy_matrix.nrow(); i++) {
-	      new_uppy_downy_matrix(i, _) = uppy_downy_matrix(i, _);
-	    }
-	    uppy_downy_matrix=new_uppy_downy_matrix;
-	  }
-	  uppy_downy_matrix(uppy_downy_count, 0) = prev;
-	  uppy_downy_matrix(uppy_downy_count, 1) = t - 1;
-	  uppy_downy_matrix(uppy_downy_count, 2) = len;
-	  uppy_downy_count++;
-	  //uppy_downy_reporter.push_back(temp_vector);
-	}
-	i0_cur++;
-      }
-      // now re-size again
-      if (verbose) {
-	std::cout << "resize" << std::endl;
-      }
-      Rcpp::NumericMatrix final_uppy_downy_matrix(uppy_downy_count, 4);
-      for(k = 0; k < uppy_downy_count; k++) {
-	final_uppy_downy_matrix(k, 0) = uppy_downy_matrix(k, 0);
-	final_uppy_downy_matrix(k, 1) = uppy_downy_matrix(k, 1) - uppy_downy_matrix(k, 2) + 1;	
-	final_uppy_downy_matrix(k, 2) = uppy_downy_matrix(k, 1);
-	final_uppy_downy_matrix(k, 3) = uppy_downy_matrix(k, 2);	
-      }
-      colnames(final_uppy_downy_matrix) = Rcpp::CharacterVector({"index0", "start1", "end1", "len1"});
-      if (verbose) {
-	std::cout << "done" << std::endl;
-      }
-      return(final_uppy_downy_matrix);
+      i0_cur++;
     }
+    // now re-size again
+    if (verbose) {
+      std::cout << "resize" << std::endl;
+    }
+    Rcpp::NumericMatrix final_uppy_downy_matrix(uppy_downy_count, 4);
+    for(k = 0; k < uppy_downy_count; k++) {
+      final_uppy_downy_matrix(k, 0) = uppy_downy_matrix(k, 0);
+      final_uppy_downy_matrix(k, 1) = uppy_downy_matrix(k, 1) - uppy_downy_matrix(k, 2) + 1;	
+      final_uppy_downy_matrix(k, 2) = uppy_downy_matrix(k, 1);
+      final_uppy_downy_matrix(k, 3) = uppy_downy_matrix(k, 2);	
+    }
+    colnames(final_uppy_downy_matrix) = Rcpp::CharacterVector({"index0", "start1", "end1", "len1"});
+    if (verbose) {
+      std::cout << "done" << std::endl;
+    }
+    return(final_uppy_downy_matrix);
+  }
 }
 
 
