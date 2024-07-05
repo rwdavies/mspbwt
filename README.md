@@ -1,4 +1,4 @@
-# Memory efficient PBWT 
+# Multi symbol PBWT 
 
 high level functions for users:
 - ms_encode
