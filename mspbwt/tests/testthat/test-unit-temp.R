@@ -83,7 +83,7 @@ test_that("can avoid use of d", {
             ## print(paste0("s = ", s, " v2 = ", v2))
             k1 <- get_k_given_matrix_u(s, v2, U) ## 0-based
             k2 <- get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = TRUE, U = U)
-            k3 <- Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs, do_checks = FALSE, U = matrix(0, 1, 1))
+            k3 <- Rcpp_get_k_given_encoded_u(s, v2, usge, C, K, egs, verbose = TRUE)
             print(paste0("k1 = ", k1, ", k2 = ", k2, ", k3 = ", k3))
             expect_equal(k1, k2)
             expect_equal(k1, k3)

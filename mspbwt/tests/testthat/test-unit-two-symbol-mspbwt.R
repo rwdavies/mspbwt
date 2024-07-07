@@ -31,7 +31,7 @@ test_that("multi-version with 2 symbols can work, when symbols aren't relabelled
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
-    out <- QUILT::make_rhb_t_equality(
+    out <- make_rhb_t_equality(
         rhb_t = X,
         nSNPs = ncol(X) * 32,
         nMaxDH = 20,
@@ -72,7 +72,7 @@ test_that("multi-version with 2 symbols can work, when symbols are relabelled", 
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
     check_top_matches(top_matches, X, Z)     
 
-    out <- QUILT::make_rhb_t_equality(
+    out <- make_rhb_t_equality(
         rhb_t = X,
         nSNPs = ncol(X) * 32,
         nMaxDH = 20,
@@ -123,7 +123,7 @@ test_that("multi-symbol with 2 symbols can work anywhere", {
             ## check the result is there
             check_expected_top_match(top_matches, irow, icol, K, T, w) 
 
-            out <- QUILT::make_rhb_t_equality(
+            out <- make_rhb_t_equality(
                 rhb_t = X,
                 nSNPs = ncol(X) * 32,
                 nMaxDH = 20,
@@ -175,7 +175,7 @@ test_that("multi-version with 2 symbols can capture clean breaks", {
     indices <- BuildIndices_Algorithm5(X, verbose = FALSE, do_checks = TRUE, do_var_check = FALSE)
     top_matches <- MatchZ_Algorithm5(X, indices, Z, verbose = FALSE, do_checks = TRUE)
 
-    out <- QUILT::make_rhb_t_equality(
+    out <- make_rhb_t_equality(
         rhb_t = X,
         nSNPs = ncol(X) * 32,
         nMaxDH = 20,
