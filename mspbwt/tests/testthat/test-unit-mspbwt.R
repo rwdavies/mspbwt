@@ -271,8 +271,8 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
         X[3, c(w1 - 1, w2 + 1)] <- 5 - Z[c(w1 - 1, w2 + 1)]
 
         ##
-        rhb_t <- make_rhb_t_from_rhi_t(X)
-        out <- make_rhb_t_equality(
+        rhb_t <- STITCH::make_rhb_t_from_rhi_t(X)
+        out <- STITCH::make_rhb_t_equality(
             rhb_t = X,
             nSNPs = 32 * nGrids,
             nMaxDH = nMaxDH,

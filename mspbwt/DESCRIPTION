@@ -7,7 +7,7 @@ Author: Robert Davies
 Maintainer: Robert Davies <robertwilliamdavies@gmail.com>
 Description: This package is a library for an efficient multi symbol pbwt
 License: GPL3
-Depends: STITCH (>= 1.6.10)
+Depends: STITCH (>= 1.6.11)
 Imports: Rcpp (>= 1.0.2)
 LinkingTo: Rcpp
 RoxygenNote: 7.3.1

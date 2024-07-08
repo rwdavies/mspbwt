@@ -153,14 +153,14 @@ test_driver_intuition <- function(
   Xs <- X
   Zs <- Z
   ## rest
-  rhb_t <- make_rhb_t_from_rhi_t(X)
-  out <- make_rhb_t_equality(
+  rhb_t <- STITCH::make_rhb_t_from_rhi_t(X)
+  out <- STITCH::make_rhb_t_equality(
     rhb_t = rhb_t,
     nSNPs = T,
     nMaxDH = nMaxDH,
     ref_error = 0.001
   )
-  Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
+  Zg <- STITCH::make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
   Z <- map_Z_to_all_symbols(Zg, out[["all_symbols"]])
   out <- append(
     out,
@@ -221,14 +221,14 @@ test_driver_multiple <- function(
   Xs <- X
   Zs <- Z
   ## rest
-  rhb_t <- make_rhb_t_from_rhi_t(X)
-  out <- make_rhb_t_equality(
+  rhb_t <- STITCH::make_rhb_t_from_rhi_t(X)
+  out <- STITCH::make_rhb_t_equality(
     rhb_t = rhb_t,
     nSNPs = T,
     nMaxDH = nMaxDH,
     ref_error = 0.001
   )
-  Zg <- make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
+  Zg <- STITCH::make_rhb_t_from_rhi_t(matrix(Z, nrow = 1))
   Z <- map_Z_to_all_symbols(Zg, out[["all_symbols"]])
   out <- append(
     out,
