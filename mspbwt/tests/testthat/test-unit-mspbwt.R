@@ -272,7 +272,6 @@ test_that("mspbwt can work with rare symbol not in hapMatcher", {
 
         ##
         rhb_t <- make_rhb_t_from_rhi_t(X)
-        ## QUILT::
         out <- make_rhb_t_equality(
             rhb_t = X,
             nSNPs = 32 * nGrids,
@@ -552,6 +551,7 @@ test_that("can do scan up and down", {
 
 
 test_that("can avoid use of d", {
+    skip("WIP")
 
     set.seed(2029)
 

@@ -47,7 +47,7 @@ test_that("bug found", {
         if (recast) {
             a <- apply(a, 2, function(x) match(x, unique(x)) - 1)
         }
-        out <- QUILT::make_rhb_t_equality(
+        out <- make_rhb_t_equality(
             rhb_t = a,
             nSNPs = ncol(a) * 32,
             nMaxDH = 20,

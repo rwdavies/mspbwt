@@ -154,7 +154,7 @@ test_driver_intuition <- function(
   Zs <- Z
   ## rest
   rhb_t <- make_rhb_t_from_rhi_t(X)
-  out <- QUILT::make_rhb_t_equality(
+  out <- make_rhb_t_equality(
     rhb_t = rhb_t,
     nSNPs = T,
     nMaxDH = nMaxDH,
@@ -222,7 +222,7 @@ test_driver_multiple <- function(
   Zs <- Z
   ## rest
   rhb_t <- make_rhb_t_from_rhi_t(X)
-  out <- QUILT::make_rhb_t_equality(
+  out <- make_rhb_t_equality(
     rhb_t = rhb_t,
     nSNPs = T,
     nMaxDH = nMaxDH,

@@ -819,7 +819,7 @@ make_rhb_t_equality <- function(
             a <- a[order(-a)]
         } else {
             ## from stitch
-            a <- a[match(int_determine_rspo(names(a)), names(a))]
+            a <- a[match(STITCH::int_determine_rspo(names(a)), names(a))]
         }
         a <- a[a > 0]
         ## flip order to get conventional binary order
