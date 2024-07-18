@@ -28,7 +28,7 @@ jobs:
           use-public-rspm: true
 
       - name: Install dependencies
-        run: export DEV_QUILT="TRUE" && ./scripts/install-r-dependencies.R
+        run: ./scripts/install-r-dependencies.R
 
       - name: Unit tests
         run: ./scripts/test-unit.sh
