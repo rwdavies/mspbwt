@@ -53,7 +53,7 @@ Rcpp::List Rcpp_encode_maximal_column_of_u(
 	do_encoding_this_SNP = true;
 	if (i < (n_rows - 1)) {
       if (
-          (u(e0 + 1) - u(s0)) == 0 | \
+          (u(e0 + 1) - u(s0)) == 0 || \
           (u(e0 + 1) - u(s0)) == (e0 + 1 - s0)
           ) {
         out_mat(i, col_vec_pos) = vec_pos - 1;

@@ -1,8 +1,8 @@
 Package: mspbwt
 Type: Package
 Title: Multi Symbol Positional Burrows Wheeler Transform
-Version: 0.1.0
-Date: 2024-07-18
+Version: 0.1.1
+Date: 2025-05-04
 Authors@R: c(
     person("Robert", "Davies", , "robertwilliamdavies@gmail.com", role = c("aut", "cre")),
     person("Zilong", "Li", , "zilong.dk@gmail.com", role = c("aut"))
@@ -11,7 +11,7 @@ Description: This package is a library for an efficient multi symbol pbwt
 Depends: STITCH (>= 1.6.11)
 Imports: Rcpp
 LinkingTo: Rcpp
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 License: GPL3 | file LICENSE
 SystemRequirements: C++11
 NeedsCompilation: yes
